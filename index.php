@@ -1,6 +1,15 @@
 <?php include 'header.php'; ?>
 
 <body>
+<!-- Header -->
+  <header class="grid">
+    <div style="text-align:right">
+      <button id="themeToggle" class="secondary outline">
+        🌙 Dark mode
+      </button>
+    </div>
+  </header>
+
 <div class="container">
 
 
