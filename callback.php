@@ -32,7 +32,7 @@ $json = json_decode($response, true);
 
 if (isset($json['access_token'])) {
     $_SESSION['access_token'] = $json['access_token'];
-    header("Location: activities.php");
+    header("Location: routes.php");
     exit;
 } else {
     echo "Error fetching access token: " . $response;
