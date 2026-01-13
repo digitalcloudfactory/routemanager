@@ -17,8 +17,17 @@ $access_token = $_SESSION['access_token'];
 
 // Connect to DB
 try {
-    $pdo = new PDO("mysql:host=$db_host;port=$db_port;dbname=$db_name;charset=utf8", $db_user, $db_pass);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+$pdo = new PDO(
+    "mysql:host=$db_host;port=$db_port;dbname=$db_name;charset=utf8mb4",
+    $db_user,
+    $db_pass,
+    [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4"
+    ]
+);
+
+    
 } catch (PDOException $e) {
     die("Database connection failed: " . $e->getMessage());
 }
