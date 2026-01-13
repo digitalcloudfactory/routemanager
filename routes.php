@@ -56,7 +56,7 @@ $routes_db = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <div class="container">
 <header>
     <h1>Strava Routes</h1>
-    <a class="logout-button" href="logout.php">Logout</a>
+    <a class="logout-button" href="logout.php" class="strava-button">Logout</a>
 </header>
 
 <!-- Filters + Sorting -->
@@ -99,7 +99,7 @@ $routes_db = $stmt->fetchAll(PDO::FETCH_ASSOC);
 </div>
 
 <!-- Fetch New Routes Button -->
-<button id="fetchNewBtn">Fetch New Routes from Strava</button>
+<button id="fetchNewBtn" class="strava-button">Sync Routes</button>
 
 <!-- Routes Grid -->
 <div class="routes-grid" id="routesGrid">
