@@ -31,4 +31,8 @@ $auth_url = "https://www.strava.com/oauth/authorize" .
     <p>Connect your Strava account to view your routes</p>
     <a class="strava-button" href="<?= $auth_url ?>">Login</a>
 </div>
-</div></body></html>
+</div>
+
+</body>
+
+<?php include 'footer.php'; ?>
