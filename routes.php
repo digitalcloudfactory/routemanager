@@ -77,7 +77,7 @@ $routes_db = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 <h1>Last 5 Stored Strava Routes</h1>
 <form method="POST">
-    <button type="submit" name="fetch_new">Fetch New Routes from Strava</button>
+    <button type="submit" name="fetch_new" class="strava-button">Fetch New Routes from Strava</button>
 </form>
 </div></body></html>
 <?php
