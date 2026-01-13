@@ -1,3 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Strava Routes</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+
+
 <?php
 session_start();
 
@@ -18,10 +29,11 @@ $auth_url = "https://www.strava.com/oauth/authorize" .
     "&redirect_uri={$redirect_uri}" .
     "&approval_prompt=auto" .
     "&scope=activity:read_all";
-
-
-
-echo "<h1>Strava Routes Viewer</h1>";
-echo "<p>Connect your Strava account to view your routes</p>";
-echo "<a href='$auth_url' class='strava-button'>Login</a>";
 ?>
+
+    <div class="login-section">
+    <h1>Login with Strava</h1>
+    <p>Connect your Strava account to view your routes</p>
+    <a class="strava-button" href="<?= $auth_url ?>">Login</a>
+</div>
+</div></body></html>
