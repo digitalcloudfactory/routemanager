@@ -105,7 +105,7 @@ $routes_db = $stmt->fetchAll(PDO::FETCH_ASSOC);
 </div>
 
 <!-- Fetch New Routes Button -->
-<button id="fetchNewBtn" class="strava-button">Sync Routes</button>
+<button id="fetchNewBtn">Sync Routes</button>
 
 <!-- Routes Grid -->
 <div class="routes-grid" id="routesGrid">
