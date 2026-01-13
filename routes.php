@@ -1,3 +1,12 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Strava Routes</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
 <?php
 session_start();
 
@@ -70,7 +79,7 @@ $routes_db = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <form method="POST">
     <button type="submit" name="fetch_new">Fetch New Routes from Strava</button>
 </form>
-
+</div></body></html>
 <?php
 if (empty($routes_db)) {
     echo "<p>No routes in database.</p>";
