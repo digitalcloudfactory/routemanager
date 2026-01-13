@@ -10,7 +10,7 @@ $db_pass = '069668a0-0bc6-788a-8000-597667343eee';
 
 // Strava access token
 if (!isset($_SESSION['access_token'])) {
-    header("Location: login.php");
+    header("Location: index.php");
     exit;
 }
 $access_token = $_SESSION['access_token'];
