@@ -2,8 +2,8 @@
 session_start();
 
 // Strava API credentials
-$client_id = 'YOUR_STRAVA_CLIENT_ID';
-$redirect_uri = 'http://localhost:8080/callback.php'; // Must match callback.php
+$client_id = '6839';
+$redirect_uri = 'http://map-routes.wasmer.app/callback.php'; // Must match callback.php
 
 // If already logged in, redirect to activities
 if (isset($_SESSION['access_token'])) {
