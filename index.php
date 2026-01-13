@@ -18,7 +18,7 @@ $redirect_uri = 'http://map-routes.wasmer.app/callback.php'; // Must match callb
 
 // If already logged in, redirect to activities
 if (isset($_SESSION['access_token'])) {
-    header("Location: activities.php");
+    header("Location: routes.php");
     exit;
 }
 
