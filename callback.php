@@ -1,9 +1,9 @@
 <?php
 session_start();
 
-$client_id = 'YOUR_STRAVA_CLIENT_ID';
-$client_secret = 'YOUR_STRAVA_CLIENT_SECRET';
-$redirect_uri = 'http://localhost:8080/callback.php';
+$client_id = '6839';
+$client_secret = '1a1057defe991fd6c2711f1199a3563cb3d5395f';
+$redirect_uri = 'http://map-routes.wasmer.app/callback.php';
 
 if (!isset($_GET['code'])) {
     echo "No code returned from Strava.";
