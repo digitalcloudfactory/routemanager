@@ -19,6 +19,9 @@ $auth_url = "https://www.strava.com/oauth/authorize" .
     "&approval_prompt=auto" .
     "&scope=activity:read_all";
 
-echo "<h1>Login with Strava</h1>";
-echo "<a href='$auth_url'>Login</a>";
+
+
+echo "<h1>Strava Routes Viewer</h1>";
+echo "<p>Connect your Strava account to view your routes</p>";
+echo "<a href='$auth_url' class='strava-button'>Login</a>";
 ?>
