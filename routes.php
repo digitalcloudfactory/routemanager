@@ -10,7 +10,7 @@ $db_pass = '069668a0-0bc6-788a-8000-597667343eee';
 
 // Strava access token
 if (!isset($_SESSION['access_token'])) {
-    header("Location: index.php");
+    header("Location: login.php");
     exit;
 }
 $access_token = $_SESSION['access_token'];
@@ -38,4 +38,44 @@ if (isset($_POST['fetch_new'])) {
         $stmt = $pdo->prepare("INSERT IGNORE INTO strava_routes (id, name, distance, elevation, type) VALUES (:id, :name, :distance, :elevation, :type)");
 
         foreach ($routes as $route) {
-            $stm
+            $stmt->execute([
+                ':id' => $route['id'],
+                ':name' => $route['name'],
+                ':distance' => $route['distance'],
+                ':elevation' => $route['elevation_gain'],
+                ':type' => $route['type'] ?? 'Unknown'
+            ]);
+        }
+        echo "<p>New routes fetched and stored!</p>";
+    } else {
+        echo "<p>No new routes found.</p>";
+    }
+}
+
+// Read routes from DB
+$stmt = $pdo->query("SELECT * FROM strava_routes ORDER BY id DESC LIMIT 5");
+$routes_db = $stmt->fetchAll(PDO::FETCH_ASSOC);
+?>
+
+<h1>Last 5 Stored Strava Routes</h1>
+<form method="POST">
+    <button type="submit" name="fetch_new">Fetch New Routes from Strava</button>
+</form>
+
+<?php
+if (empty($routes_db)) {
+    echo "<p>No routes in database.</p>";
+} else {
+    echo "<ul>";
+    foreach ($routes_db as $route) {
+        $name = htmlspecialchars($route['name']);
+        $distance_km = round($route['distance'] / 1000, 2);
+        $elevation = $route['elevation'];
+        $type = $route['type'];
+        echo "<li><strong>$name</strong> — $distance_km km — Elevation Gain: $elevation m — Type: $type</li>";
+    }
+    echo "</ul>";
+}
+
+echo "<a href='logout.php'>Logout</a>";
+?>
