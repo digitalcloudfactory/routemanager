@@ -39,6 +39,9 @@ $routes_db = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <head>
 <meta charset="UTF-8">
 <title>Strava Routes Dashboard</title>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"/>
+     <!-- Your custom styles -->
 <link rel="stylesheet" href="style.css">
 <style>
 .filter-sort {
@@ -51,6 +54,9 @@ $routes_db = $stmt->fetchAll(PDO::FETCH_ASSOC);
     display: block;
 }
 </style>
+</head>
+
+    
 </head>
 <body>
 <div class="container">
