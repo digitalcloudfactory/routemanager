@@ -33,6 +33,4 @@ $auth_url = "https://www.strava.com/oauth/authorize" .
 </div>
 </div>
 
-</body>
-
 <?php include 'footer.php'; ?>
