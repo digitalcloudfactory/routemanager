@@ -1,18 +1,5 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Strava Routes</title>
+<?php include 'header.php'; ?>
 
-  <!-- Pico CSS -->
-  <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
-  />
-
-  <!-- Your custom styles -->
-  <link rel="stylesheet" href="style.css">
-</head>
 <body>
 <div class="container">
 
