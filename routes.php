@@ -35,83 +35,98 @@ $routes_db = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
-<meta charset="UTF-8">
-<title>Strava Routes Dashboard</title>
+  <meta charset="UTF-8">
+  <title>Strava Routes</title>
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"/>
-     <!-- Your custom styles -->
-<link rel="stylesheet" href="style.css">
-<style>
-.filter-sort {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    margin-bottom: 1rem;
-}
-.filter-sort label, .filter-sort select, .filter-sort input {
-    display: block;
-}
-</style>
-</head>
-
-    
+  <!-- Pico CSS -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
+  />
 </head>
 <body>
-<div class="container">
-<header>
-    <h1>Strava Routes</h1>
-    <a class="logout-button" href="logout.php" class="strava-button">Logout</a>
-</header>
+<html data-theme="light">
+<html data-theme="dark">
 
-<!-- Filters + Sorting -->
-<div class="filter-sort">
-    <label>
-        Name:
-        <input type="text" id="filterName" placeholder="Search by name">
-    </label>
-    <label>
-        Min Distance (km):
-        <input type="number" id="filterMinDistance" step="0.1">
-    </label>
-    <label>
-        Max Distance (km):
-        <input type="number" id="filterMaxDistance" step="0.1">
-    </label>
-    <label>
-        Min Elevation (m):
-        <input type="number" id="filterMinElevation">
-    </label>
-    <label>
-        Max Elevation (m):
-        <input type="number" id="filterMaxElevation">
-    </label>
-    <label>
-        Sort by:
-        <select id="sortField">
-            <option value="name">Name</option>
-            <option value="distance">Distance</option>
-            <option value="elevation">Elevation</option>
-        </select>
-    </label>
-    <label>
-        Order:
-        <select id="sortOrder">
-            <option value="asc">Ascending</option>
-            <option value="desc">Descending</option>
-        </select>
-    </label>
-</div>
+<script>
+const toggle = document.getElementById("themeToggle");
+const root = document.documentElement;
 
-<!-- Fetch New Routes Button -->
-<button id="fetchNewBtn">Sync Routes</button>
+const savedTheme = localStorage.getItem("theme");
+if (savedTheme) {
+  root.setAttribute("data-theme", savedTheme);
+  toggle.textContent = savedTheme === "dark" ? "☀️ Light mode" : "🌙 Dark mode";
+}
 
-<!-- Routes Grid -->
-<div class="routes-grid" id="routesGrid">
-    <!-- Routes will be injected here by JS -->
-</div>
-</div>
+toggle.addEventListener("click", () => {
+  const current = root.getAttribute("data-theme") || "light";
+  const next = current === "light" ? "dark" : "light";
+
+  root.setAttribute("data-theme", next);
+  localStorage.setItem("theme", next);
+  toggle.textContent = next === "dark" ? "☀️ Light mode" : "🌙 Dark mode";
+});
+</script>
+
+    
+<main class="container">
+
+  <!-- Header -->
+  <header class="grid">
+    <hgroup>
+      <h1>Strava Routes</h1>
+      <p>Your saved Strava routes</p>
+    </hgroup>
+
+    <div style="text-align:right">
+      <button id="themeToggle" class="secondary outline">
+        🌙 Dark mode
+      </button>
+      <a href="logout.php" role="button" class="contrast outline">
+        Logout
+      </a>
+    </div>
+  </header>
+
+  <!-- Filters -->
+  <section>
+    <form class="grid">
+      <input id="filterName" placeholder="Filter by name">
+
+      <input id="filterMinDistance" type="number" step="0.1" placeholder="Min distance (km)">
+      <input id="filterMaxDistance" type="number" step="0.1" placeholder="Max distance (km)">
+
+      <input id="filterMinElevation" type="number" placeholder="Min elevation (m)">
+      <input id="filterMaxElevation" type="number" placeholder="Max elevation (m)">
+
+      <select id="sortField">
+        <option value="name">Sort: Name</option>
+        <option value="distance">Sort: Distance</option>
+        <option value="elevation">Sort: Elevation</option>
+      </select>
+
+      <select id="sortOrder">
+        <option value="asc">Ascending</option>
+        <option value="desc">Descending</option>
+      </select>
+    </form>
+  </section>
+
+  <!-- Actions -->
+  <section>
+    <button id="fetchNewBtn">
+      🔄 Fetch new routes from Strava
+    </button>
+  </section>
+
+  <!-- Routes -->
+  <section id="routesGrid" class="grid">
+    <!-- Cards injected by JS -->
+  </section>
+
+</main>
 
 <script>
 let routes = <?php echo json_encode($routes_db, JSON_UNESCAPED_UNICODE); ?>;
@@ -119,27 +134,35 @@ let routes = <?php echo json_encode($routes_db, JSON_UNESCAPED_UNICODE); ?>;
 // Convert distance to km for filtering
 routes.forEach(r => r.distance_km = r.distance / 1000);
 
+
+    
 function renderRoutes(data) {
-    const container = document.getElementById('routesGrid');
-    container.innerHTML = '';
-    if (data.length === 0) {
-        container.innerHTML = "<p class='no-routes'>No routes match your filters.</p>";
-        return;
-    }
-    data.forEach(route => {
-        const card = document.createElement('div');
-        card.className = 'route-card';
-        card.innerHTML = `
-            <h3>${route.name}</h3>
-            <div class='route-details'>
-                <p>Distance: ${route.distance_km.toFixed(2)} km</p>
-                <p>Elevation Gain: ${route.elevation} m</p>
-                <p>Type: ${route.type}</p>
-            </div>
-        `;
-        container.appendChild(card);
-    });
+  const container = document.getElementById("routesGrid");
+  container.innerHTML = "";
+
+  if (data.length === 0) {
+    container.innerHTML = "<p>No routes found.</p>";
+    return;
+  }
+
+  data.forEach(route => {
+    const article = document.createElement("article");
+
+    article.innerHTML = `
+      <header>
+        <strong>${route.name}</strong>
+      </header>
+      <p>
+        📏 ${route.distance_km.toFixed(2)} km<br>
+        ⛰ ${route.elevation} m<br>
+        🏷 ${route.type}
+      </p>
+    `;
+
+    container.appendChild(article);
+  });
 }
+
 
 // Filtering & Sorting
 function applyFilters() {
