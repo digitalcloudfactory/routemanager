@@ -1,5 +1,18 @@
 <?php
 session_start();
+
+
+if (!isset($_SESSION['internal_user_id'])) {
+    echo json_encode(['success' => false, 'error' => 'Not logged in']);
+    exit;
+}
+
+// Use internal ID for all DB writes
+$internalUserId = $_SESSION['internal_user_id'];
+
+// Optional: still keep strava_id if needed for API calls
+$stravaId = $_SESSION['strava_id'];
+
 header('Content-Type: application/json');
 error_log('Session ID: ' . session_id());
 error_log('Session contents: ' . print_r($_SESSION, true));
@@ -26,13 +39,6 @@ try {
     exit;
 }
 
-// --- CHECK LOGIN ---
-if (!isset($_SESSION['strava_id'])) {
-    echo json_encode(['success' => false, 'error' => 'Not logged in']);
-    exit;
-}
-
-$stravaId = $_SESSION['strava_id'];
 
 // --- FETCH USER INTERNAL ID AND TOKENS ---
 $stmt = $pdo->prepare("SELECT id, access_token, refresh_token, token_expires_at FROM users WHERE strava_id = :strava_id");
