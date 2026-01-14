@@ -257,7 +257,7 @@ function renderTable(data) {
       <td>${route.name}</td>
       <td>${Number(route.distance_km).toFixed(2)}</td>
       <td>${route.elevation}</td>
-      <td>${routeTypeLabel(route.estimated_moving_time)}</td>
+      <td>${route.estimated_moving_time)}</td>
     `;
 
     const details = document.createElement('tr');
@@ -267,7 +267,7 @@ function renderTable(data) {
       <td colspan="4">
         <article>
         
-          <p><strong>Estimated Moving Time:</strong>${route.estimated_moving_time}<br><strong>Description</strong><br> ${route.description || 'No description'}
+          <p><strong>Description</strong><br> ${route.description || 'No description'}
           </p>
           <div id="map-${route.route_id}" class="route-map"></div>
           <p>
