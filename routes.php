@@ -153,6 +153,31 @@ function renderMap(polyline) {
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 }
 
+function initMap(route) {
+  const mapId = `map-${route.route_id}`;
+  const mapEl = document.getElementById(mapId);
+
+  if (mapEl.dataset.loaded) return;
+
+  const map = L.map(mapId);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+  }).addTo(map);
+
+  if (route.summary_polyline) {
+    const coords = polyline.decode(route.summary_polyline)
+      .map(c => [c[0], c[1]]);
+
+    const line = L.polyline(coords).addTo(map);
+    map.fitBounds(line.getBounds());
+  }
+
+  map.invalidateSize();
+  mapEl.dataset.loaded = "true";
+}
+
+    
 function polylineDecode(str) {
   return polyline.decode(str).map(c => [c[0], c[1]]);
 }
