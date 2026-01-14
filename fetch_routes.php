@@ -41,8 +41,8 @@ try {
 
 
 // --- FETCH USER INTERNAL ID AND TOKENS ---
-$stmt = $pdo->prepare("SELECT id, access_token, refresh_token, token_expires_at FROM users WHERE strava_id = :strava_id");
-$stmt->execute([':strava_id' => $stravaId]);
+$stmt = $pdo->prepare("SELECT id, access_token, refresh_token, token_expires_at FROM users WHERE id = :id");
+$stmt->execute([':id' => $internalUserId]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$user) {
