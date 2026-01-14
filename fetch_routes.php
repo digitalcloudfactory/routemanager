@@ -1,5 +1,4 @@
 <?php
-// fetch_routes.php
 session_start();
 header('Content-Type: application/json');
 error_log('Session ID: ' . session_id());
