@@ -205,6 +205,7 @@ if ($count > 0) {
 }
 
 error_log("Inserted/updated routes: $count");
+error_log("User ID where we need to update last_sync_value: $user_id");
 
 /* ===============================
    RESPONSE
