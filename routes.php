@@ -78,7 +78,6 @@ tr.route-row { cursor: pointer; }
 <body>
 
 
-
 <main class="container">
 
 <header class="grid">
@@ -92,6 +91,11 @@ tr.route-row { cursor: pointer; }
       <small>Strava athlete</small>
     </div>
   </div>
+<section class="grid">
+  <button id="fetchRoutes" type="button">
+    Fetch new routes from Strava
+  </button>
+</section>
 </header>
 
 <section>
@@ -202,5 +206,31 @@ function initMap(route) {
   map.invalidateSize();
   el.dataset.loaded = "true";
 }
+
+/* ===============================
+   FETCH ROUTES (AJAX)
+================================ */
+
+document.getElementById('fetchRoutes').addEventListener('click', async () => {
+  const btn = document.getElementById('fetchRoutes');
+  btn.setAttribute('aria-busy', 'true');
+
+  try {
+    const res = await fetch('fetch_routes.php');
+    const data = await res.json();
+
+    if (!data.success) {
+      alert(data.error || 'Failed to fetch routes');
+      return;
+    }
+
+    location.reload();
+  } catch (e) {
+    alert('Error fetching routes');
+  } finally {
+    btn.removeAttribute('aria-busy');
+  }
+});
+    
 </script>
 
