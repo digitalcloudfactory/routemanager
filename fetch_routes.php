@@ -116,7 +116,7 @@ if ($expires_at <= time()) {
    FETCH ROUTES FROM STRAVA
 ================================ */
 
-$ch = curl_init("https://www.strava.com/api/v3/athlete/routes?per_page=5");
+$ch = curl_init("https://www.strava.com/api/v3/athlete/routes?per_page=10");
 curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_HTTPHEADER => [
@@ -204,6 +204,7 @@ if ($count > 0) {
     $updateSync->execute([':id' => $user_id]);
 }
 
+error_log("Inserted/updated routes: $count");
 
 /* ===============================
    RESPONSE
