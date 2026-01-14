@@ -115,7 +115,7 @@ $insert = $pdo->prepare("
     distance_km = VALUES(distance),
     elevation = VALUES(elevation),
     type = VALUES(type),
-    polyline = VALUES(polyline)
+    summary_polyline = VALUES(summary_polyline)
 ");
 
 
