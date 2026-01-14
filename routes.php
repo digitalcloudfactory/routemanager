@@ -199,5 +199,3 @@ function initMap(route) {
 }
 </script>
 
-</body>
-</html>
