@@ -104,6 +104,8 @@ if (!is_array($routes)) {
     exit;
 }
 
+$typeMap = ['run' => 1, 'ride' => 2, 'walk' => 3];
+
 // --- PREPARE INSERT/UPDATE ---
 $insert = $pdo->prepare("
     INSERT INTO strava_routes 
@@ -123,7 +125,7 @@ $count = 0;
 
 try {
     foreach ($routes as $route) {
-        $routeType = $typeMap[$route['type']] ?? 0;
+        $routeType = $typeMap[strtolower($route['type'])] ?? 0;
 
         $insert->execute([
             ':user'        => $internalUserId,
