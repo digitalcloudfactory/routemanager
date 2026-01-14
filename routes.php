@@ -171,7 +171,7 @@ tr.route-row { cursor: pointer; }
   <th>Name</th>
   <th>Distance (km)</th>
   <th>Elevation (m)</th>
-  <th>Type</th>
+  <th>Estimated Moving Time</th>
 </tr>
 </thead>
 <tbody id="routesBody"></tbody>
@@ -208,6 +208,7 @@ tr.route-row { cursor: pointer; }
         <option value="1">Ride</option>
         <option value="2">Run</option>
         <option value="3">Walk</option>
+        <option value="6">Gravel</option>
       </select>
     </label>
 
@@ -256,7 +257,7 @@ function renderTable(data) {
       <td>${route.name}</td>
       <td>${Number(route.distance_km).toFixed(2)}</td>
       <td>${route.elevation}</td>
-      <td>${routeTypeLabel(route.type)}</td>
+      <td>${routeTypeLabel(route.estimated_moving_time)}</td>
     `;
 
     const details = document.createElement('tr');
@@ -449,6 +450,7 @@ function routeTypeLabel(type) {
     1: 'Ride',
     2: 'Run',
     3: 'Walk'
+    6: 'Gravel'
   }[type] || 'Other';
 }
 
