@@ -169,9 +169,9 @@ tr.route-row { cursor: pointer; }
       Type
       <select id="filterType">
         <option value="">All</option>
-        <option value="Ride">Ride</option>
-        <option value="Run">Run</option>
-        <option value="Walk">Walk</option>
+        <option value="1">Ride</option>
+        <option value="2">Run</option>
+        <option value="3">Walk</option>
       </select>
     </label>
 
@@ -220,7 +220,7 @@ function renderTable(data) {
       <td>${route.name}</td>
       <td>${Number(route.distance_km).toFixed(2)}</td>
       <td>${route.elevation}</td>
-      <td>${route.type}</td>
+      <td>${routeTypeLabel(route.type)}</td>
     `;
 
     const details = document.createElement('tr');
@@ -253,6 +253,8 @@ function renderTable(data) {
     tbody.appendChild(details);
   });
 }
+
+
 
 /* INITIAL RENDER */
 renderTable(routes);
@@ -338,7 +340,7 @@ function applyFilters() {
     r.name.toLowerCase().includes(name) &&
     r.distance_km >= minDist &&
     r.elevation >= minElev &&
-    (!type || r.type === type)
+    (!type || Number(r.type) === Number(type))
   );
 
   renderTable(filteredRoutes);
@@ -361,6 +363,26 @@ function clearFilters() {
     document.getElementById(id).addEventListener('input', applyFilters);
   });
 
+const panel = document.getElementById('filterPanel');
+const filterBtn = document.getElementById('openFilters');
+
+filterBtn.onclick = () => {
+  const isOpen = panel.classList.contains('open');
+  toggleFilters(!isOpen);
+};
+
+function toggleFilters(open) {
+  panel.classList.toggle('open', open);
+  panel.setAttribute('aria-hidden', !open);
+}
+
+function routeTypeLabel(type) {
+  return {
+    1: 'Ride',
+    2: 'Run',
+    3: 'Walk'
+  }[type] || 'Other';
+}
     
 </script>
 
