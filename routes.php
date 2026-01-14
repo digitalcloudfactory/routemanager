@@ -8,12 +8,12 @@ error_reporting(E_ALL);
 
 
 
-if (!isset($_SESSION['user_id'])) {
+if (!isset($_SESSION['internal_user_id'])) {
     header("Location: index.php");
     exit;
 }
 
-$user_id = $_SESSION['user_id'];
+$internalUserId = $_SESSION['internal_user_id'];
 
 /* ===============================
    DATABASE CONFIG
