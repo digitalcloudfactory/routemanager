@@ -266,31 +266,6 @@ renderTable(routes);
    LEAFLET MAP INIT (VISIBLE ONLY)
 ================================ */
 
-function initMap(route) {
-  const mapId = `map-${route.route_id}`;
-  const el = document.getElementById(mapId);
-
-  if (!el || el.dataset.loaded) return;
-
-  const map = L.map(mapId);
-
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap'
-  }).addTo(map);
-
-  if (route.summary_polyline) {
-    const coords = polyline.decode(route.summary_polyline)
-      .map(c => [c[0], c[1]]);
-    const line = L.polyline(coords).addTo(map);
-    map.fitBounds(line.getBounds());
-  }
-
-  map.invalidateSize();
-  el.dataset.loaded = "true";
-
-addDistanceMarkers(map, coords, 10);
-}
-
 function addDistanceMarkers(map, latlngs, stepKm = 10) {
   let distance = 0;
   let nextMarker = stepKm;
@@ -317,6 +292,34 @@ function addDistanceMarkers(map, latlngs, stepKm = 10) {
     }
   }
 }
+    
+function initMap(route) {
+  const mapId = `map-${route.route_id}`;
+  const el = document.getElementById(mapId);
+ const coords = polyline.decode(route.summary_polyline);
+    
+  if (!el || el.dataset.loaded) return;
+
+  const map = L.map(mapId);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+  }).addTo(map);
+
+  if (route.summary_polyline) {
+    const coords = polyline.decode(route.summary_polyline)
+      .map(c => [c[0], c[1]]);
+    const line = L.polyline(coords).addTo(map);
+    map.fitBounds(line.getBounds());
+  }
+
+  map.invalidateSize();
+  el.dataset.loaded = "true";
+
+addDistanceMarkers(map, coords, 10);
+}
+
+
     
 /* ===============================
    FETCH ROUTES (AJAX)
