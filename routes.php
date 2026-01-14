@@ -50,7 +50,7 @@ $pdo = new PDO(
 $userStmt = $pdo->prepare("
     SELECT firstname, lastname, avatar,last_routes_sync
     FROM users
-    WHERE strava_id = ?
+    WHERE id = ?
 ");
 $userStmt->execute([$internalUserId]);
 $user = $userStmt->fetch(PDO::FETCH_ASSOC);
