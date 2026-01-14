@@ -108,14 +108,15 @@ if (!is_array($routes)) {
 // --- PREPARE INSERT/UPDATE ---
 $insert = $pdo->prepare("
     INSERT INTO strava_routes 
-    (user_id, route_id, name, description, distance_km, elevation, type, summary_polyline)
-    VALUES (:user, :rid, :name, :description, :distance, :elevation, :type, :polyline)
+    (user_id, route_id, name, description, distance_km, elevation, type, sub_type, summary_polyline)
+    VALUES (:user, :rid, :name, :description, :distance, :elevation, :type, :sub_type ,:polyline)
     ON DUPLICATE KEY UPDATE
     name = VALUES(name),
     description = VALUES(description),
     distance_km = VALUES(distance_km),
     elevation = VALUES(elevation),
     type = VALUES(type),
+    sub_type = VALUES(sub_type),
     summary_polyline = VALUES(summary_polyline)
 ");
 
@@ -134,6 +135,7 @@ try {
             ':distance'    => $route['distance'] / 1000,
             ':elevation'   => $route['elevation_gain'],
             ':type'        => $routeType,
+            ':sub_type'    => $route['sub_type'],
             ':polyline'    => $route['map']['summary_polyline'] ?? null
         ]);
         $count++;
