@@ -72,6 +72,25 @@ $routes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 tr.route-row { cursor: pointer; }
 .route-details article { margin-top: 1rem; }
 .route-map { height: 300px; border-radius: 12px; }
+
+#filterPanel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 320px;
+  height: 100%;
+  background: var(--background-color);
+  box-shadow: -4px 0 12px rgba(0,0,0,0.1);
+  padding: 1rem;
+  transform: translateX(100%);
+  transition: transform 0.25s ease;
+  z-index: 1000;
+}
+
+#filterPanel.open {
+  transform: translateX(0);
+}
+
 </style>
 
 
@@ -91,12 +110,22 @@ tr.route-row { cursor: pointer; }
       <small>Strava athlete</small>
     </div>
   </div>
+
 <section class="grid">
-  <button id="fetchRoutes" type="button">
-    Fetch new routes from Strava
-  </button>
-</section>
+  <div>
+    <button id="fetchRoutes" type="button">
+      Fetch new routes from Strava
+    </button>
+  </div>
+  <div style="text-align:right">
+    <button id="openFilters" class="secondary" type="button">
+      Filters
+    </button>
+  </div>
+</section>    
 </header>
+
+
 
 <section>
 <figure style="overflow-x:auto">
@@ -114,6 +143,46 @@ tr.route-row { cursor: pointer; }
 </figure>
 </section>
 
+<aside id="filterPanel" aria-hidden="true">
+  <article>
+    <header class="grid">
+      <strong>Filters</strong>
+      <a href="#" aria-label="Close" onclick="toggleFilters(false)"></a>
+    </header>
+
+    <label>
+      Name
+      <input id="filterName" type="text" placeholder="Route name">
+    </label>
+
+    <label>
+      Min distance (km)
+      <input id="filterDistance" type="number" min="0" step="0.1">
+    </label>
+
+    <label>
+      Min elevation (m)
+      <input id="filterElevation" type="number" min="0">
+    </label>
+
+    <label>
+      Type
+      <select id="filterType">
+        <option value="">All</option>
+        <option value="Ride">Ride</option>
+        <option value="Run">Run</option>
+        <option value="Walk">Walk</option>
+      </select>
+    </label>
+
+    <footer>
+      <button class="secondary" onclick="clearFilters()">Clear</button>
+    </footer>
+  </article>
+</aside>
+
+
+    
 </main>
 
 <?php include 'footer.php'; ?>
@@ -129,56 +198,65 @@ const tbody = document.getElementById('routesBody');
    RENDER TABLE + INLINE DETAILS
 ================================ */
 
-routes.forEach(route => {
+function renderTable(data) {
+  tbody.innerHTML = '';
 
-  const row = document.createElement('tr');
-  row.className = 'route-row';
+  if (data.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="4" style="text-align:center">
+          No routes match the filters
+        </td>
+      </tr>
+    `;
+    return;
+  }
 
-  row.innerHTML = `
-    <td>${route.name}</td>
-    <td>${Number(route.distance_km).toFixed(2)}</td>
-    <td>${route.elevation}</td>
-    <td>${route.type}</td>
-  `;
+  data.forEach(route => {
+    const row = document.createElement('tr');
+    row.className = 'route-row';
 
-  const details = document.createElement('tr');
-  details.className = 'route-details';
-  details.hidden = true;
+    row.innerHTML = `
+      <td>${route.name}</td>
+      <td>${Number(route.distance_km).toFixed(2)}</td>
+      <td>${route.elevation}</td>
+      <td>${route.type}</td>
+    `;
 
-  details.innerHTML = `
-    <td colspan="4">
-      <article>
-        <p><strong>Description</strong><br>
-           ${route.description || 'No description provided'}
-        </p>
+    const details = document.createElement('tr');
+    details.hidden = true;
 
-        <p>
-          <strong>Distance:</strong> ${route.distance_km.toFixed(2)} km<br>
-          <strong>Elevation:</strong> ${route.elevation} m<br>
-          <strong>Type:</strong> ${route.type}
-        </p>
+    details.innerHTML = `
+      <td colspan="4">
+        <article>
+          <p><strong>Description</strong><br>
+            ${route.description || 'No description'}
+          </p>
+          <div id="map-${route.route_id}" class="route-map"></div>
+          <p>
+            <a href="https://www.strava.com/routes/${route.route_id}"
+               target="_blank"
+               role="button">
+              Open on Strava
+            </a>
+          </p>
+        </article>
+      </td>
+    `;
 
-        <div id="map-${route.route_id}" class="route-map"></div>
+    row.onclick = () => {
+      details.hidden = !details.hidden;
+      if (!details.hidden) initMap(route);
+    };
 
-        <p>
-          <a href="https://www.strava.com/routes/${route.route_id}"
-             target="_blank"
-             role="button">
-            Open on Strava
-          </a>
-        </p>
-      </article>
-    </td>
-  `;
-
-  row.addEventListener('click', () => {
-    details.hidden = !details.hidden;
-    if (!details.hidden) initMap(route);
+    tbody.appendChild(row);
+    tbody.appendChild(details);
   });
+}
 
-  tbody.appendChild(row);
-  tbody.appendChild(details);
-});
+/* INITIAL RENDER */
+renderTable(routes);
+
 
 /* ===============================
    LEAFLET MAP INIT (VISIBLE ONLY)
@@ -231,6 +309,58 @@ document.getElementById('fetchRoutes').addEventListener('click', async () => {
     btn.removeAttribute('aria-busy');
   }
 });
+
+let filteredRoutes = [...routes];
+
+/* ===============================
+   FILTER PANEL TOGGLE
+================================ */
+
+const panel = document.getElementById('filterPanel');
+document.getElementById('openFilters').onclick = () => toggleFilters(true);
+
+function toggleFilters(open) {
+  panel.classList.toggle('open', open);
+  panel.setAttribute('aria-hidden', !open);
+}
+
+/* ===============================
+   FILTER LOGIC
+================================ */
+
+function applyFilters() {
+  const name = document.getElementById('filterName').value.toLowerCase();
+  const minDist = parseFloat(document.getElementById('filterDistance').value) || 0;
+  const minElev = parseFloat(document.getElementById('filterElevation').value) || 0;
+  const type = document.getElementById('filterType').value;
+
+  filteredRoutes = routes.filter(r =>
+    r.name.toLowerCase().includes(name) &&
+    r.distance_km >= minDist &&
+    r.elevation >= minElev &&
+    (!type || r.type === type)
+  );
+
+  renderTable(filteredRoutes);
+}
+
+function clearFilters() {
+  document.getElementById('filterName').value = '';
+  document.getElementById('filterDistance').value = '';
+  document.getElementById('filterElevation').value = '';
+  document.getElementById('filterType').value = '';
+  applyFilters();
+}
+
+/* ===============================
+   EVENTS
+================================ */
+
+['filterName','filterDistance','filterElevation','filterType']
+  .forEach(id => {
+    document.getElementById(id).addEventListener('input', applyFilters);
+  });
+
     
 </script>
 
