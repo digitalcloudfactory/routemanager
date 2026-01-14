@@ -126,7 +126,8 @@ $count = 0;
 try {
     foreach ($routes as $route) {
         $routeType = $route['type'] ?? null;
-
+        $routeSubType = $route['sub_type'] ?? null;
+        
         $insert->execute([
             ':user'        => $internalUserId,
             ':rid'         => $route['id'],
@@ -135,7 +136,7 @@ try {
             ':distance'    => $route['distance'] / 1000,
             ':elevation'   => $route['elevation_gain'],
             ':type'        => $routeType,
-            ':sub_type'    => $route['sub_type'],
+            ':sub_type'    => $routeSubType,
             ':polyline'    => $route['map']['summary_polyline'] ?? null
         ]);
         $count++;
