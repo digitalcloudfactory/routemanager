@@ -266,7 +266,7 @@ function renderTable(data) {
       <td colspan="4">
         <article>
         
-          <p><strong>Estimated Moving Time:</strong>${route.estimated_moving_time}<strong>Description</strong><br> ${route.description || 'No description'}
+          <p><strong>Estimated Moving Time:</strong>${route.estimated_moving_time}<br><strong>Description</strong><br> ${route.description || 'No description'}
           </p>
           <div id="map-${route.route_id}" class="route-map"></div>
           <p>
