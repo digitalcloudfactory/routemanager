@@ -1,3 +1,4 @@
+
 <?php
 
 ini_set('display_errors', 1);
@@ -67,6 +68,7 @@ $routes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <?php include 'header.php'; ?>
+<script src="https://unpkg.com/@mapbox/polyline"></script>
 
 <style>
 tr.route-row { cursor: pointer; }
@@ -285,6 +287,35 @@ function initMap(route) {
 
   map.invalidateSize();
   el.dataset.loaded = "true";
+
+
+function addDistanceMarkers(map, latlngs, stepKm = 10) {
+  let distance = 0;
+  let nextMarker = stepKm;
+
+  for (let i = 1; i < latlngs.length; i++) {
+    distance += haversineDistance(latlngs[i - 1], latlngs[i]);
+
+    if (distance >= nextMarker) {
+      const marker = L.circleMarker(latlngs[i], {
+        radius: 4,
+        color: '#666',
+        fillColor: '#fff',
+        fillOpacity: 1,
+        weight: 2
+      }).addTo(map);
+
+      marker.bindTooltip(`${nextMarker} km`, {
+        permanent: true,
+        direction: 'top',
+        className: 'distance-label'
+      });
+
+      nextMarker += stepKm;
+    }
+  }
+}
+    
 }
 
 /* ===============================
@@ -383,6 +414,26 @@ function routeTypeLabel(type) {
     3: 'Walk'
   }[type] || 'Other';
 }
+
+/* ===============================
+ Map Distance markers
+================================ */
+function haversineDistance(a, b) {
+  const R = 6371; // km
+  const dLat = (b[0] - a[0]) * Math.PI / 180;
+  const dLng = (b[1] - a[1]) * Math.PI / 180;
+
+  const lat1 = a[0] * Math.PI / 180;
+  const lat2 = b[0] * Math.PI / 180;
+
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) *
+    Math.sin(dLng / 2) ** 2;
+
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
     
 </script>
 
