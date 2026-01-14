@@ -40,6 +40,7 @@ $stmt = $pdo->prepare("
 $stmt->execute([$user_id]);
 $routes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
+<?php include 'header.php'; ?>
 
 <body>
 <main class="container">
