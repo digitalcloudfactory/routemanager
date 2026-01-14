@@ -112,7 +112,7 @@ $insert = $pdo->prepare("
     ON DUPLICATE KEY UPDATE
     name = VALUES(name),
     description = VALUES(description),
-    distance_km = VALUES(distance),
+    distance_km = VALUES(distance_km),
     elevation = VALUES(elevation),
     type = VALUES(type),
     summary_polyline = VALUES(summary_polyline)
