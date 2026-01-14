@@ -66,6 +66,11 @@ $access_token  = $user['access_token'];
 $refresh_token = $user['refresh_token'];
 $expires_at    = $user['expires_at'];
 
+$userStmt = $pdo->prepare("SELECT id, last_routes_sync FROM users WHERE id = :id");
+$userStmt->execute([':id' => $user_id]);
+$user = $userStmt->fetch(PDO::FETCH_ASSOC);
+
+
 /* ===============================
    TOKEN REFRESH (IF EXPIRED)
 ================================ */
@@ -123,6 +128,8 @@ $response = curl_exec($ch);
 curl_close($ch);
 
 $routes = json_decode($response, true);
+
+
 
 if (!is_array($routes)) {
     http_response_code(500);
@@ -186,6 +193,15 @@ foreach ($routes as $route) {
     ]);
 
     $count++;
+}
+
+if ($count > 0) {
+    $updateSync = $pdo->prepare("
+        UPDATE users
+        SET last_routes_sync = NOW()
+        WHERE id = :id
+    ");
+    $updateSync->execute([':id' => $user_id]);
 }
 
 
