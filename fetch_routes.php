@@ -104,7 +104,6 @@ if (!is_array($routes)) {
     exit;
 }
 
-$typeMap = ['run' => 1, 'ride' => 2, 'walk' => 3];
 
 // --- PREPARE INSERT/UPDATE ---
 $insert = $pdo->prepare("
@@ -125,7 +124,7 @@ $count = 0;
 
 try {
     foreach ($routes as $route) {
-        $routeType = $typeMap[strtolower($route['type'])] ?? 0;
+        $routeType = $route['type'] ?? null;
 
         $insert->execute([
             ':user'        => $internalUserId,
