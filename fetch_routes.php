@@ -2,6 +2,8 @@
 // fetch_routes.php
 session_start();
 header('Content-Type: application/json');
+error_log('Session ID: ' . session_id());
+error_log('Session contents: ' . print_r($_SESSION, true));
 
 // --- CONFIG ---
 $db_host = 'db.fr-pari1.bengt.wasmernet.com';
