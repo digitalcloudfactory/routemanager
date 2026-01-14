@@ -119,29 +119,7 @@ $routes_db = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 
 </main>
-<script>
-    document.querySelectorAll("th[data-sort]").forEach(th => {
-  th.style.cursor = "pointer";
 
-  th.addEventListener("click", () => {
-    const field = th.dataset.sort;
-
-    if (sortField === field) {
-      sortOrder = sortOrder === "asc" ? "desc" : "asc";
-    } else {
-      sortField = field;
-      sortOrder = "asc";
-    }
-
-    document.getElementById("sortField").value = field;
-    document.getElementById("sortOrder").value = sortOrder;
-
-    applyFilters();
-  });
-});
-<script>
-
-    
 <script>
 let routes = <?php echo json_encode($routes_db, JSON_UNESCAPED_UNICODE); ?>;
 
@@ -238,6 +216,26 @@ document.getElementById('fetchNewBtn').addEventListener('click', () => {
             alert('Error fetching routes.');
         }
     });
+});
+
+document.querySelectorAll("th[data-sort]").forEach(th => {
+  th.style.cursor = "pointer";
+
+  th.addEventListener("click", () => {
+    const field = th.dataset.sort;
+
+    if (sortField === field) {
+      sortOrder = sortOrder === "asc" ? "desc" : "asc";
+    } else {
+      sortField = field;
+      sortOrder = "asc";
+    }
+
+    document.getElementById("sortField").value = field;
+    document.getElementById("sortOrder").value = sortOrder;
+
+    applyFilters();
+  });
 });
 </script>
     
