@@ -1,10 +1,11 @@
 <?php include 'header.php'; ?>
 <style>
-    html, body {
+ html, body {
       height: 100%;
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     }
+
     body {
       display: flex;
       align-items: center;
@@ -23,15 +24,8 @@
       background-color: rgba(255, 255, 255, 0.4); /* adjust opacity to lighten image */
       z-index: 0;
     }
-  
-.strava-button {
-  display: inline-block;
-  text-decoration: none;
-}
-.strava-button img:hover {
-    transform: scale(1.02);
 
-  .login-container {
+    .login-container {
       position: relative;  /* so it sits above the overlay */
       z-index: 1;
       text-align: center;
@@ -53,6 +47,17 @@
       font-size: 0.9rem;
       color: #555;
       margin-bottom: 1.5rem;
+    }
+
+    .strava-button img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      transition: transform 0.2s;
+    }
+
+    .strava-button img:hover {
+      transform: scale(1.02);
     }
   </style>
 
