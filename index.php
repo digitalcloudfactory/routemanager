@@ -10,7 +10,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: url('https://www.dropbox.com/scl/fi/bk21xinnt8rvgffmycfsj/mallorca-1117793_1280.jpg?rlkey=61yqez5zhfxqjss96fx37lqcd&dl=1') no-repeat center center fixed;
+      background: url('https://www.dropbox.com/scl/fi/ai25ww1xq1jnmazi4yr0e/beautiful-66018_1280.jpg?rlkey=44y4nxpmu79ccg8m3a5r9ddvl&dl=1') no-repeat center center fixed;
       background-size: cover;
       position: relative;
     }
