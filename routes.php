@@ -75,6 +75,9 @@ $stmt = $pdo->prepare("
 ");
 $stmt->execute([$internalUserId]);
 $routes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+var_dump($internalUserId);
+var_dump($routesStmt->fetchAll(PDO::FETCH_ASSOC));
 ?>
 
 <?php include 'header.php'; ?>
@@ -208,7 +211,6 @@ tr.route-row { cursor: pointer; }
         <option value="1">Ride</option>
         <option value="2">Run</option>
         <option value="3">Walk</option>
-        <option value="6">Gravel</option>
       </select>
     </label>
 
