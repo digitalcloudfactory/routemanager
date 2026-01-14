@@ -31,19 +31,29 @@
 .strava-button img:hover {
     transform: scale(1.02);
 
-  .login-section {
-    z-index: 1;
-  text-align: center;
-  padding: 4rem 2rem;
-  position: relative;  /* so it sits above the overlay */
-}
+  .login-container {
+      position: relative;  /* so it sits above the overlay */
+      z-index: 1;
+      text-align: center;
+      padding: 2rem;
+      background: rgba(255, 255, 255, 0.85); /* optional card background for readability */
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      max-width: 360px;
+      width: 90%;
+    }
 
-.login-section a.strava-button {
-  z-index: 1;
-  display: inline-block;
-  margin-top: 2rem;
-position: relative;  /* so it sits above the overlay */
-}
+    .login-container h1 {
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
+      color: #333;
+    }
+
+    .login-container p {
+      font-size: 0.9rem;
+      color: #555;
+      margin-bottom: 1.5rem;
+    }
   </style>
 
 <body>
@@ -81,15 +91,16 @@ $auth_url = "https://www.strava.com/oauth/authorize" .
     "&scope=activity:read_all";
 ?>
 
-    <div class="login-section">
-   <h1>Welcome to Strava Routes</h1>
+
+  <section class="login-container">
+    <h1>Welcome to Strava Routes</h1>
     <p>Connect your Strava account to view and manage your routes.</p>
 
     <a class="strava-button" href="<?= $auth_url ?>">
-    <img src="https://www.dropbox.com/scl/fi/rzrnbkndn8y2u8if4hezd/btn_strava_connect_with_orange.png?rlkey=s0w9ewb5o9fimgsh33ekqt9lz&dl=1" 
-         alt="Connect with Strava" style="max-width:250px; width:100%; height:auto;">
-  </a>
-</div>
+      <img src="https://www.dropbox.com/scl/fi/rzrnbkndn8y2u8if4hezd/btn_strava_connect_with_orange.png?rlkey=s0w9ewb5o9fimgsh33ekqt9lz&dl=1" 
+           alt="Connect with Strava">
+    </a>
+  </section>
 </div>
 
 <?php include 'footer.php'; ?>
