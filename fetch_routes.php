@@ -118,20 +118,28 @@ $insert = $pdo->prepare("
     polyline = VALUES(polyline)
 ");
 
+
 $count = 0;
 
-foreach ($routes as $route) {
-    $insert->execute([
-        ':user'        => $internalUserId,
-        ':rid'         => $route['id'],
-        ':name'        => $route['name'],
-        ':description' => $route['description'] ?? null,
-        ':distance'    => $route['distance'] / 1000,
-        ':elevation'   => $route['elevation_gain'],
-        ':type'        => $route['type'],
-        ':polyline'    => $route['map']['summary_polyline'] ?? null
-    ]);
-    $count++;
+try {
+    foreach ($routes as $route) {
+        $routeType = $typeMap[$route['type']] ?? 0;
+
+        $insert->execute([
+            ':user'        => $internalUserId,
+            ':rid'         => $route['id'],
+            ':name'        => $route['name'],
+            ':description' => $route['description'] ?? null,
+            ':distance'    => $route['distance'] / 1000,
+            ':elevation'   => $route['elevation_gain'],
+            ':type'        => $routeType,
+            ':polyline'    => $route['map']['summary_polyline'] ?? null
+        ]);
+        $count++;
+    }
+} catch (PDOException $e) {
+    echo json_encode(['success'=>false,'error'=>'DB insert failed: '.$e->getMessage()]);
+    exit;
 }
 
 // --- UPDATE last_routes_sync IF ROUTES INSERTED/UPDATED ---
