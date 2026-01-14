@@ -57,9 +57,10 @@ $auth_url = "https://www.strava.com/oauth/authorize" .
     <p>Connect your Strava account to view your routes</p>
 
 
-      
-    <a class="strava-button" href="<?= $auth_url ?>"><img src="https://www.dropbox.com/scl/fi/rzrnbkndn8y2u8if4hezd/btn_strava_connect_with_orange.png?rlkey=s0w9ewb5o9fimgsh33ekqt9lz&dl=0"
-    alt="Strava" style="height:1.2em; vertical-align:middle; margin-right:0.5em;"></a>
+    <a class="strava-button" href="<?= $auth_url ?>">
+    <img src="https://www.dropbox.com/scl/fi/rzrnbkndn8y2u8if4hezd/btn_strava_connect_with_orange.png?rlkey=s0w9ewb5o9fimgsh33ekqt9lz&dl=1" 
+         alt="Connect with Strava" style="max-width:250px; width:100%; height:auto;">
+  </a>
 </div>
 </div>
 
