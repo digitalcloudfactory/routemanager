@@ -104,6 +104,19 @@ tr.route-row { cursor: pointer; }
   box-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }
 
+#routesTable {
+  font-size: 0.8rem; /* smaller overall table text */
+}
+
+#routesTable th,
+#routesTable td {
+  padding: 0.3rem 0.5rem; /* reduce padding for compact look */
+}
+
+#routesTable th {
+  font-weight: 600; /* keep header slightly bold */
+}
+
 </style>
 
 
