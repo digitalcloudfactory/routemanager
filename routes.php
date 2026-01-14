@@ -40,20 +40,6 @@ $stmt = $pdo->prepare("
 $stmt->execute([$user_id]);
 $routes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
-<!DOCTYPE html>
-<html data-theme="light">
-<head>
-<meta charset="UTF-8">
-<title>My Strava Routes</title>
-
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
-
-<style>
-#map { height: 300px; border-radius: 12px; }
-tr[data-route] { cursor: pointer; }
-</style>
-</head>
 
 <body>
 <main class="container">
@@ -68,7 +54,6 @@ tr[data-route] { cursor: pointer; }
     </div>
   </div>
   <div style="text-align:right">
-    <button id="themeToggle" class="secondary">🌙</button>
     <a href="logout.php" role="button" class="secondary">Logout</a>
   </div>
 </header>
