@@ -11,8 +11,8 @@ $db_port = 10272;
 $db_name = 'routes';
 $db_user = '68a00bc6768780007ea0fea26ffa';
 $db_pass = '069668a0-0bc6-788a-8000-597667343eee';
-$strava_client_id = 'YOUR_CLIENT_ID';
-$strava_client_secret = 'YOUR_CLIENT_SECRET';
+$strava_client_id = '6839';
+$strava_client_secret = '1a1057defe991fd6c2711f1199a3563cb3d5395f';
 
 // --- CONNECT DB ---
 try {
