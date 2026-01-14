@@ -93,6 +93,17 @@ tr.route-row { cursor: pointer; }
   transform: translateX(0);
 }
 
+.distance-label {
+  background-color: #fff;       /* White background for visibility */
+  color: #333;                  /* Dark text */
+  font-size: 0.55rem;           /* Smaller font */
+  font-weight: 600;
+  padding: 2px 4px;             /* Small padding */
+  border-radius: 50%;           /* Round pill */
+  border: 1px solid #ccc;       /* Optional subtle border */
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
 </style>
 
 
@@ -275,11 +286,11 @@ function addDistanceMarkers(map, latlngs, stepKm = 10) {
 
     if (distance >= nextMarker) {
       const marker = L.circleMarker(latlngs[i], {
-        radius: 4,
+        radius: 3,
         color: '#666',
         fillColor: '#fff',
         fillOpacity: 1,
-        weight: 2
+        weight: 1
       }).addTo(map);
 
       marker.bindTooltip(`${nextMarker} km`, {
