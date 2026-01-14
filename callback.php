@@ -63,13 +63,16 @@ if (!isset($data['access_token'], $data['athlete']['id'])) {
    EXTRACT USER & TOKEN DATA
 ================================ */
 
-$strava_id    = $data['athlete']['id'];
-$access_token = $data['access_token'];
-$refresh_token= $data['refresh_token'];
-$expires_at   = $data['expires_at'];
+$athlete = $data['athlete'];
+
+$strava_id = $athlete['id'];
 $firstname = $athlete['firstname'];
 $lastname  = $athlete['lastname'];
 $avatar    = $athlete['profile'];
+$access_token = $data['access_token'];
+$refresh_token= $data['refresh_token'];
+$expires_at   = $data['expires_at'];
+
 
 
 /* ===============================
