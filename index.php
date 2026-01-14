@@ -67,6 +67,8 @@
 
 <?php
 session_start();
+error_log('Session ID: ' . session_id());
+error_log('Session contents: ' . print_r($_SESSION, true));
 
 // Strava API credentials
 $client_id = '6839';
