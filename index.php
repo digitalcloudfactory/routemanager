@@ -1,19 +1,21 @@
 <?php include 'header.php'; ?>
 <style>
-  .strava-button {
-  display: inline-flex;
-  align-items: center;
-  background: #fc4c02;
-  color: white;
-  padding: 0.8rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 600;
+.strava-button {
+  display: inline-block;
   text-decoration: none;
-  transition: background 0.3s;
 }
-
 .strava-button:hover {
   background: #e34402;
+}
+
+  .login-section {
+  text-align: center;
+  padding: 4rem 2rem;
+}
+
+.login-section a.strava-button {
+  display: inline-block;
+  margin-top: 2rem;
 }
   </style>
 
@@ -53,9 +55,8 @@ $auth_url = "https://www.strava.com/oauth/authorize" .
 ?>
 
     <div class="login-section">
-    <h1>Login with Strava</h1>
-    <p>Connect your Strava account to view your routes</p>
-
+   <h1>Welcome to Strava Routes</h1>
+    <p>Connect your Strava account to view and manage your routes.</p>
 
     <a class="strava-button" href="<?= $auth_url ?>">
     <img src="https://www.dropbox.com/scl/fi/rzrnbkndn8y2u8if4hezd/btn_strava_connect_with_orange.png?rlkey=s0w9ewb5o9fimgsh33ekqt9lz&dl=1" 
