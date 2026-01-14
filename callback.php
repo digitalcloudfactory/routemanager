@@ -9,7 +9,7 @@ $db_port = 10272;
 $db_name = 'routes';
 $db_user = '68a00bc6768780007ea0fea26ffa';
 $db_pass = '069668a0-0bc6-788a-8000-597667343eee';
-$client_id     = '6839';
+$client_id     = 6839;
 $client_secret = '1a1057defe991fd6c2711f1199a3563cb3d5395f';
 $redirect_uri  = 'http://map-routes.wasmer.app/callback.php';
 
