@@ -8,7 +8,10 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
-/* DB CONFIG */
+/* ===============================
+   DATABASE CONFIG
+================================ */
+
 $db_host = 'db.fr-pari1.bengt.wasmernet.com';
 $db_port = 10272;
 $db_name = 'routes';
@@ -25,14 +28,31 @@ $pdo = new PDO(
     ]
 );
 
-/* LOAD USER PROFILE */
-$userStmt = $pdo->prepare("SELECT firstname, lastname, avatar FROM users WHERE strava_id = ?");
+/* ===============================
+   LOAD USER PROFILE
+================================ */
+
+$userStmt = $pdo->prepare("
+    SELECT firstname, lastname, avatar
+    FROM users
+    WHERE strava_id = ?
+");
 $userStmt->execute([$user_id]);
 $user = $userStmt->fetch(PDO::FETCH_ASSOC);
 
-/* LOAD ROUTES */
+/* ===============================
+   LOAD ROUTES (PER USER)
+================================ */
+
 $stmt = $pdo->prepare("
-    SELECT *
+    SELECT
+        route_id,
+        name,
+        description,
+        distance_km,
+        elevation,
+        type,
+        summary_polyline
     FROM strava_routes
     WHERE user_id = ?
     ORDER BY updated_at DESC
@@ -40,27 +60,35 @@ $stmt = $pdo->prepare("
 $stmt->execute([$user_id]);
 $routes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
+
 <?php include 'header.php'; ?>
 
+<style>
+tr.route-row { cursor: pointer; }
+.route-details article { margin-top: 1rem; }
+.route-map { height: 300px; border-radius: 12px; }
+</style>
+
+
 <body>
+
+
+
 <main class="container">
 
-<!-- PROFILE HEADER -->
 <header class="grid">
   <div class="grid" style="align-items:center">
-    <img src="<?= htmlspecialchars($user['avatar']) ?>" width="64" style="border-radius:50%">
+    <img src="<?= htmlspecialchars($user['avatar']) ?>"
+         alt="Avatar"
+         width="64"
+         style="border-radius:50%">
     <div>
       <strong><?= htmlspecialchars($user['firstname'].' '.$user['lastname']) ?></strong><br>
       <small>Strava athlete</small>
     </div>
   </div>
-  <div style="text-align:right">
-  <button id="themeToggle" class="secondary">🌙</button>
-    <a href="logout.php" role="button" class="secondary">Logout</a>
-  </div>
 </header>
 
-<!-- TABLE -->
 <section>
 <figure style="overflow-x:auto">
 <table class="striped hover">
@@ -77,26 +105,9 @@ $routes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 </figure>
 </section>
 
-<!-- ROUTE MODAL -->
-<dialog id="routeModal">
-<article>
-<header>
-  <strong id="modalName"></strong>
-  <a href="#" aria-label="Close" class="close" onclick="routeModal.close()"></a>
-</header>
-
-<p id="modalMeta"></p>
-<p id="modalDesc"></p>
-
-<div id="map"></div>
-
-<footer>
-  <a id="stravaLink" href="#" target="_blank" role="button">Open on Strava</a>
-</footer>
-</article>
-</dialog>
-
 </main>
+
+<?php include 'footer.php'; ?>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://unpkg.com/@mapbox/polyline"></script>
@@ -104,61 +115,71 @@ $routes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <script>
 const routes = <?= json_encode($routes, JSON_UNESCAPED_UNICODE); ?>;
 const tbody = document.getElementById('routesBody');
-const modal = document.getElementById('routeModal');
-let map, polylineLayer;
 
-/* RENDER TABLE */
-routes.forEach(r => {
-  const tr = document.createElement('tr');
-  tr.dataset.route = JSON.stringify(r);
+/* ===============================
+   RENDER TABLE + INLINE DETAILS
+================================ */
 
-  tr.innerHTML = `
-    <td>${r.name}</td>
-    <td>${Number(r.distance_km).toFixed(2)}</td>
-    <td>${r.elevation}</td>
-    <td>${r.type}</td>
+routes.forEach(route => {
+
+  const row = document.createElement('tr');
+  row.className = 'route-row';
+
+  row.innerHTML = `
+    <td>${route.name}</td>
+    <td>${Number(route.distance_km).toFixed(2)}</td>
+    <td>${route.elevation}</td>
+    <td>${route.type}</td>
   `;
 
-  tr.onclick = () => openModal(r);
-  tbody.appendChild(tr);
+  const details = document.createElement('tr');
+  details.className = 'route-details';
+  details.hidden = true;
+
+  details.innerHTML = `
+    <td colspan="4">
+      <article>
+        <p><strong>Description</strong><br>
+           ${route.description || 'No description provided'}
+        </p>
+
+        <p>
+          <strong>Distance:</strong> ${route.distance_km.toFixed(2)} km<br>
+          <strong>Elevation:</strong> ${route.elevation} m<br>
+          <strong>Type:</strong> ${route.type}
+        </p>
+
+        <div id="map-${route.route_id}" class="route-map"></div>
+
+        <p>
+          <a href="https://www.strava.com/routes/${route.route_id}"
+             target="_blank"
+             role="button">
+            Open on Strava
+          </a>
+        </p>
+      </article>
+    </td>
+  `;
+
+  row.addEventListener('click', () => {
+    details.hidden = !details.hidden;
+    if (!details.hidden) initMap(route);
+  });
+
+  tbody.appendChild(row);
+  tbody.appendChild(details);
 });
 
-/* MODAL LOGIC */
-function openModal(r) {
-  modal.showModal();
-
-  document.getElementById('modalName').textContent = r.name;
-  document.getElementById('modalMeta').innerHTML = `
-    Distance: ${r.distance_km.toFixed(2)} km<br>
-    Elevation: ${r.elevation} m<br>
-    Type: ${r.type}
-  `;
-  document.getElementById('modalDesc').textContent = r.description || 'No description';
-  document.getElementById('stravaLink').href = `https://www.strava.com/routes/${r.route_id}`;
-
-  setTimeout(() => renderMap(r.summary_polyline), 100);
-}
-
-/* MAP */
-function renderMap(polyline) {
-  if (map) map.remove();
-
-  map = L.map('map');
-  const coords = polyline ? polylineDecode(polyline) : [];
-
-  if (coords.length) {
-    polylineLayer = L.polyline(coords).addTo(map);
-    map.fitBounds(polylineLayer.getBounds());
-  }
-
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-}
+/* ===============================
+   LEAFLET MAP INIT (VISIBLE ONLY)
+================================ */
 
 function initMap(route) {
   const mapId = `map-${route.route_id}`;
-  const mapEl = document.getElementById(mapId);
+  const el = document.getElementById(mapId);
 
-  if (mapEl.dataset.loaded) return;
+  if (!el || el.dataset.loaded) return;
 
   const map = L.map(mapId);
 
@@ -169,18 +190,14 @@ function initMap(route) {
   if (route.summary_polyline) {
     const coords = polyline.decode(route.summary_polyline)
       .map(c => [c[0], c[1]]);
-
     const line = L.polyline(coords).addTo(map);
     map.fitBounds(line.getBounds());
   }
 
   map.invalidateSize();
-  mapEl.dataset.loaded = "true";
+  el.dataset.loaded = "true";
 }
-
-    
-function polylineDecode(str) {
-  return polyline.decode(str).map(c => [c[0], c[1]]);
-}
-
 </script>
+
+</body>
+</html>
