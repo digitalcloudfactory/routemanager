@@ -1,5 +1,13 @@
 
+
 <?php
+/* ===============================
+----Important rule going forward----
+-Use case-	            -ID to use-
+DB queries	            internal_user_id ✅
+Strava API calls	    strava_id
+Session auth check	    internal_user_id
+================================ */
 session_start();
 
 ini_set('display_errors', 1);
@@ -44,7 +52,7 @@ $userStmt = $pdo->prepare("
     FROM users
     WHERE strava_id = ?
 ");
-$userStmt->execute([$user_id]);
+$userStmt->execute([$internalUserId]);
 $user = $userStmt->fetch(PDO::FETCH_ASSOC);
 
 /* ===============================
@@ -64,7 +72,7 @@ $stmt = $pdo->prepare("
     WHERE user_id = ?
     ORDER BY updated_at DESC
 ");
-$stmt->execute([$user_id]);
+$stmt->execute([$internalUserId]);
 $routes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
