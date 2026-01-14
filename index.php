@@ -28,20 +28,21 @@
   display: inline-block;
   text-decoration: none;
 }
-.strava-button:hover {
-  background: #e34402;
-}
+.strava-button img:hover {
+    transform: scale(1.02);
 
   .login-section {
     z-index: 1;
   text-align: center;
   padding: 4rem 2rem;
+  position: relative;  /* so it sits above the overlay */
 }
 
 .login-section a.strava-button {
   z-index: 1;
   display: inline-block;
   margin-top: 2rem;
+position: relative;  /* so it sits above the overlay */
 }
   </style>
 
