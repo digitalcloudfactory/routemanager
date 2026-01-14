@@ -39,7 +39,7 @@ $pdo = new PDO(
 ================================ */
 
 $userStmt = $pdo->prepare("
-    SELECT firstname, lastname, avatar
+    SELECT firstname, lastname, avatar,last_routes_sync
     FROM users
     WHERE strava_id = ?
 ");
@@ -132,7 +132,7 @@ tr.route-row { cursor: pointer; }
          width="64"
          style="border-radius:50%">
     <div>
-      <strong><?= htmlspecialchars($user['firstname'].' '.$user['lastname']) ?></strong><br>
+      <strong><?= htmlspecialchars($user['firstname'].' '.$user['lastname'].' '.$user['last_routes_sync']) ?></strong><br>
       <small>Strava athlete</small>
     </div>
   </div>
