@@ -220,7 +220,7 @@ function renderTable(data) {
       <td>${route.name}</td>
       <td>${Number(route.distance_km).toFixed(2)}</td>
       <td>${route.elevation}</td>
-      
+      <td>${routeTypeLabel(route.type)}</td>
     `;
 
     const details = document.createElement('tr');
@@ -363,7 +363,7 @@ function clearFilters() {
     document.getElementById(id).addEventListener('input', applyFilters);
   });
 
-const panel = document.getElementById('filterPanel');
+
 const filterBtn = document.getElementById('openFilters');
 
 filterBtn.onclick = () => {
