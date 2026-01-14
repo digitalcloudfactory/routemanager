@@ -54,6 +54,7 @@ $routes = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </div>
   </div>
   <div style="text-align:right">
+  <button id="themeToggle" class="secondary">🌙</button>
     <a href="logout.php" role="button" class="secondary">Logout</a>
   </div>
 </header>
