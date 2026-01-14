@@ -67,6 +67,10 @@ $strava_id    = $data['athlete']['id'];
 $access_token = $data['access_token'];
 $refresh_token= $data['refresh_token'];
 $expires_at   = $data['expires_at'];
+$firstname = $athlete['firstname'];
+$lastname  = $athlete['lastname'];
+$avatar    = $athlete['profile'];
+
 
 /* ===============================
    CONNECT TO DATABASE (UTF8MB4)
@@ -93,20 +97,29 @@ try {
 ================================ */
 
 $stmt = $pdo->prepare("
-    INSERT INTO users (strava_id, access_token, refresh_token, expires_at)
-    VALUES (:sid, :access, :refresh, :expires)
-    ON DUPLICATE KEY UPDATE
-        access_token  = VALUES(access_token),
-        refresh_token = VALUES(refresh_token),
-        expires_at    = VALUES(expires_at)
+  INSERT INTO users
+    (strava_id, firstname, lastname, avatar, access_token, refresh_token, expires_at)
+  VALUES
+    (:sid, :first, :last, :avatar, :access, :refresh, :expires)
+  ON DUPLICATE KEY UPDATE
+    firstname = VALUES(firstname),
+    lastname  = VALUES(lastname),
+    avatar    = VALUES(avatar),
+    access_token = VALUES(access_token),
+    refresh_token = VALUES(refresh_token),
+    expires_at = VALUES(expires_at)
 ");
 
 $stmt->execute([
-    ':sid'     => $strava_id,
-    ':access'  => $access_token,
-    ':refresh' => $refresh_token,
-    ':expires' => $expires_at
+  ':sid'     => $strava_id,
+  ':first'   => $firstname,
+  ':last'    => $lastname,
+  ':avatar'  => $avatar,
+  ':access'  => $access_token,
+  ':refresh' => $refresh_token,
+  ':expires' => $expires_at
 ]);
+
 
 /* ===============================
    CREATE USER SESSION
