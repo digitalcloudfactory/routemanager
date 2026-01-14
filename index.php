@@ -1,5 +1,25 @@
 <?php include 'header.php'; ?>
 <style>
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: url('https://www.dropbox.com/scl/fi/bk21xinnt8rvgffmycfsj/mallorca-1117793_1280.jpg?rlkey=61yqez5zhfxqjss96fx37lqcd&dl=1') no-repeat center center fixed;
+      background-size: cover;
+      position: relative;
+    }
+
+    /* semi-transparent overlay */
+    body::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background-color: rgba(255, 255, 255, 0.4); /* adjust opacity to lighten image */
+      z-index: 0;
+    }
+  
 .strava-button {
   display: inline-block;
   text-decoration: none;
@@ -9,11 +29,13 @@
 }
 
   .login-section {
+    z-index: 1;
   text-align: center;
   padding: 4rem 2rem;
 }
 
 .login-section a.strava-button {
+  z-index: 1;
   display: inline-block;
   margin-top: 2rem;
 }
