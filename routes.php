@@ -99,12 +99,49 @@ $routes_db = $stmt->fetchAll(PDO::FETCH_ASSOC);
   </section>
 
   <!-- Routes -->
-  <section id="routesGrid" class="grid">
-    <!-- Cards injected by JS -->
-  </section>
+<section>
+  <figure>
+    <table id="routesTable" class="striped hover">
+      <thead>
+        <tr>
+        <th data-sort="name">Name</th>
+        <th data-sort="distance">Distance (km)</th>
+        <th data-sort="elevation">Elevation (m)</th>
+        <th>Type</th>
+        </tr>
+      </thead>
+      <tbody id="routesBody">
+        <!-- Rows injected by JS -->
+      </tbody>
+    </table>
+  </figure>
+</section>
+
 
 </main>
+<script>
+    document.querySelectorAll("th[data-sort]").forEach(th => {
+  th.style.cursor = "pointer";
 
+  th.addEventListener("click", () => {
+    const field = th.dataset.sort;
+
+    if (sortField === field) {
+      sortOrder = sortOrder === "asc" ? "desc" : "asc";
+    } else {
+      sortField = field;
+      sortOrder = "asc";
+    }
+
+    document.getElementById("sortField").value = field;
+    document.getElementById("sortOrder").value = sortOrder;
+
+    applyFilters();
+  });
+});
+<script>
+
+    
 <script>
 let routes = <?php echo json_encode($routes_db, JSON_UNESCAPED_UNICODE); ?>;
 
@@ -114,31 +151,34 @@ routes.forEach(r => r.distance_km = r.distance / 1000);
 
     
 function renderRoutes(data) {
-  const container = document.getElementById("routesGrid");
-  container.innerHTML = "";
+  const tbody = document.getElementById("routesBody");
+  tbody.innerHTML = "";
 
   if (data.length === 0) {
-    container.innerHTML = "<p>No routes found.</p>";
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="4" style="text-align:center">
+          No routes found
+        </td>
+      </tr>
+    `;
     return;
   }
 
   data.forEach(route => {
-    const article = document.createElement("article");
+    const tr = document.createElement("tr");
 
-    article.innerHTML = `
-      <header>
-        <strong>${route.name}</strong>
-      </header>
-      <p>
-        📏 ${route.distance_km.toFixed(2)} km<br>
-        ⛰ ${route.elevation} m<br>
-        🏷 ${route.type}
-      </p>
+    tr.innerHTML = `
+      <td>${route.name}</td>
+      <td>${route.distance_km.toFixed(2)}</td>
+      <td>${route.elevation}</td>
+      <td>${route.type}</td>
     `;
 
-    container.appendChild(article);
+    tbody.appendChild(tr);
   });
 }
+
 
 
 // Filtering & Sorting
