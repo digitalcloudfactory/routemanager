@@ -77,7 +77,7 @@ $stmt->execute([$internalUserId]);
 $routes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 var_dump($internalUserId);
-var_dump($routesStmt->fetchAll(PDO::FETCH_ASSOC));
+var_dump($stmt->fetchAll(PDO::FETCH_ASSOC));
 ?>
 
 <?php include 'header.php'; ?>
