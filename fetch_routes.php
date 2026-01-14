@@ -107,7 +107,7 @@ if (!is_array($routes)) {
 // --- PREPARE INSERT/UPDATE ---
 $insert = $pdo->prepare("
     INSERT INTO strava_routes 
-    (user_id, strava_route_id, name, description, distance_km, elevation, type, polyline)
+    (user_id, route_id, name, description, distance_km, elevation, type, polyline)
     VALUES (:user, :rid, :name, :description, :distance, :elevation, :type, :polyline)
     ON DUPLICATE KEY UPDATE
     name = VALUES(name),
