@@ -128,7 +128,8 @@ $stmt->execute([
    CREATE USER SESSION
 ================================ */
 
-$_SESSION['user_id'] = $strava_id;
+$_SESSION['strava_id'] = $stravaUser['id']; // Strava athlete ID
+$_SESSION['internal_user_id'] = $user['id']; // internal DB ID
 
 /* ===============================
    REDIRECT TO DASHBOARD
