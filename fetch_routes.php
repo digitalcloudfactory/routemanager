@@ -2,46 +2,172 @@
 session_start();
 header('Content-Type: application/json');
 
-// Database & Strava token setup
+/* ===============================
+   AUTH CHECK
+================================ */
+
+if (!isset($_SESSION['user_id'])) {
+    http_response_code(401);
+    echo json_encode(['error' => 'Not authenticated']);
+    exit;
+}
+
+$user_id = $_SESSION['user_id'];
+
+/* ===============================
+   CONFIG
+================================ */
+
+$client_id     = 'YOUR_STRAVA_CLIENT_ID';
+$client_secret = 'YOUR_STRAVA_CLIENT_SECRET';
+
+// Database credentials
 $db_host = 'db.fr-pari1.bengt.wasmernet.com';
 $db_port = 10272;
 $db_name = 'routes';
 $db_user = '68a00bc6768780007ea0fea26ffa';
 $db_pass = '069668a0-0bc6-788a-8000-597667343eee';
-$access_token = $_SESSION['access_token'] ?? null;
 
-if (!$access_token) {
-    echo json_encode(['success'=>false]);
+/* ===============================
+   DATABASE CONNECTION
+================================ */
+
+try {
+    $pdo = new PDO(
+        "mysql:host=$db_host;port=$db_port;dbname=$db_name;charset=utf8mb4",
+        $db_user,
+        $db_pass,
+        [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4"
+        ]
+    );
+} catch (PDOException $e) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Database connection failed']);
     exit;
 }
 
-// DB connection
-$pdo = new PDO("mysql:host=$db_host;port=$db_port;dbname=$db_name;charset=utf8mb4",$db_user,$db_pass,[PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+/* ===============================
+   LOAD USER TOKENS
+================================ */
 
-// Fetch routes from Strava
-$ch = curl_init("https://www.strava.com/api/v3/athlete/routes?per_page=10");
-curl_setopt($ch, CURLOPT_HTTPHEADER, ["Authorization: Bearer $access_token"]);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+$stmt = $pdo->prepare("SELECT * FROM users WHERE strava_id = ?");
+$stmt->execute([$user_id]);
+$user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$user) {
+    http_response_code(401);
+    echo json_encode(['error' => 'User not found']);
+    exit;
+}
+
+$access_token  = $user['access_token'];
+$refresh_token = $user['refresh_token'];
+$expires_at    = $user['expires_at'];
+
+/* ===============================
+   TOKEN REFRESH (IF EXPIRED)
+================================ */
+
+if ($expires_at <= time()) {
+
+    $ch = curl_init("https://www.strava.com/oauth/token");
+    curl_setopt_array($ch, [
+        CURLOPT_POST => true,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POSTFIELDS => http_build_query([
+            'client_id'     => $client_id,
+            'client_secret' => $client_secret,
+            'grant_type'    => 'refresh_token',
+            'refresh_token' => $refresh_token
+        ])
+    ]);
+
+    $response = curl_exec($ch);
+    curl_close($ch);
+
+    $data = json_decode($response, true);
+
+    if (!isset($data['access_token'])) {
+        http_response_code(401);
+        echo json_encode(['error' => 'Token refresh failed']);
+        exit;
+    }
+
+    $access_token  = $data['access_token'];
+    $refresh_token = $data['refresh_token'];
+    $expires_at    = $data['expires_at'];
+
+    $stmt = $pdo->prepare("
+        UPDATE users
+        SET access_token = ?, refresh_token = ?, expires_at = ?
+        WHERE strava_id = ?
+    ");
+    $stmt->execute([$access_token, $refresh_token, $expires_at, $user_id]);
+}
+
+/* ===============================
+   FETCH ROUTES FROM STRAVA
+================================ */
+
+$ch = curl_init("https://www.strava.com/api/v3/athlete/routes?per_page=5");
+curl_setopt_array($ch, [
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_HTTPHEADER => [
+        "Authorization: Bearer $access_token"
+    ]
+]);
+
 $response = curl_exec($ch);
 curl_close($ch);
 
-$routes = json_decode($response,true);
-if(!$routes) $routes=[];
+$routes = json_decode($response, true);
 
-// Insert into DB
-$stmt = $pdo->prepare("INSERT IGNORE INTO strava_routes (id,name,distance,elevation,type) VALUES (:id,:name,:distance,:elevation,:type)");
-foreach($routes as $r){
-    $stmt->execute([
-        ':id'=>$r['id'],
-        ':name'=>$r['name'],
-        ':distance'=>$r['distance'],
-        ':elevation'=>$r['elevation_gain'],
-        ':type'=>$r['type'] ?? 'Unknown'
-    ]);
+if (!is_array($routes)) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Failed to fetch routes']);
+    exit;
 }
 
-// Return latest routes
-$stmt = $pdo->query("SELECT * FROM strava_routes ORDER BY id DESC LIMIT 50");
-$latest = $stmt->fetchAll(PDO::FETCH_ASSOC);
+/* ===============================
+   STORE ROUTES (PER USER)
+================================ */
 
-echo json_encode(['success'=>true,'routes'=>$latest]);
+$insert = $pdo->prepare("
+    INSERT INTO strava_routes
+      (user_id, route_id, name, distance_km, elevation, type, updated_at)
+    VALUES
+      (:user, :rid, :name, :distance, :elevation, :type, NOW())
+    ON DUPLICATE KEY UPDATE
+      name = VALUES(name),
+      distance_km = VALUES(distance_km),
+      elevation = VALUES(elevation),
+      type = VALUES(type),
+      updated_at = NOW()
+");
+
+$count = 0;
+
+foreach ($routes as $route) {
+
+    $insert->execute([
+        ':user'      => $user_id,
+        ':rid'       => $route['id'],
+        ':name'      => $route['name'],
+        ':distance'  => $route['distance'] / 1000,
+        ':elevation' => $route['elevation_gain'],
+        ':type'      => $route['type']
+    ]);
+
+    $count++;
+}
+
+/* ===============================
+   RESPONSE
+================================ */
+
+echo json_encode([
+    'success' => true,
+    'routes_fetched' => $count
+]);
