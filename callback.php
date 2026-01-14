@@ -49,7 +49,14 @@ curl_close($ch);
 $data = json_decode($response, true);
 
 if (!isset($data['access_token'])) {
-    die("Failed to get access token from Strava.");
+    echo "<pre>";
+    echo "Strava token exchange failed.\n\n";
+    echo "Raw response:\n";
+    print_r($data);
+    echo "\n\nFull raw body:\n";
+    echo htmlspecialchars($response);
+    echo "</pre>";
+    exit;
 }
 
 $accessToken = $data['access_token'];
