@@ -134,17 +134,40 @@ if (!is_array($routes)) {
    STORE ROUTES (PER USER)
 ================================ */
 
+
 $insert = $pdo->prepare("
     INSERT INTO strava_routes
-      (user_id, route_id, name, distance_km, elevation, type, updated_at)
+      (
+        user_id,
+        route_id,
+        name,
+        description,
+        distance_km,
+        elevation,
+        type,
+        summary_polyline,
+        updated_at
+      )
     VALUES
-      (:user, :rid, :name, :distance, :elevation, :type, NOW())
+      (
+        :user,
+        :rid,
+        :name,
+        :description,
+        :distance,
+        :elevation,
+        :type,
+        :polyline,
+        NOW()
+      )
     ON DUPLICATE KEY UPDATE
-      name = VALUES(name),
-      distance_km = VALUES(distance_km),
-      elevation = VALUES(elevation),
-      type = VALUES(type),
-      updated_at = NOW()
+        name = VALUES(name),
+        description = VALUES(description),
+        distance_km = VALUES(distance_km),
+        elevation = VALUES(elevation),
+        type = VALUES(type),
+        summary_polyline = VALUES(summary_polyline),
+        updated_at = NOW()
 ");
 
 $count = 0;
@@ -152,16 +175,19 @@ $count = 0;
 foreach ($routes as $route) {
 
     $insert->execute([
-        ':user'      => $user_id,
-        ':rid'       => $route['id'],
-        ':name'      => $route['name'],
-        ':distance'  => $route['distance'] / 1000,
-        ':elevation' => $route['elevation_gain'],
-        ':type'      => $route['type']
+        ':user'        => $user_id,
+        ':rid'         => $route['id'],
+        ':name'        => $route['name'],
+        ':description' => $route['description'] ?? null,
+        ':distance'    => $route['distance'] / 1000,
+        ':elevation'   => $route['elevation_gain'],
+        ':type'        => $route['type'],
+        ':polyline'    => $route['map']['summary_polyline'] ?? null
     ]);
 
     $count++;
 }
+
 
 /* ===============================
    RESPONSE
