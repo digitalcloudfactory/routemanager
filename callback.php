@@ -5,9 +5,9 @@ session_start();
    CONFIG
 ================================ */
 
-$client_id     = 'YOUR_STRAVA_CLIENT_ID';
-$client_secret = 'YOUR_STRAVA_CLIENT_SECRET';
-$redirect_uri  = 'https://YOUR_DOMAIN/callback.php';
+$client_id     = '6839';
+$client_secret = '1a1057defe991fd6c2711f1199a3563cb3d5395f';
+$redirect_uri  = 'http://map-routes.wasmer.app/callback.php';
 
 // Database credentials
 $db_host = 'db.fr-pari1.bengt.wasmernet.com';
