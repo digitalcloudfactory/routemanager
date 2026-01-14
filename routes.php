@@ -67,6 +67,7 @@ $stmt = $pdo->prepare("
         distance_km,
         elevation,
         type,
+        estimated_moving_time,
         summary_polyline
     FROM strava_routes
     WHERE user_id = ?
@@ -265,6 +266,7 @@ function renderTable(data) {
       <td colspan="4">
         <article>
           <p><strong>Description</strong><br>
+            ${route.estimated_moving_time}
             ${route.description || 'No description'}
           </p>
           <div id="map-${route.route_id}" class="route-map"></div>
