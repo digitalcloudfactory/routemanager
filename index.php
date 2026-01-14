@@ -58,8 +58,8 @@ $auth_url = "https://www.strava.com/oauth/authorize" .
 
 
       
-    <a class="strava-button" href="<?= $auth_url ?>"><img src="https://upload.wikimedia.org/wikipedia/commons/0/06/Strava_icon.png"
-    alt="Strava" style="height:1.2em; vertical-align:middle; margin-right:0.5em;"> Connect with Strava</a>
+    <a class="strava-button" href="<?= $auth_url ?>"><img src="https://www.dropbox.com/scl/fi/rzrnbkndn8y2u8if4hezd/btn_strava_connect_with_orange.png?rlkey=s0w9ewb5o9fimgsh33ekqt9lz&dl=0"
+    alt="Strava" style="height:1.2em; vertical-align:middle; margin-right:0.5em;"></a>
 </div>
 </div>
 
