@@ -288,6 +288,8 @@ function initMap(route) {
   map.invalidateSize();
   el.dataset.loaded = "true";
 
+addDistanceMarkers(map, coords, 10);
+}
 
 function addDistanceMarkers(map, latlngs, stepKm = 10) {
   let distance = 0;
@@ -316,8 +318,6 @@ function addDistanceMarkers(map, latlngs, stepKm = 10) {
   }
 }
     
-}
-
 /* ===============================
    FETCH ROUTES (AJAX)
 ================================ */
