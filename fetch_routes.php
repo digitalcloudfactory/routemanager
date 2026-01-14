@@ -18,8 +18,8 @@ $user_id = $_SESSION['user_id'];
    CONFIG
 ================================ */
 
-$client_id     = 'YOUR_STRAVA_CLIENT_ID';
-$client_secret = 'YOUR_STRAVA_CLIENT_SECRET';
+$client_id     = '6839';
+$client_secret = '1a1057defe991fd6c2711f1199a3563cb3d5395f';
 
 // Database credentials
 $db_host = 'db.fr-pari1.bengt.wasmernet.com';
