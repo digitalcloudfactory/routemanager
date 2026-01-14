@@ -1,4 +1,21 @@
 <?php include 'header.php'; ?>
+<style>
+  .strava-button {
+  display: inline-flex;
+  align-items: center;
+  background: #fc4c02;
+  color: white;
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.3s;
+}
+
+.strava-button:hover {
+  background: #e34402;
+}
+  </style>
 
 <body>
 <!-- Header -->
@@ -38,7 +55,11 @@ $auth_url = "https://www.strava.com/oauth/authorize" .
     <div class="login-section">
     <h1>Login with Strava</h1>
     <p>Connect your Strava account to view your routes</p>
-    <a class="strava-button" href="<?= $auth_url ?>">Login</a>
+
+
+      
+    <a class="strava-button" href="<?= $auth_url ?>"><img src="https://upload.wikimedia.org/wikipedia/commons/0/06/Strava_icon.png"
+    alt="Strava" style="height:1.2em; vertical-align:middle; margin-right:0.5em;"> Connect with Strava</a>
 </div>
 </div>
 
