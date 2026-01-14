@@ -155,7 +155,7 @@ tr.route-row { cursor: pointer; }
 
 <section>
 <figure style="overflow-x:auto">
-<table class="striped hover">
+<table class="routesTable striped hover">
 <thead>
 <tr>
   <th>Name</th>
