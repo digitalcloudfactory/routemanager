@@ -1,10 +1,6 @@
 <?php
 session_start();
 
-/* ===============================
-   AUTH CHECK
-================================ */
-
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit;
@@ -12,19 +8,12 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
-/* ===============================
-   DATABASE CONFIG
-================================ */
-
+/* DB CONFIG */
 $db_host = 'db.fr-pari1.bengt.wasmernet.com';
 $db_port = 10272;
 $db_name = 'routes';
 $db_user = '68a00bc6768780007ea0fea26ffa';
 $db_pass = '069668a0-0bc6-788a-8000-597667343eee';
-
-/* ===============================
-   DB CONNECTION
-================================ */
 
 $pdo = new PDO(
     "mysql:host=$db_host;port=$db_port;dbname=$db_name;charset=utf8mb4",
@@ -36,200 +25,150 @@ $pdo = new PDO(
     ]
 );
 
-/* ===============================
-   LOAD ROUTES (PER USER)
-================================ */
+/* LOAD USER PROFILE */
+$userStmt = $pdo->prepare("SELECT firstname, lastname, avatar FROM users WHERE strava_id = ?");
+$userStmt->execute([$user_id]);
+$user = $userStmt->fetch(PDO::FETCH_ASSOC);
 
+/* LOAD ROUTES */
 $stmt = $pdo->prepare("
-    SELECT route_id, name, distance_km, elevation, type
+    SELECT *
     FROM strava_routes
     WHERE user_id = ?
     ORDER BY updated_at DESC
 ");
-
 $stmt->execute([$user_id]);
 $routes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
 <html data-theme="light">
 <head>
-  <meta charset="UTF-8">
-  <title>My Strava Routes</title>
+<meta charset="UTF-8">
+<title>My Strava Routes</title>
 
-  <!-- Pico CSS -->
-  <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
-  />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
 
-  <!-- Optional custom overrides -->
-  <link rel="stylesheet" href="style.css">
+<style>
+#map { height: 300px; border-radius: 12px; }
+tr[data-route] { cursor: pointer; }
+</style>
 </head>
 
 <body>
 <main class="container">
 
-  <!-- HEADER -->
-  <header class="grid">
+<!-- PROFILE HEADER -->
+<header class="grid">
+  <div class="grid" style="align-items:center">
+    <img src="<?= htmlspecialchars($user['avatar']) ?>" width="64" style="border-radius:50%">
     <div>
-      <h1>My Strava Routes</h1>
+      <strong><?= htmlspecialchars($user['firstname'].' '.$user['lastname']) ?></strong><br>
+      <small>Strava athlete</small>
     </div>
-    <div style="text-align:right">
-      <button id="themeToggle" class="secondary">🌙 Dark</button>
-      <a href="logout.php" role="button" class="secondary">Logout</a>
-    </div>
-  </header>
+  </div>
+  <div style="text-align:right">
+    <button id="themeToggle" class="secondary">🌙</button>
+    <a href="logout.php" role="button" class="secondary">Logout</a>
+  </div>
+</header>
 
-  <!-- CONTROLS -->
-  <section>
-    <form class="grid">
-      <input id="filterName" placeholder="Filter by name">
-      <input id="filterDistance" type="number" placeholder="Min distance (km)">
-      <input id="filterElevation" type="number" placeholder="Min elevation (m)">
-      <button type="button" id="fetchRoutes">Fetch new routes</button>
-    </form>
-  </section>
+<!-- TABLE -->
+<section>
+<figure style="overflow-x:auto">
+<table class="striped hover">
+<thead>
+<tr>
+  <th>Name</th>
+  <th>Distance (km)</th>
+  <th>Elevation (m)</th>
+  <th>Type</th>
+</tr>
+</thead>
+<tbody id="routesBody"></tbody>
+</table>
+</figure>
+</section>
 
-  <!-- TABLE -->
-  <section>
-    <figure style="overflow-x:auto">
-      <table class="striped hover" id="routesTable">
-        <thead>
-          <tr>
-            <th data-sort="name">Name</th>
-            <th data-sort="distance_km">Distance (km)</th>
-            <th data-sort="elevation">Elevation (m)</th>
-            <th>Type</th>
-          </tr>
-        </thead>
-        <tbody id="routesBody"></tbody>
-      </table>
-    </figure>
-  </section>
+<!-- ROUTE MODAL -->
+<dialog id="routeModal">
+<article>
+<header>
+  <strong id="modalName"></strong>
+  <a href="#" aria-label="Close" class="close" onclick="routeModal.close()"></a>
+</header>
+
+<p id="modalMeta"></p>
+<p id="modalDesc"></p>
+
+<div id="map"></div>
+
+<footer>
+  <a id="stravaLink" href="#" target="_blank" role="button">Open on Strava</a>
+</footer>
+</article>
+</dialog>
 
 </main>
 
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/@mapbox/polyline"></script>
+
 <script>
-/* ===============================
-   DATA FROM PHP
-================================ */
+const routes = <?= json_encode($routes, JSON_UNESCAPED_UNICODE); ?>;
+const tbody = document.getElementById('routesBody');
+const modal = document.getElementById('routeModal');
+let map, polylineLayer;
 
-const routes = <?php echo json_encode($routes, JSON_UNESCAPED_UNICODE); ?>;
-let filteredRoutes = [...routes];
-let sortField = null;
-let sortOrder = 'asc';
+/* RENDER TABLE */
+routes.forEach(r => {
+  const tr = document.createElement('tr');
+  tr.dataset.route = JSON.stringify(r);
 
-/* ===============================
-   RENDER TABLE
-================================ */
+  tr.innerHTML = `
+    <td>${r.name}</td>
+    <td>${Number(r.distance_km).toFixed(2)}</td>
+    <td>${r.elevation}</td>
+    <td>${r.type}</td>
+  `;
 
-function renderRoutes(data) {
-  const tbody = document.getElementById('routesBody');
-  tbody.innerHTML = '';
-
-  if (data.length === 0) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="4" style="text-align:center">
-          No routes found
-        </td>
-      </tr>`;
-    return;
-  }
-
-  data.forEach(r => {
-    tbody.innerHTML += `
-      <tr>
-        <td>${r.name}</td>
-        <td>${Number(r.distance_km).toFixed(2)}</td>
-        <td>${r.elevation}</td>
-        <td>${r.type}</td>
-      </tr>`;
-  });
-}
-
-/* ===============================
-   FILTER & SORT
-================================ */
-
-function applyFilters() {
-  const name = filterName.value.toLowerCase();
-  const minDist = parseFloat(filterDistance.value) || 0;
-  const minElev = parseFloat(filterElevation.value) || 0;
-
-  filteredRoutes = routes.filter(r =>
-    r.name.toLowerCase().includes(name) &&
-    r.distance_km >= minDist &&
-    r.elevation >= minElev
-  );
-
-  if (sortField) {
-    filteredRoutes.sort((a, b) => {
-      const v1 = a[sortField];
-      const v2 = b[sortField];
-      return sortOrder === 'asc'
-        ? v1 > v2 ? 1 : -1
-        : v1 < v2 ? 1 : -1;
-    });
-  }
-
-  renderRoutes(filteredRoutes);
-}
-
-/* ===============================
-   SORT HANDLERS
-================================ */
-
-document.querySelectorAll('th[data-sort]').forEach(th => {
-  th.style.cursor = 'pointer';
-  th.addEventListener('click', () => {
-    const field = th.dataset.sort;
-    sortOrder = sortField === field && sortOrder === 'asc' ? 'desc' : 'asc';
-    sortField = field;
-    applyFilters();
-  });
+  tr.onclick = () => openModal(r);
+  tbody.appendChild(tr);
 });
 
-/* ===============================
-   FETCH NEW ROUTES (AJAX)
-================================ */
+/* MODAL LOGIC */
+function openModal(r) {
+  modal.showModal();
 
-document.getElementById('fetchRoutes').onclick = async () => {
-  const btn = fetchRoutes;
-  btn.setAttribute('aria-busy', 'true');
+  document.getElementById('modalName').textContent = r.name;
+  document.getElementById('modalMeta').innerHTML = `
+    Distance: ${r.distance_km.toFixed(2)} km<br>
+    Elevation: ${r.elevation} m<br>
+    Type: ${r.type}
+  `;
+  document.getElementById('modalDesc').textContent = r.description || 'No description';
+  document.getElementById('stravaLink').href = `https://www.strava.com/routes/${r.route_id}`;
 
-  await fetch('fetch_routes.php');
-  location.reload();
-};
+  setTimeout(() => renderMap(r.summary_polyline), 100);
+}
 
-/* ===============================
-   THEME TOGGLE
-================================ */
+/* MAP */
+function renderMap(polyline) {
+  if (map) map.remove();
 
-const html = document.documentElement;
-const toggle = document.getElementById('themeToggle');
+  map = L.map('map');
+  const coords = polyline ? polylineDecode(polyline) : [];
 
-const savedTheme = localStorage.getItem('theme') || 'light';
-html.setAttribute('data-theme', savedTheme);
-toggle.textContent = savedTheme === 'dark' ? '☀️ Light' : '🌙 Dark';
+  if (coords.length) {
+    polylineLayer = L.polyline(coords).addTo(map);
+    map.fitBounds(polylineLayer.getBounds());
+  }
 
-toggle.onclick = () => {
-  const newTheme = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-  html.setAttribute('data-theme', newTheme);
-  localStorage.setItem('theme', newTheme);
-  toggle.textContent = newTheme === 'dark' ? '☀️ Light' : '🌙 Dark';
-};
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+}
 
-/* ===============================
-   INIT
-================================ */
+function polylineDecode(str) {
+  return polyline.decode(str).map(c => [c[0], c[1]]);
+}
 
-filterName.oninput =
-filterDistance.oninput =
-filterElevation.oninput = applyFilters;
-
-renderRoutes(routes);
 </script>
-
-</body>
-</html>
