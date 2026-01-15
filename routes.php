@@ -210,6 +210,7 @@ tr.route-row { cursor: pointer; }
         <option value="1">Ride</option>
         <option value="2">Run</option>
         <option value="3">Walk</option>
+        <option value="6">Gravel</option>
       </select>
     </label>
 
@@ -277,9 +278,22 @@ function renderTable(data) {
     details.innerHTML = `
       <td colspan="4">
         <article>
-          <p><strong>Created at</strong> ${route.created_date}<br></p>
-          <p><strong>Description</strong><br> ${route.description || 'No description'}
-          </p>
+           <table><tbody>
+                      <tr>
+                        <td>Name: ${route.name}</td>
+                        <td>Distance: ${Number(route.distance_km).toFixed(2)}</td>
+                        <td>Elevation: ${route.elevation}</td>
+                        <td>Moving Time: ${formatDuration(route.estimated_moving_time)}</td>
+                      </tr>
+                      <tr>
+                        <td><strong>Created at</strong> ${route.created_date}</td>
+                        <td>Type:${routeTypeLabel(route.type)}</td>
+                        <td>Starred:</td>
+                        <td>Private:</td>
+                        <td><strong>Description</strong><br> ${route.description || 'No description'}</td>
+                      </tr>
+                    </tbody>
+                    </table> 
           <div id="map-${route.route_id}" class="route-map"></div>
           <p>
             <a href="https://www.strava.com/routes/${route.route_id}"
