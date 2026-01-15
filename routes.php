@@ -239,13 +239,16 @@ tr.route-row { cursor: pointer; font-size: 0.55rem;}
       </select>
     </label>
 
+    <label>
+        Tags
+        <input id="filterTags" type="text" placeholder="Comma-separated tags">
+    </label>
+      
     <footer>
       <button class="secondary" onclick="clearFilters()">Clear</button>
     </footer>
   </article>
 </aside>
-
-
     
 </main>
 
@@ -466,11 +469,18 @@ function applyFilters() {
   const minElev = parseFloat(document.getElementById('filterElevation').value) || 0;
   const type = document.getElementById('filterType').value;
 
+    const tagInput = document.getElementById('filterTags').value
+                       .toLowerCase()
+                       .split(',')
+                       .map(t => t.trim())
+                       .filter(t => t);
+
   filteredRoutes = routes.filter(r =>
     r.name.toLowerCase().includes(name) &&
     r.distance_km >= minDist &&
     r.elevation >= minElev &&
-    (!type || Number(r.type) === Number(type))
+    (!type || r.type === type) &&
+    (tagInput.length === 0 || tagInput.every(t => r.tags.map(t2 => t2.toLowerCase()).includes(t)))
   );
 
   renderTable(filteredRoutes);
