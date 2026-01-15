@@ -16,9 +16,10 @@ $data = json_decode(file_get_contents('php://input'), true);
 $routeId = (string)($data['route_id'] ?? 0);
 $tags = $data['tags'] ?? [];
 
-error_log('Route ID received: ' . $routeId);
-error_log('Internal USER ID received: ' . $_SESSION['internal_user_id']);
-error_log('Tags received: ' . $tags);
+error_log($data);
+//error_log('Route ID received: ' . $routeId);
+//error_log('Internal USER ID received: ' . $_SESSION['internal_user_id']);
+//error_log('Tags received: ' . $tags);
 
 if (!$routeId) {
     echo json_encode(['success' => false, 'error' => 'Invalid route']);
