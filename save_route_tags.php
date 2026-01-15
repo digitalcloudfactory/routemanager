@@ -11,10 +11,9 @@ if (!isset($_SESSION['internal_user_id'])) {
 $internalUserId = $_SESSION['internal_user_id'];
 
 header('Content-Type: application/json');
-error_log('Session ID: ' . session_id());
-error_log('Session contents: ' . print_r($_SESSION, true));
 
-
+error_log('Route ID received: ' . $routeId);
+error_log('Internal USER ID received: ' . $_SESSION['internal_user_id']);
 
 $data = json_decode(file_get_contents('php://input'), true);
 $routeId = (int)($data['route_id'] ?? 0);
