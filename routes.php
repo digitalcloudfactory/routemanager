@@ -317,6 +317,7 @@ function renderTable(data) {
                         <td><strong>Private:</strong></td>
                       </tr>
                        <tr>
+                       <<td><strong>Route ID:</strong> ${route.route_id}</td>
                        <td><strong>Description</strong> ${route.description || 'No description'}</td>
                        <td>
                                 <strong>Tags</strong>
