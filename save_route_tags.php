@@ -17,11 +17,14 @@ $routeId = (string)($data['route_id'] ?? 0);
 $tags = $data['tags'] ?? [];
 
 error_log('Internal USER ID received: ' . $_SESSION['internal_user_id']);
-error_log('Tags received: ' . $tags);
+
+$routeId = (string)($data['route_id'] ?? '');
+$tags = $data['tags'] ?? [];
+
 error_log('Route ID received: ' . $routeId);
+error_log('Tags received: ' . json_encode($tags, JSON_UNESCAPED_UNICODE));
 
-
-if (!$routeId) {
+if ($routeId === '') {
     echo json_encode(['success' => false, 'error' => 'Invalid route']);
     exit;
 }
