@@ -68,7 +68,7 @@ $stmt = $pdo->prepare("
         elevation,
         type,
         estimated_moving_time,
-        summary_polyline
+        summary_polyline,
         DATE(created_at) AS created_date
     FROM strava_routes
     WHERE user_id = ?
