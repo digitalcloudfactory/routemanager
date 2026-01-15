@@ -500,14 +500,15 @@ function clearFilters() {
   document.getElementById('filterDistance').value = '';
   document.getElementById('filterElevation').value = '';
   document.getElementById('filterType').value = '';
-  applyFilters();
+  document.getElementById('filterTags').value = '';
+applyFilters();
 }
 
 /* ===============================
    EVENTS
 ================================ */
 
-['filterName','filterDistance','filterElevation','filterType']
+['filterName','filterDistance','filterElevation','filterType','filterTags']
   .forEach(id => {
     document.getElementById(id).addEventListener('input', applyFilters);
   });
