@@ -118,7 +118,6 @@ $insert = $pdo->prepare("
     type = VALUES(type),
     private = VALUES(private),
     starred = VALUES(starred),
-    created_at = VALUES(created_at),
     estimated_moving_time = VALUES(estimated_moving_time),
     summary_polyline = VALUES(summary_polyline)
 ");
