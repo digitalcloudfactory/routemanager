@@ -69,6 +69,7 @@ $stmt = $pdo->prepare("
         type,
         estimated_moving_time,
         summary_polyline
+        DATE(created_at) AS created_date
     FROM strava_routes
     WHERE user_id = ?
     ORDER BY updated_at DESC
@@ -266,7 +267,7 @@ function renderTable(data) {
     details.innerHTML = `
       <td colspan="4">
         <article>
-          <p><strong>Created at</strong> ${date('Y-m-d', strtotime($route['created_at']))};<br>
+          <p><strong>Created at</strong> ${route.created_date}<br></p>
           <p><strong>Description</strong><br> ${route.description || 'No description'}
           </p>
           <div id="map-${route.route_id}" class="route-map"></div>
