@@ -13,10 +13,6 @@ $internalUserId = $_SESSION['internal_user_id'];
 header('Content-Type: application/json');
 
 $data = json_decode(file_get_contents('php://input'), true);
-$routeId = (string)($data['route_id'] ?? 0);
-$tags = $data['tags'] ?? [];
-
-error_log('Internal USER ID received: ' . $_SESSION['internal_user_id']);
 
 $routeId = (string)($data['route_id'] ?? '');
 $tags = $data['tags'] ?? [];
