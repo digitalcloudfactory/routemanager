@@ -1,11 +1,20 @@
 <?php
 session_start();
-header('Content-Type: application/json');
+
 
 if (!isset($_SESSION['internal_user_id'])) {
     echo json_encode(['success' => false, 'error' => 'Not logged in']);
     exit;
 }
+
+// Use internal ID for all DB writes
+$internalUserId = $_SESSION['internal_user_id'];
+
+header('Content-Type: application/json');
+error_log('Session ID: ' . session_id());
+error_log('Session contents: ' . print_r($_SESSION, true));
+
+
 
 $data = json_decode(file_get_contents('php://input'), true);
 $routeId = (int)($data['route_id'] ?? 0);
@@ -15,14 +24,29 @@ if (!$routeId) {
     echo json_encode(['success' => false, 'error' => 'Invalid route']);
     exit;
 }
+echo ("USER: ". $internalUserId .' - ' . "Route ID: " . $routeId;
 
-/* DB */
-$pdo = new PDO(
-    "mysql:host=db.fr-pari1.bengt.wasmernet.com;port=10272;dbname=routes;charset=utf8mb4",
-    "68a00bc6768780007ea0fea26ffa",
-    "069668a0-0bc6-788a-8000-597667343eee",
-    [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
-);
+// --- CONFIG ---
+$db_host = 'db.fr-pari1.bengt.wasmernet.com';
+$db_port = 10272;
+$db_name = 'routes';
+$db_user = '68a00bc6768780007ea0fea26ffa';
+$db_pass = '069668a0-0bc6-788a-8000-597667343eee';
+$strava_client_id = '6839';
+$strava_client_secret = '1a1057defe991fd6c2711f1199a3563cb3d5395f';
+
+// --- CONNECT DB ---
+try {
+    $pdo = new PDO(
+        "mysql:host=$db_host;port=$db_port;dbname=$db_name;charset=utf8mb4",
+        $db_user,
+        $db_pass
+    );
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    echo json_encode(['success' => false, 'error' => 'DB Connection failed']);
+    exit;
+}
 
 /* Security: ensure route belongs to user */
 $check = $pdo->prepare("
@@ -30,6 +54,7 @@ $check = $pdo->prepare("
     WHERE route_id = ? AND user_id = ?
 ");
 $check->execute([$routeId, $_SESSION['internal_user_id']]);
+
 if (!$check->fetch()) {
     echo json_encode(['success' => false, 'error' => 'Unauthorized']);
     exit;
