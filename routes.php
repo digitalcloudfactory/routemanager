@@ -143,8 +143,8 @@ tr.route-row { cursor: pointer; }
          width="64"
          style="border-radius:50%">
     <div>
-      <strong><?= htmlspecialchars($user['firstname'].' '.$user['lastname'].' '.$user['last_routes_sync']) ?></strong><br>
-      <small>Strava athlete</small>
+      <strong><?= htmlspecialchars($user['firstname'].' '.$user['lastname']) ?></strong><br>
+      <small>Last Strava Sync: <?= htmlspecialchars($user['last_routes_sync']) ?></small>
     </div>
   </div>
 
