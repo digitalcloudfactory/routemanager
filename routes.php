@@ -83,7 +83,7 @@ $routes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <script src="https://unpkg.com/@mapbox/polyline"></script>
 
 <style>
-tr.route-row { cursor: pointer; }
+tr.route-row { cursor: pointer; font-size: 0.55rem;}
 .route-details article { margin-top: 1rem; }
 .route-map { height: 300px; border-radius: 12px; }
 
