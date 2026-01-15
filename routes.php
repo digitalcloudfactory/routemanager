@@ -233,9 +233,18 @@ const routes = <?= json_encode($routes, JSON_UNESCAPED_UNICODE); ?>;
 const tbody = document.getElementById('routesBody');
 
 /* ===============================
-   RENDER TABLE + INLINE DETAILS
+   RENDER Seconds to Exact Moving time
 ================================ */
 
+function formatDuration(seconds) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+/* ===============================
+   RENDER TABLE + INLINE DETAILS
+================================ */ 
 function renderTable(data) {
   tbody.innerHTML = '';
 
@@ -252,13 +261,14 @@ function renderTable(data) {
 
   data.forEach(route => {
     const row = document.createElement('tr');
+        
     row.className = 'route-row';
 
     row.innerHTML = `
       <td>${route.name}</td>
       <td>${Number(route.distance_km).toFixed(2)}</td>
       <td>${route.elevation}</td>
-      <td>${route.estimated_moving_time}</td>
+      <td>${formatDuration(route.estimated_moving_time)}</td>
     `;
 
     const details = document.createElement('tr');
