@@ -24,7 +24,6 @@ if (!$routeId) {
     echo json_encode(['success' => false, 'error' => 'Invalid route']);
     exit;
 }
-echo ("USER: ". $internalUserId .' - ' . "Route ID: " . $routeId;
 
 // --- CONFIG ---
 $db_host = 'db.fr-pari1.bengt.wasmernet.com';
