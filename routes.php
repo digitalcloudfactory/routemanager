@@ -76,9 +76,6 @@ $stmt = $pdo->prepare("
 $stmt->execute([$internalUserId]);
 $routes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-var_dump($internalUserId);
-var_dump($pdo->query("SELECT COUNT(*) FROM strava_routes WHERE user_id = $internalUserId")->fetchColumn());
-var_dump($stmt->fetchAll(PDO::FETCH_ASSOC));
 ?>
 
 <?php include 'header.php'; ?>
@@ -452,7 +449,7 @@ function routeTypeLabel(type) {
   return {
     1: 'Ride',
     2: 'Run',
-    3: 'Walk'
+    3: 'Walk',
     6: 'Gravel'
   }[type] || 'Other';
 }
