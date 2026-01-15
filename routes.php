@@ -59,7 +59,7 @@ $user = $userStmt->fetch(PDO::FETCH_ASSOC);
 
 $stmt = $pdo->prepare("
     SELECT
-        route_id,
+        CAST(route_id AS CHAR) AS route_id,
         name,
         description,
         distance_km,
