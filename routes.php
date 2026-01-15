@@ -1,5 +1,3 @@
-
-
 <?php
 /* ===============================
 ----Important rule going forward----
@@ -322,7 +320,7 @@ function renderTable(data) {
                        <td><strong>Description</strong> ${route.description || 'No description'}</td>
                        <td>
                                 <strong>Tags</strong>
-                                <input type="text" value="${route.tags || ''}" placeholder="e.g. Gravel, Mallorca, Favorite" onblur="saveTags(${route.route_id}, this.value)">
+                                <input type="text" value="${route.tags || ''}" placeholder="e.g. Gravel, Mallorca, Favorite" onblur="saveTags('${route.route_id}', this.value)">
                                 <small>Comma separated</small>
                        </td>
                       </tr>
