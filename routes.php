@@ -266,7 +266,7 @@ function renderTable(data) {
     details.innerHTML = `
       <td colspan="4">
         <article>
-        
+          <p><strong>Created at</strong> ${date('Y-m-d', strtotime($route['created_at']))};<br>
           <p><strong>Description</strong><br> ${route.description || 'No description'}
           </p>
           <div id="map-${route.route_id}" class="route-map"></div>
