@@ -280,17 +280,19 @@ function renderTable(data) {
         <article>
            <table><tbody>
                       <tr>
-                        <td>Name: ${route.name}</td>
-                        <td>Distance: ${Number(route.distance_km).toFixed(2)}</td>
-                        <td>Elevation: ${route.elevation}</td>
-                        <td>Moving Time: ${formatDuration(route.estimated_moving_time)}</td>
+                        <td><strong>Name:</strong> ${route.name}</td>
+                        <td><strong>Distance:</strong> ${Number(route.distance_km).toFixed(2)}</td>
+                        <td><strong>Elevation:</strong> ${route.elevation}</td>
+                        <td><strong>Moving Time:</strong> ${formatDuration(route.estimated_moving_time)}</td>
                       </tr>
                       <tr>
-                        <td><strong>Created at</strong> ${route.created_date}</td>
-                        <td>Type:${routeTypeLabel(route.type)}</td>
-                        <td>Starred:</td>
-                        <td>Private:</td>
-                        <td><strong>Description</strong><br> ${route.description || 'No description'}</td>
+                        <td><strong>Created at:</strong> ${route.created_date}</td>
+                        <td><strong>Type:</strong>${routeTypeLabel(route.type)}</td>
+                        <td><strong>Starred:</strong></td>
+                        <td><strong>Private:</strong></td>
+                      </tr>
+                       <tr>
+                       <td><strong>Description</strong> ${route.description || 'No description'}</td>
                       </tr>
                     </tbody>
                     </table> 
