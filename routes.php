@@ -77,6 +77,33 @@ $stmt = $pdo->prepare("
 $stmt->execute([$internalUserId]);
 $routes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+/* ===============================
+   LOAD TAGS PER ROUTE
+================================ */
+
+$tagStmt = $pdo->prepare("
+    SELECT route_id, GROUP_CONCAT(tag ORDER BY tag SEPARATOR ', ') AS tags
+    FROM route_tags
+    WHERE route_id IN (
+        SELECT route_id FROM strava_routes WHERE user_id = ?
+    )
+    GROUP BY route_id
+");
+$tagStmt->execute([$internalUserId]);
+$tagsRaw = $tagStmt->fetchAll(PDO::FETCH_ASSOC);
+
+$tagsByRoute = [];
+foreach ($tagsRaw as $row) {
+    $tagsByRoute[$row['route_id']] = $row['tags'];
+}
+
+/* ===============================
+   attach tags to routes
+================================ */
+foreach ($routes as &$route) {
+    $route['tags'] = $tagsByRoute[$route['route_id']] ?? '';
+}
+unset($route);
 ?>
 
 <?php include 'header.php'; ?>
@@ -293,6 +320,11 @@ function renderTable(data) {
                       </tr>
                        <tr>
                        <td><strong>Description</strong> ${route.description || 'No description'}</td>
+                       <td>
+                                <strong>Tags</strong>
+                                <input type="text" value="${route.tags || ''}" placeholder="e.g. Gravel, Mallorca, Favorite" onblur="saveTags(${route.route_id}, this.value)">
+                                <small>Comma separated</small>
+                       </td>
                       </tr>
                     </tbody>
                     </table> 
@@ -323,6 +355,9 @@ function renderTable(data) {
 /* INITIAL RENDER */
 renderTable(routes);
 
+
+
+    
 
 /* ===============================
    LEAFLET MAP INIT (VISIBLE ONLY)
@@ -500,6 +535,26 @@ function haversineDistance(a, b) {
   return 2 * R * Math.asin(Math.sqrt(h));
 }
 
-    
+async function saveTags(routeId, value) {
+  const tags = value
+    .split(',')
+    .map(t => t.trim())
+    .filter(Boolean);
+
+  try {
+    const res = await fetch('save_route_tags.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ route_id: routeId, tags })
+    });
+
+    const data = await res.json();
+    if (!data.success) {
+      alert(data.error || 'Failed to save tags');
+    }
+  } catch (e) {
+    alert('Error saving tags');
+  }
+}    
 </script>
 
