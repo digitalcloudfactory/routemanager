@@ -469,24 +469,28 @@ function applyFilters() {
   const minElev = parseFloat(document.getElementById('filterElevation').value) || 0;
   const type = document.getElementById('filterType').value;
 
-    const tagInput = document.getElementById('filterTags').value
-                       .toLowerCase()
-                       .split(',')
-                       .map(t => t.trim())
-                       .filter(t => t);
+  const tagInput = document.getElementById('filterTags').value
+    .toLowerCase()
+    .split(',')
+    .map(t => t.trim())
+    .filter(Boolean);
 
-filteredRoutes = routes.filter(r => {
-  const routeTags = (r.tags || []).map(t => t.toLowerCase());
+  filteredRoutes = routes.filter(r => {
+    const routeTags = (r.tags || '')
+      .toLowerCase()
+      .split(',')
+      .map(t => t.trim())
+      .filter(Boolean);
 
-  return (
-    r.name.toLowerCase().includes(name) &&
-    r.distance_km >= minDist &&
-    r.elevation >= minElev &&
-    (!type || r.type === type) &&
-    (tagInput.length === 0 ||
-      tagInput.every(t => routeTags.includes(t)))
-  );
-});
+    return (
+      r.name.toLowerCase().includes(name) &&
+      r.distance_km >= minDist &&
+      r.elevation >= minElev &&
+      (!type || String(r.type) === type) &&
+      (tagInput.length === 0 ||
+        tagInput.every(t => routeTags.includes(t)))
+    );
+  });
 
   renderTable(filteredRoutes);
 }
