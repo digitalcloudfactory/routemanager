@@ -475,13 +475,18 @@ function applyFilters() {
                        .map(t => t.trim())
                        .filter(t => t);
 
-  filteredRoutes = routes.filter(r =>
+filteredRoutes = routes.filter(r => {
+  const routeTags = (r.tags || []).map(t => t.toLowerCase());
+
+  return (
     r.name.toLowerCase().includes(name) &&
     r.distance_km >= minDist &&
     r.elevation >= minElev &&
     (!type || r.type === type) &&
-    (tagInput.length === 0 || tagInput.every(t => r.tags.map(t2 => t2.toLowerCase()).includes(t)))
+    (tagInput.length === 0 ||
+      tagInput.every(t => routeTags.includes(t)))
   );
+});
 
   renderTable(filteredRoutes);
 }
