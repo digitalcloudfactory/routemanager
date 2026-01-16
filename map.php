@@ -32,7 +32,7 @@ $internalUserId = $_SESSION['internal_user_id'];
   <?php include 'filter_panel.php'; ?>
 </main>
 
-<?php include 'footer.php'; ?>
+
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://unpkg.com/@mapbox/polyline"></script>
 
@@ -89,3 +89,4 @@ drawRoutes(routes);
 </script>
 
 <script src="routes_shared.js"></script>
+<?php include 'footer.php'; ?>
