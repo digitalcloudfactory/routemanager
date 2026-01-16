@@ -178,7 +178,7 @@ tr.route-row { cursor: pointer; font-size: 0.55rem;}
 
 <section class="grid">
 <div>
-    <a href="map.php<?= !empty($_SERVER['QUERY_STRING']) ? '?' . $_SERVER['QUERY_STRING'] : '' ?>">Map view</a>
+    <a href="map.php<?= isset($_SERVER['QUERY_STRING']) && $_SERVER['QUERY_STRING'] ? '?' . $_SERVER['QUERY_STRING'] : '' ?>">Map view</a>
 </div>    
     <div>
     <button id="fetchRoutes" type="button">
@@ -281,7 +281,7 @@ function renderTable(data) {
                         <td><strong>Private:</strong></td>
                       </tr>
                        <tr>
-                       <<td><strong>Route ID:</strong> ${route.route_id}</td>
+                       <td><strong>Route ID:</strong> ${route.route_id}</td>
                        <td><strong>Description</strong> ${route.description || 'No description'}</td>
                        <td>
                                 <strong>Tags</strong>
@@ -489,8 +489,10 @@ async function saveTags(routeId, value) {
   }
 }
     
-
-<script src="routes_shared.js"></script>
-    
 </script>
 
+<script>
+const routes = <?= json_encode($routes, JSON_UNESCAPED_UNICODE); ?>;
+</script>
+
+<script src="routes_shared.js"></script>
