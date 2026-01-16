@@ -41,10 +41,10 @@ $internalUserId = $_SESSION['internal_user_id'];
 
 <section class="grid">
 <div>
-    <a href="map.php<?= htmlspecialchars($_SERVER['QUERY_STRING'] ? '?' . $_SERVER['QUERY_STRING'] : '') ?>"
+<a href="routes.php<?= htmlspecialchars($_SERVER['QUERY_STRING'] ? '?' . $_SERVER['QUERY_STRING'] : '') ?>"
    role="button"
    class="secondary">
-   Map view
+   Table view
 </a>
 </div>    
     <div>
