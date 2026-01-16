@@ -1,5 +1,3 @@
-
-
 <?php
 /* ===============================
 ----Important rule going forward----
@@ -61,14 +59,15 @@ $user = $userStmt->fetch(PDO::FETCH_ASSOC);
 
 $stmt = $pdo->prepare("
     SELECT
-        route_id,
+        CAST(route_id AS CHAR) AS route_id,
         name,
         description,
         distance_km,
         elevation,
         type,
         estimated_moving_time,
-        summary_polyline
+        summary_polyline,
+        DATE(created_at) AS created_date
     FROM strava_routes
     WHERE user_id = ?
     ORDER BY updated_at DESC
@@ -76,13 +75,40 @@ $stmt = $pdo->prepare("
 $stmt->execute([$internalUserId]);
 $routes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+/* ===============================
+   LOAD TAGS PER ROUTE
+================================ */
+
+$tagStmt = $pdo->prepare("
+    SELECT route_id, GROUP_CONCAT(tag ORDER BY tag SEPARATOR ', ') AS tags
+    FROM route_tags
+    WHERE route_id IN (
+        SELECT route_id FROM strava_routes WHERE user_id = ?
+    )
+    GROUP BY route_id
+");
+$tagStmt->execute([$internalUserId]);
+$tagsRaw = $tagStmt->fetchAll(PDO::FETCH_ASSOC);
+
+$tagsByRoute = [];
+foreach ($tagsRaw as $row) {
+    $tagsByRoute[$row['route_id']] = $row['tags'];
+}
+
+/* ===============================
+   attach tags to routes
+================================ */
+foreach ($routes as &$route) {
+    $route['tags'] = $tagsByRoute[$route['route_id']] ?? '';
+}
+unset($route);
 ?>
 
 <?php include 'header.php'; ?>
 <script src="https://unpkg.com/@mapbox/polyline"></script>
 
 <style>
-tr.route-row { cursor: pointer; }
+tr.route-row { cursor: pointer; font-size: 0.55rem;}
 .route-details article { margin-top: 1rem; }
 .route-map { height: 300px; border-radius: 12px; }
 
@@ -209,16 +235,20 @@ tr.route-row { cursor: pointer; }
         <option value="1">Ride</option>
         <option value="2">Run</option>
         <option value="3">Walk</option>
+        <option value="6">Gravel</option>
       </select>
     </label>
 
+    <label>
+        Tags
+        <input id="filterTags" type="text" placeholder="Comma-separated tags">
+    </label>
+      
     <footer>
       <button class="secondary" onclick="clearFilters()">Clear</button>
     </footer>
   </article>
 </aside>
-
-
     
 </main>
 
@@ -232,9 +262,18 @@ const routes = <?= json_encode($routes, JSON_UNESCAPED_UNICODE); ?>;
 const tbody = document.getElementById('routesBody');
 
 /* ===============================
-   RENDER TABLE + INLINE DETAILS
+   RENDER Seconds to Exact Moving time
 ================================ */
 
+function formatDuration(seconds) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+/* ===============================
+   RENDER TABLE + INLINE DETAILS
+================================ */ 
 function renderTable(data) {
   tbody.innerHTML = '';
 
@@ -251,13 +290,14 @@ function renderTable(data) {
 
   data.forEach(route => {
     const row = document.createElement('tr');
+        
     row.className = 'route-row';
 
     row.innerHTML = `
       <td>${route.name}</td>
       <td>${Number(route.distance_km).toFixed(2)}</td>
       <td>${route.elevation}</td>
-      <td>${route.estimated_moving_time}</td>
+      <td>${formatDuration(route.estimated_moving_time)}</td>
     `;
 
     const details = document.createElement('tr');
@@ -266,9 +306,30 @@ function renderTable(data) {
     details.innerHTML = `
       <td colspan="4">
         <article>
-        
-          <p><strong>Description</strong><br> ${route.description || 'No description'}
-          </p>
+           <table><tbody>
+                      <tr>
+                        <td><strong>Name:</strong> ${route.name}</td>
+                        <td><strong>Distance:</strong> ${Number(route.distance_km).toFixed(2)}</td>
+                        <td><strong>Elevation:</strong> ${route.elevation}</td>
+                        <td><strong>Moving Time:</strong> ${formatDuration(route.estimated_moving_time)}</td>
+                      </tr>
+                      <tr>
+                        <td><strong>Created at:</strong> ${route.created_date}</td>
+                        <td><strong>Type:</strong>${routeTypeLabel(route.type)}</td>
+                        <td><strong>Starred:</strong></td>
+                        <td><strong>Private:</strong></td>
+                      </tr>
+                       <tr>
+                       <<td><strong>Route ID:</strong> ${route.route_id}</td>
+                       <td><strong>Description</strong> ${route.description || 'No description'}</td>
+                       <td>
+                                <strong>Tags</strong>
+                                <input type="text" value="${route.tags || ''}" placeholder="e.g. Gravel, Mallorca, Favorite" onblur="saveTags('${route.route_id}', this.value)">
+                                <small>Comma separated</small>
+                       </td>
+                      </tr>
+                    </tbody>
+                    </table> 
           <div id="map-${route.route_id}" class="route-map"></div>
           <p>
             <a href="https://www.strava.com/routes/${route.route_id}"
@@ -296,6 +357,9 @@ function renderTable(data) {
 /* INITIAL RENDER */
 renderTable(routes);
 
+
+
+    
 
 /* ===============================
    LEAFLET MAP INIT (VISIBLE ONLY)
@@ -405,12 +469,28 @@ function applyFilters() {
   const minElev = parseFloat(document.getElementById('filterElevation').value) || 0;
   const type = document.getElementById('filterType').value;
 
-  filteredRoutes = routes.filter(r =>
-    r.name.toLowerCase().includes(name) &&
-    r.distance_km >= minDist &&
-    r.elevation >= minElev &&
-    (!type || Number(r.type) === Number(type))
-  );
+  const tagInput = document.getElementById('filterTags').value
+    .toLowerCase()
+    .split(',')
+    .map(t => t.trim())
+    .filter(Boolean);
+
+  filteredRoutes = routes.filter(r => {
+    const routeTags = (r.tags || '')
+      .toLowerCase()
+      .split(',')
+      .map(t => t.trim())
+      .filter(Boolean);
+
+    return (
+      r.name.toLowerCase().includes(name) &&
+      r.distance_km >= minDist &&
+      r.elevation >= minElev &&
+      (!type || String(r.type) === type) &&
+      (tagInput.length === 0 ||
+        tagInput.every(t => routeTags.includes(t)))
+    );
+  });
 
   renderTable(filteredRoutes);
 }
@@ -420,14 +500,15 @@ function clearFilters() {
   document.getElementById('filterDistance').value = '';
   document.getElementById('filterElevation').value = '';
   document.getElementById('filterType').value = '';
-  applyFilters();
+  document.getElementById('filterTags').value = '';
+applyFilters();
 }
 
 /* ===============================
    EVENTS
 ================================ */
 
-['filterName','filterDistance','filterElevation','filterType']
+['filterName','filterDistance','filterElevation','filterType','filterTags']
   .forEach(id => {
     document.getElementById(id).addEventListener('input', applyFilters);
   });
@@ -477,5 +558,27 @@ function onFiltersUpdated(data) {
   renderTable(data);
 }
     
+
+async function saveTags(routeId, value) {
+  const tags = value
+    .split(',')
+    .map(t => t.trim())
+    .filter(Boolean);
+
+  try {
+    const res = await fetch('save_route_tags.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ route_id: routeId, tags })
+    });
+
+    const data = await res.json();
+    if (!data.success) {
+      alert(data.error || 'Failed to save tags');
+    }
+  } catch (e) {
+    alert('Error saving tags');
+  }
+}    
 </script>
 

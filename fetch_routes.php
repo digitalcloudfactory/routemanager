@@ -118,7 +118,6 @@ $insert = $pdo->prepare("
     type = VALUES(type),
     private = VALUES(private),
     starred = VALUES(starred),
-    created_at = VALUES(created_at),
     estimated_moving_time = VALUES(estimated_moving_time),
     summary_polyline = VALUES(summary_polyline)
 ");
@@ -129,8 +128,8 @@ $count = 0;
 try {
     foreach ($routes as $route) {
         $routeType = $route['type'] ?? null;
-        
-        
+        $createdAt = !empty($route['created_at']) ? date('Y-m-d H:i:s', strtotime($route['created_at'])) : null;
+
         $insert->execute([
             ':user'        => $internalUserId,
             ':rid'         => $route['id'],
@@ -141,7 +140,7 @@ try {
             ':type'        => $routeType,
             ':private'   => $route['private'],
             ':starred'   => $route['starred'],
-            ':created_at'   => $route['created_at'],
+            ':created_at'   => $createdAt,
             ':estimated_moving_time'    => $route['estimated_moving_time'],
             ':polyline'    => $route['map']['summary_polyline'] ?? null
         ]);
