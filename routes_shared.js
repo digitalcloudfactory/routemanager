@@ -20,6 +20,15 @@ function updateURLFromFilters() {
   history.replaceState({}, '', newUrl);
 }
 
+function clearFilters() {
+  document.getElementById('filterName').value = '';
+  document.getElementById('filterDistance').value = '';
+  document.getElementById('filterElevation').value = '';
+  document.getElementById('filterType').value = '';
+  document.getElementById('filterTags').value = '';
+applyFilters();
+}
+
 function loadFiltersFromURL() {
   const params = new URLSearchParams(window.location.search);
 
