@@ -26,11 +26,21 @@ function clearFilters() {
   document.getElementById('filterElevation').value = '';
   document.getElementById('filterType').value = '';
   document.getElementById('filterTags').value = '';
+  
 applyFilters();
+updateURLFromFilters();
 }
 
 function loadFiltersFromURL() {
   const params = new URLSearchParams(window.location.search);
+
+  const filterName = document.getElementById('filterName');
+  const filterDistance = document.getElementById('filterDistance');
+  const filterElevation = document.getElementById('filterElevation');
+  const filterType = document.getElementById('filterType');
+  const filterTags = document.getElementById('filterTags');
+
+  if (!filterName) return; // safety check
 
   if (params.has('name')) filterName.value = params.get('name');
   if (params.has('minDist')) filterDistance.value = params.get('minDist');
@@ -65,18 +75,7 @@ function applyFilters() {
   });
 
   renderTable(filteredRoutes);
-
-  // --- Update URL query string ---
-  const params = new URLSearchParams();
-  if (name) params.set('name', name);
-  if (minDist) params.set('minDist', minDist);
-  if (minElev) params.set('minElev', minElev);
-  if (type) params.set('type', type);
-  if (tags) params.set('tags', tags);
-
-  const newUrl = window.location.pathname + '?' + params.toString();
-  window.history.replaceState({}, '', newUrl);
-
+  updateURLFromFilters();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
