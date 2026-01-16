@@ -36,38 +36,38 @@ document.addEventListener('DOMContentLoaded', loadFiltersFromURL);
 
 
 function applyFilters() {
-  const name = document.getElementById('filterName')?.value.toLowerCase() || '';
-  const minDist = parseFloat(document.getElementById('filterDistance')?.value) || 0;
-  const minElev = parseFloat(document.getElementById('filterElevation')?.value) || 0;
-  const type = document.getElementById('filterType')?.value || '';
+  const name = document.getElementById('filterName').value.trim();
+  const minDist = document.getElementById('filterDistance').value.trim();
+  const minElev = document.getElementById('filterElevation').value.trim();
+  const type = document.getElementById('filterType').value;
+  const tags = document.getElementById('filterTags').value.trim();
 
-  const tagInput = (document.getElementById('filterTags')?.value || '')
-    .toLowerCase()
-    .split(',')
-    .map(t => t.trim())
-    .filter(Boolean);
-
+  // Apply filtering logic
   filteredRoutes = routes.filter(r => {
-    const routeTags = (r.tags || '')
-      .split(',')
-      .map(t => t.trim().toLowerCase())
-      .filter(Boolean);
+    const routeTags = (r.tags || '').split(',').map(t => t.trim().toLowerCase());
 
     return (
-      r.name.toLowerCase().includes(name) &&
-      r.distance_km >= minDist &&
-      r.elevation >= minElev &&
-      (!type || String(r.type) === String(type)) &&
-      (tagInput.length === 0 || tagInput.every(t => routeTags.includes(t)))
+      (!name || r.name.toLowerCase().includes(name.toLowerCase())) &&
+      (!minDist || r.distance_km >= parseFloat(minDist)) &&
+      (!minElev || r.elevation >= parseFloat(minElev)) &&
+      (!type || r.type == type) &&
+      (!tags || tags.split(',').every(t => routeTags.includes(t.trim().toLowerCase())))
     );
   });
 
-  // 🔥 THIS IS THE IMPORTANT PART
-  if (typeof onFiltersUpdated === 'function') {
-    onFiltersUpdated(filteredRoutes);
-  } else if (typeof renderTable === 'function') {
-    renderTable(filteredRoutes);
-  }
+  renderTable(filteredRoutes);
+
+  // --- Update URL query string ---
+  const params = new URLSearchParams();
+  if (name) params.set('name', name);
+  if (minDist) params.set('minDist', minDist);
+  if (minElev) params.set('minElev', minElev);
+  if (type) params.set('type', type);
+  if (tags) params.set('tags', tags);
+
+  const newUrl = window.location.pathname + '?' + params.toString();
+  window.history.replaceState({}, '', newUrl);
+
 }
 
 document.addEventListener('DOMContentLoaded', () => {
