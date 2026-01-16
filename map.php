@@ -14,12 +14,53 @@ $internalUserId = $_SESSION['internal_user_id'];
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/@mapbox/polyline"></script>
+
 <style>
 #map {
   height: calc(100vh - 120px);
   border-radius: 12px;
 }
 </style>
+
+
+<main class="container">
+
+<header class="grid">
+  <div class="grid" style="align-items:center">
+    <img src="<?= htmlspecialchars($user['avatar']) ?>"
+         alt="Avatar"
+         width="64"
+         style="border-radius:50%">
+    <div>
+      <strong><?= htmlspecialchars($user['firstname'].' '.$user['lastname']) ?></strong><br>
+      <small>Last Strava Sync: <?= htmlspecialchars($user['last_routes_sync']) ?></small>
+    </div>
+  </div>
+
+<section class="grid">
+<div>
+    <a href="map.php<?= htmlspecialchars($_SERVER['QUERY_STRING'] ? '?' . $_SERVER['QUERY_STRING'] : '') ?>"
+   role="button"
+   class="secondary">
+   Map view
+</a>
+</div>    
+    <div>
+    <button id="fetchRoutes" type="button">
+      Fetch new routes from Strava
+    </button>
+  </div>
+  <div style="text-align:right">
+    <button id="openFilters" class="secondary" type="button">
+      Filters
+    </button>
+  </div>
+</section>    
+</header>
+
+
 
 <main class="container">
   <header class="grid">
@@ -33,8 +74,7 @@ $internalUserId = $_SESSION['internal_user_id'];
 </main>
 
 
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="https://unpkg.com/@mapbox/polyline"></script>
+
 
 <script>
 const routes = <?= json_encode($routes, JSON_UNESCAPED_UNICODE); ?>;
