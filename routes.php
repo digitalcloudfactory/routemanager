@@ -472,7 +472,10 @@ function haversineDistance(a, b) {
 
   return 2 * R * Math.asin(Math.sqrt(h));
 }
-
+    
+function onFiltersUpdated(data) {
+  renderTable(data);
+}
     
 </script>
 
