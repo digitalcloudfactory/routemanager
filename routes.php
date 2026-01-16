@@ -500,8 +500,9 @@ function applyFilters() {
         tagInput.every(t => routeTags.includes(t)))
     );
   });
-
+   
   renderTable(filteredRoutes);
+  updateURLFromFilters();
 }
 
 function clearFilters() {
