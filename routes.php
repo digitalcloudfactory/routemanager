@@ -468,60 +468,10 @@ function toggleFilters(open) {
   panel.setAttribute('aria-hidden', !open);
 }
 
-/* ===============================
-   FILTER LOGIC
-================================ */
-
-function applyFilters() {
-  const name = document.getElementById('filterName').value.toLowerCase();
-  const minDist = parseFloat(document.getElementById('filterDistance').value) || 0;
-  const minElev = parseFloat(document.getElementById('filterElevation').value) || 0;
-  const type = document.getElementById('filterType').value;
-
-  const tagInput = document.getElementById('filterTags').value
-    .toLowerCase()
-    .split(',')
-    .map(t => t.trim())
-    .filter(Boolean);
-
-  filteredRoutes = routes.filter(r => {
-    const routeTags = (r.tags || '')
-      .toLowerCase()
-      .split(',')
-      .map(t => t.trim())
-      .filter(Boolean);
-
-    return (
-      r.name.toLowerCase().includes(name) &&
-      r.distance_km >= minDist &&
-      r.elevation >= minElev &&
-      (!type || String(r.type) === type) &&
-      (tagInput.length === 0 ||
-        tagInput.every(t => routeTags.includes(t)))
-    );
-  });
-   
-  renderTable(filteredRoutes);
-  updateURLFromFilters();
-}
-
-function clearFilters() {
-  document.getElementById('filterName').value = '';
-  document.getElementById('filterDistance').value = '';
-  document.getElementById('filterElevation').value = '';
-  document.getElementById('filterType').value = '';
-  document.getElementById('filterTags').value = '';
-applyFilters();
-}
 
 /* ===============================
    EVENTS
 ================================ */
-
-['filterName','filterDistance','filterElevation','filterType','filterTags']
-  .forEach(id => {
-    document.getElementById(id).addEventListener('input', applyFilters);
-  });
 
 
 const filterBtn = document.getElementById('openFilters');
@@ -564,9 +514,7 @@ function haversineDistance(a, b) {
   return 2 * R * Math.asin(Math.sqrt(h));
 }
     
-function onFiltersUpdated(data) {
-  renderTable(data);
-}
+
     
 
 async function saveTags(routeId, value) {
@@ -589,6 +537,9 @@ async function saveTags(routeId, value) {
   } catch (e) {
     alert('Error saving tags');
   }
-}    
+}
+
+<script src="routes_shared.js"></script>
+    
 </script>
 
