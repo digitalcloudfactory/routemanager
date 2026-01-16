@@ -491,8 +491,4 @@ async function saveTags(routeId, value) {
     
 </script>
 
-<script>
-const routes = <?= json_encode($routes, JSON_UNESCAPED_UNICODE); ?>;
-</script>
-
 <script src="routes_shared.js"></script>
