@@ -1,3 +1,26 @@
+function updateURLFromFilters() {
+  const params = new URLSearchParams();
+
+  const name = document.getElementById('filterName').value.trim();
+  const minDist = document.getElementById('filterDistance').value;
+  const minElev = document.getElementById('filterElevation').value;
+  const type = document.getElementById('filterType').value;
+  const tags = document.getElementById('filterTags').value.trim();
+
+  if (name) params.set('name', name);
+  if (minDist) params.set('minDist', minDist);
+  if (minElev) params.set('minElev', minElev);
+  if (type) params.set('type', type);
+  if (tags) params.set('tags', tags);
+
+  const newUrl =
+    window.location.pathname +
+    (params.toString() ? '?' + params.toString() : '');
+
+  history.replaceState({}, '', newUrl);
+}
+
+
 function applyFilters() {
   const name = document.getElementById('filterName')?.value.toLowerCase() || '';
   const minDist = parseFloat(document.getElementById('filterDistance')?.value) || 0;
