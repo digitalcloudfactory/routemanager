@@ -178,11 +178,7 @@ tr.route-row { cursor: pointer; font-size: 0.55rem;}
 
 <section class="grid">
 <div>
-    <a href="map.php<?= htmlspecialchars($_SERVER['QUERY_STRING'] ? '?' . $_SERVER['QUERY_STRING'] : '') ?>"
-   role="button"
-   class="secondary">
-   Map view
-</a>
+    <a href=map.php<?= htmlspecialchars($_SERVER['QUERY_STRING'] ? '?' . $_SERVER['QUERY_STRING'] : '') ?> role="button" class="secondary">Map view</a>
 </div>    
     <div>
     <button id="fetchRoutes" type="button">
@@ -214,51 +210,7 @@ tr.route-row { cursor: pointer; font-size: 0.55rem;}
 </table>
 </figure>
 </section>
-
-<aside id="filterPanel" aria-hidden="true">
-  <article>
-    <header class="grid">
-      <strong>Filters</strong>
-      <a href="#" aria-label="Close" onclick="toggleFilters(false)"></a>
-    </header>
-
-    <label>
-      Name
-      <input id="filterName" type="text" placeholder="Route name">
-    </label>
-
-    <label>
-      Min distance (km)
-      <input id="filterDistance" type="number" min="0" step="0.1">
-    </label>
-
-    <label>
-      Min elevation (m)
-      <input id="filterElevation" type="number" min="0">
-    </label>
-
-    <label>
-      Type
-      <select id="filterType">
-        <option value="">All</option>
-        <option value="1">Ride</option>
-        <option value="2">Run</option>
-        <option value="3">Walk</option>
-        <option value="6">Gravel</option>
-      </select>
-    </label>
-
-    <label>
-        Tags
-        <input id="filterTags" type="text" placeholder="Comma-separated tags">
-    </label>
-      
-    <footer>
-      <button class="secondary" onclick="clearFilters()">Clear</button>
-    </footer>
-  </article>
-</aside>
-    
+  <?php include 'filter_panel.php'; ?>  
 </main>
 
 <?php include 'footer.php'; ?>
@@ -362,13 +314,11 @@ function renderTable(data) {
 }
 
 
-
 /* INITIAL RENDER */
 renderTable(routes);
 
 
 
-    
 
 /* ===============================
    LEAFLET MAP INIT (VISIBLE ONLY)
@@ -538,6 +488,7 @@ async function saveTags(routeId, value) {
     alert('Error saving tags');
   }
 }
+    
 
 <script src="routes_shared.js"></script>
     
