@@ -32,3 +32,19 @@ function applyFilters() {
     renderTable(filteredRoutes);
   }
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  ['filterName','filterDistance','filterElevation','filterType','filterTags']
+    .forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('input', applyFilters);
+    });
+
+  const filterBtn = document.getElementById('openFilters');
+  if (filterBtn) {
+    filterBtn.onclick = () => {
+      const panel = document.getElementById('filterPanel');
+      panel.classList.toggle('open');
+    };
+  }
+});
