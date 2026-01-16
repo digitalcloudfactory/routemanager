@@ -553,6 +553,11 @@ function haversineDistance(a, b) {
 
   return 2 * R * Math.asin(Math.sqrt(h));
 }
+    
+function onFiltersUpdated(data) {
+  renderTable(data);
+}
+    
 
 async function saveTags(routeId, value) {
   const tags = value
