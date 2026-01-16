@@ -6,13 +6,97 @@ if (!isset($_SESSION['internal_user_id'])) {
 }
 $internalUserId = $_SESSION['internal_user_id'];
 
-// same DB + routes + tags loading as routes.php
-// produce $routes array
+/* ===============================
+   DATABASE CONFIG
+================================ */
+
+$db_host = 'db.fr-pari1.bengt.wasmernet.com';
+$db_port = 10272;
+$db_name = 'routes';
+$db_user = '68a00bc6768780007ea0fea26ffa';
+$db_pass = '069668a0-0bc6-788a-8000-597667343eee';
+
+$pdo = new PDO(
+    "mysql:host=$db_host;port=$db_port;dbname=$db_name;charset=utf8mb4",
+    $db_user,
+    $db_pass,
+    [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4"
+    ]
+);
+
+/* ===============================
+   LOAD USER PROFILE
+================================ */
+
+$userStmt = $pdo->prepare("
+    SELECT firstname, lastname, avatar,last_routes_sync
+    FROM users
+    WHERE id = ?
+");
+$userStmt->execute([$internalUserId]);
+$user = $userStmt->fetch(PDO::FETCH_ASSOC);
+
+/* ===============================
+   LOAD ROUTES (PER USER)
+================================ */
+
+$stmt = $pdo->prepare("
+    SELECT
+        CAST(route_id AS CHAR) AS route_id,
+        name,
+        description,
+        distance_km,
+        elevation,
+        type,
+        estimated_moving_time,
+        summary_polyline,
+        DATE(created_at) AS created_date
+    FROM strava_routes
+    WHERE user_id = ?
+    ORDER BY updated_at DESC
+");
+$stmt->execute([$internalUserId]);
+$routes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+/* ===============================
+   LOAD TAGS PER ROUTE
+================================ */
+
+$tagStmt = $pdo->prepare("
+    SELECT route_id, GROUP_CONCAT(tag ORDER BY tag SEPARATOR ', ') AS tags
+    FROM route_tags
+    WHERE route_id IN (
+        SELECT route_id FROM strava_routes WHERE user_id = ?
+    )
+    GROUP BY route_id
+");
+$tagStmt->execute([$internalUserId]);
+$tagsRaw = $tagStmt->fetchAll(PDO::FETCH_ASSOC);
+
+$tagsByRoute = [];
+foreach ($tagsRaw as $row) {
+    $tagsByRoute[$row['route_id']] = $row['tags'];
+}
+
+/* ===============================
+   attach tags to routes
+================================ */
+foreach ($routes as &$route) {
+    $route['tags'] = $tagsByRoute[$route['route_id']] ?? '';
+}
+unset($route);
+
+
 ?>
 
 <?php include 'header.php'; ?>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/@mapbox/polyline"></script>
 
 <style>
 #map {
@@ -21,11 +105,48 @@ $internalUserId = $_SESSION['internal_user_id'];
 }
 </style>
 
+<body>
 <main class="container">
-  <header class="grid">
-    <strong>Route Map</strong>
+
+<header class="grid">
+  <div class="grid" style="align-items:center">
+    <img src="<?= htmlspecialchars($user['avatar']) ?>"
+         alt="Avatar"
+         width="64"
+         style="border-radius:50%">
+    <div>
+      <strong><?= htmlspecialchars($user['firstname'].' '.$user['lastname']) ?></strong><br>
+      <small>Last Strava Sync: <?= htmlspecialchars($user['last_routes_sync']) ?></small>
+    </div>
+  </div>
+
+<section class="grid">
+<div>
+<a href="routes.php<?= htmlspecialchars($_SERVER['QUERY_STRING'] ? '?' . $_SERVER['QUERY_STRING'] : '') ?>"
+   role="button"
+   class="secondary">
+   Table view
+</a>
+</div>    
+    <div>
+    <button id="fetchRoutes" type="button">
+      Fetch new routes from Strava
+    </button>
+  </div>
+  <div style="text-align:right">
+    <button id="openFilters" class="secondary" type="button">
+      Filters
+    </button>
+  </div>
+</section>    
+</header>
+
+
+<div>
+     <strong>Route Map</strong>
     <button id="openFilters" class="secondary">Filters</button>
-  </header>
+</div>
+
 
   <div id="map"></div>
 
@@ -33,8 +154,7 @@ $internalUserId = $_SESSION['internal_user_id'];
 </main>
 
 
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="https://unpkg.com/@mapbox/polyline"></script>
+
 
 <script>
 const routes = <?= json_encode($routes, JSON_UNESCAPED_UNICODE); ?>;
