@@ -24,7 +24,7 @@ $internalUserId = $_SESSION['internal_user_id'];
 }
 </style>
 
-
+<body>
 <main class="container">
 
 <header class="grid">
@@ -61,12 +61,11 @@ $internalUserId = $_SESSION['internal_user_id'];
 </header>
 
 
-
-<main class="container">
-  <header class="grid">
-    <strong>Route Map</strong>
+<div>
+     <strong>Route Map</strong>
     <button id="openFilters" class="secondary">Filters</button>
-  </header>
+</div>
+
 
   <div id="map"></div>
 
