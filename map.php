@@ -89,6 +89,7 @@ foreach ($routes as &$route) {
 unset($route);
 
 
+
 ?>
 
 <?php include 'header.php'; ?>
@@ -204,8 +205,26 @@ function onFiltersUpdated(data) {
   drawRoutes(data);
 }
 
-// initial render
-drawRoutes(routes);
+const params = new URLSearchParams(window.location.search);
+const name = params.get('name') || '';
+const minDist = parseFloat(params.get('minDist')) || 0;
+const minElev = parseFloat(params.get('minElev')) || 0;
+const type = params.get('type') || '';
+const tags = (params.get('tags') || '').toLowerCase().split(',').map(t => t.trim()).filter(Boolean);
+
+const filteredRoutes = routes.filter(r => {
+  const routeTags = (r.tags || '').split(',').map(t => t.trim().toLowerCase());
+
+  return (
+    (!name || r.name.toLowerCase().includes(name.toLowerCase())) &&
+    (!minDist || r.distance_km >= minDist) &&
+    (!minElev || r.elevation >= minElev) &&
+    (!type || r.type == type) &&
+    (!tags.length || tags.every(t => routeTags.includes(t)))
+  );
+});
+
+drawRoutes(filteredRoutes);
 </script>
 
 <script src="routes_shared.js"></script>
