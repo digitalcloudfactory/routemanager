@@ -20,6 +20,20 @@ function updateURLFromFilters() {
   history.replaceState({}, '', newUrl);
 }
 
+function loadFiltersFromURL() {
+  const params = new URLSearchParams(window.location.search);
+
+  if (params.has('name')) filterName.value = params.get('name');
+  if (params.has('minDist')) filterDistance.value = params.get('minDist');
+  if (params.has('minElev')) filterElevation.value = params.get('minElev');
+  if (params.has('type')) filterType.value = params.get('type');
+  if (params.has('tags')) filterTags.value = params.get('tags');
+
+  applyFilters();
+}
+
+document.addEventListener('DOMContentLoaded', loadFiltersFromURL);
+
 
 function applyFilters() {
   const name = document.getElementById('filterName')?.value.toLowerCase() || '';
