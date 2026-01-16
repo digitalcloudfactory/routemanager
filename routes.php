@@ -18,7 +18,6 @@ if (!isset($_SESSION['internal_user_id'])) {
     header("Location: index.php");
     exit;
 }
-
 $internalUserId = $_SESSION['internal_user_id'];
 
 /* ===============================
@@ -105,6 +104,8 @@ unset($route);
 ?>
 
 <?php include 'header.php'; ?>
+
+
 <script src="https://unpkg.com/@mapbox/polyline"></script>
 
 <style>
@@ -157,6 +158,7 @@ tr.route-row { cursor: pointer; font-size: 0.55rem;}
 </style>
 
 
+
 <body>
 
 
@@ -175,7 +177,14 @@ tr.route-row { cursor: pointer; font-size: 0.55rem;}
   </div>
 
 <section class="grid">
-  <div>
+<div>
+    <a href="map.php<?= htmlspecialchars($_SERVER['QUERY_STRING'] ? '?' . $_SERVER['QUERY_STRING'] : '') ?>"
+   role="button"
+   class="secondary">
+   Map view
+</a>
+</div>    
+    <div>
     <button id="fetchRoutes" type="button">
       Fetch new routes from Strava
     </button>
