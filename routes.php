@@ -178,7 +178,7 @@ tr.route-row { cursor: pointer; font-size: 0.55rem;}
 
 <section class="grid">
 <div>
-    <a href=map.php<?= htmlspecialchars($_SERVER['QUERY_STRING'] ? '?' . $_SERVER['QUERY_STRING'] : '') ?> role="button" class="secondary">Map view</a>
+    <a href="map.php<?= !empty($_SERVER['QUERY_STRING']) ? '?' . $_SERVER['QUERY_STRING'] : '' ?>">Map view</a>
 </div>    
     <div>
     <button id="fetchRoutes" type="button">
