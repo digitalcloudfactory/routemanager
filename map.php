@@ -142,13 +142,6 @@ unset($route);
 </section>    
 </header>
 
-
-<div>
-     <strong>Route Map</strong>
-    <button id="openFilters" class="secondary">Filters</button>
-</div>
-
-
   <div id="map"></div>
 
   <?php include 'filter_panel.php'; ?>
