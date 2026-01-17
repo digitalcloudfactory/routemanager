@@ -55,28 +55,38 @@ document.addEventListener('DOMContentLoaded', loadFiltersFromURL);
 
 
 function applyFilters() {
-  const name = document.getElementById('filterName').value.trim();
-  const minDist = document.getElementById('filterDistance').value.trim();
-  const minElev = document.getElementById('filterElevation').value.trim();
-  const type = document.getElementById('filterType').value;
-  const tags = document.getElementById('filterTags').value.trim();
+  const name = filterName.value.trim();
+  const minDist = filterDistance.value;
+  const minElev = filterElevation.value;
+  const type = filterType.value;
+  const tags = filterTags.value.trim();
 
-  // Apply filtering logic
   filteredRoutes = routes.filter(r => {
-    const routeTags = (r.tags || '').split(',').map(t => t.trim().toLowerCase());
+    const routeTags = (r.tags || '')
+      .split(',')
+      .map(t => t.trim().toLowerCase());
 
     return (
       (!name || r.name.toLowerCase().includes(name.toLowerCase())) &&
-      (!minDist || r.distance_km >= parseFloat(minDist)) &&
-      (!minElev || r.elevation >= parseFloat(minElev)) &&
+      (!minDist || r.distance_km >= minDist) &&
+      (!minElev || r.elevation >= minElev) &&
       (!type || r.type == type) &&
-      (!tags || tags.split(',').every(t => routeTags.includes(t.trim().toLowerCase())))
+      (!tags || tags.split(',').every(t =>
+        routeTags.includes(t.trim().toLowerCase())
+      ))
     );
   });
 
-  renderTable(filteredRoutes);
-  updateURLFromFilters();
+  // Render depending on page
+  if (typeof renderTable === 'function') {
+    renderTable(filteredRoutes);
+  }
+
+  if (typeof drawRoutes === 'function') {
+    drawRoutes(filteredRoutes);
+  }
 }
+
 
 document.addEventListener('DOMContentLoaded', () => {
   ['filterName','filterDistance','filterElevation','filterType','filterTags']
@@ -93,3 +103,30 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
 });
+
+
+document.addEventListener('DOMContentLoaded', () => {
+  [
+    filterName,
+    filterDistance,
+    filterElevation,
+    filterType,
+    filterTags
+  ].forEach(el => {
+    if (!el) return;
+    el.addEventListener('input', () => {
+      applyFilters();
+      updateURLFromFilters(); // 🔥 THIS LINE
+    });
+  });
+
+  document
+    .getElementById('clearFilters')
+    ?.addEventListener('click', () => {
+      clearFilters();
+      updateURLFromFilters();
+    });
+
+  loadFiltersFromURL();
+});
+
