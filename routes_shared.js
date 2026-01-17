@@ -55,11 +55,23 @@ document.addEventListener('DOMContentLoaded', loadFiltersFromURL);
 
 
 function applyFilters() {
-  const name = filterName.value.trim();
-  const minDist = filterDistance.value;
-  const minElev = filterElevation.value;
+  const filterName = document.getElementById('filterName');
+  const filterDistance = document.getElementById('filterDistance');
+  const filterElevation = document.getElementById('filterElevation');
+  const filterType = document.getElementById('filterType');
+  const filterTags = document.getElementById('filterTags');
+
+  if (!filterName) return;
+
+  const name = filterName.value.trim().toLowerCase();
+  const minDist = parseFloat(filterDistance.value) || 0;
+  const minElev = parseFloat(filterElevation.value) || 0;
   const type = filterType.value;
-  const tags = filterTags.value.trim();
+  const tags = filterTags.value
+    .toLowerCase()
+    .split(',')
+    .map(t => t.trim())
+    .filter(Boolean);
 
   filteredRoutes = routes.filter(r => {
     const routeTags = (r.tags || '')
@@ -67,17 +79,14 @@ function applyFilters() {
       .map(t => t.trim().toLowerCase());
 
     return (
-      (!name || r.name.toLowerCase().includes(name.toLowerCase())) &&
+      (!name || r.name.toLowerCase().includes(name)) &&
       (!minDist || r.distance_km >= minDist) &&
       (!minElev || r.elevation >= minElev) &&
       (!type || r.type == type) &&
-      (!tags || tags.split(',').every(t =>
-        routeTags.includes(t.trim().toLowerCase())
-      ))
+      (!tags.length || tags.every(t => routeTags.includes(t)))
     );
   });
 
-  // Render depending on page
   if (typeof renderTable === 'function') {
     renderTable(filteredRoutes);
   }
@@ -85,7 +94,11 @@ function applyFilters() {
   if (typeof drawRoutes === 'function') {
     drawRoutes(filteredRoutes);
   }
+
+  updateURLFromFilters();
 }
+
+
 
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -143,11 +156,6 @@ function toggleFilters(open) {
 }
 
 
-/* ===============================
-   EVENTS
-================================ */
-
-
 const filterBtn = document.getElementById('openFilters');
 
 filterBtn.onclick = () => {
@@ -155,8 +163,4 @@ filterBtn.onclick = () => {
   toggleFilters(!isOpen);
 };
 
-function toggleFilters(open) {
-  panel.classList.toggle('open', open);
-  panel.setAttribute('aria-hidden', !open);
-}
 
