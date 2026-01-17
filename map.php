@@ -218,39 +218,6 @@ const filteredRoutes = routes.filter(r => {
 });
 
 drawRoutes(filteredRoutes);
-
-    
-/* ===============================
-   FILTER PANEL TOGGLE
-================================ */
-
-const panel = document.getElementById('filterPanel');
-document.getElementById('openFilters').onclick = () => toggleFilters(true);
-
-function toggleFilters(open) {
-  panel.classList.toggle('open', open);
-  panel.setAttribute('aria-hidden', !open);
-}
-
-
-/* ===============================
-   EVENTS
-================================ */
-
-
-const filterBtn = document.getElementById('openFilters');
-
-filterBtn.onclick = () => {
-  const isOpen = panel.classList.contains('open');
-  toggleFilters(!isOpen);
-};
-
-function toggleFilters(open) {
-  panel.classList.toggle('open', open);
-  panel.setAttribute('aria-hidden', !open);
-}
-
-
     
 </script>
 
