@@ -220,7 +220,8 @@ tr.route-row { cursor: pointer; font-size: 0.55rem;}
 
 <script>
 const routes = <?= json_encode($routes, JSON_UNESCAPED_UNICODE); ?>;
-
+const tbody = document.getElementById('routesBody');
+    
 /* ===============================
    RENDER Seconds to Exact Moving time
 ================================ */
