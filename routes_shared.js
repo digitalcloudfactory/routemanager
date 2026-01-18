@@ -1,3 +1,44 @@
+document.addEventListener('DOMContentLoaded', initFilters);
+
+function initFilters() {
+  const filterIds = [
+    'filterName',
+    'filterDistance',
+    'filterElevation',
+    'filterType',
+    'filterTags'
+  ];
+
+  // Attach input listeners
+  filterIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', applyFilters);
+  });
+
+  // Filter panel toggle
+  const openBtn = document.getElementById('openFilters');
+  const panel = document.getElementById('filterPanel');
+
+  if (openBtn && panel) {
+    openBtn.addEventListener('click', () => {
+      panel.classList.toggle('open');
+    });
+  }
+
+  // Clear filters
+  document.getElementById('clearFilters')?.addEventListener('click', () => {
+    filterIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    applyFilters();
+  });
+
+  // Load filters from URL and apply
+  loadFiltersFromURL();
+}
+
+
 function updateURLFromFilters() {
   const params = new URLSearchParams();
 
@@ -51,7 +92,6 @@ function loadFiltersFromURL() {
   applyFilters();
 }
 
-document.addEventListener('DOMContentLoaded', loadFiltersFromURL);
 
 
 function applyFilters() {
@@ -100,7 +140,6 @@ function applyFilters() {
 
 
 
-
 document.addEventListener('DOMContentLoaded', () => {
   ['filterName','filterDistance','filterElevation','filterType','filterTags']
     .forEach(id => {
@@ -142,25 +181,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
   loadFiltersFromURL();
 });
-
-/* ===============================
-   FILTER PANEL TOGGLE
-================================ */
-
-const panel = document.getElementById('filterPanel');
-document.getElementById('openFilters').onclick = () => toggleFilters(true);
-
-function toggleFilters(open) {
-  panel.classList.toggle('open', open);
-  panel.setAttribute('aria-hidden', !open);
-}
-
-
-const filterBtn = document.getElementById('openFilters');
-
-filterBtn.onclick = () => {
-  const isOpen = panel.classList.contains('open');
-  toggleFilters(!isOpen);
-};
 
 
