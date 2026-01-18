@@ -194,12 +194,7 @@ function drawRoutes(data) {
   }
 }
 
-function onFiltersUpdated(data) {
-  drawRoutes(data);
-}
-
-
-drawRoutes(filteredRoutes);
+drawRoutes(routes);
     
 </script>
 
