@@ -176,7 +176,7 @@ tr.route-row { cursor: pointer; font-size: 0.55rem;}
 
 <section class="grid">
 <div>
-    <a href="map.php<?= isset($_SERVER['QUERY_STRING']) && $_SERVER['QUERY_STRING'] ? '?' . $_SERVER['QUERY_STRING'] : '' ?>">Map view</a>
+    <a id="mapLink" href="map.php">Map view</a>
 </div>    
     <div>
     <button id="fetchRoutes" type="button">
@@ -458,4 +458,26 @@ async function saveTags(routeId, value) {
 </script>
 
 <script src="routes_shared.js"></script>
+
+  <script>
+  const mapLink = document.getElementById('mapLink');
+
+  function updateMapLinkFromURL() {
+    if (!mapLink) return;
+    mapLink.href = 'map.php' + window.location.search;
+  }
+
+  // Update initially and whenever filters change URL
+  updateMapLinkFromURL();
+
+  window.addEventListener('popstate', updateMapLinkFromURL);
+
+  // Hook into URL updates from filters
+  const originalReplace = history.replaceState;
+  history.replaceState = function (...args) {
+    originalReplace.apply(this, args);
+    updateMapLinkFromURL();
+  };
+</script>
+  
 <?php include 'footer.php'; ?>
