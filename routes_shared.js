@@ -25,38 +25,25 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!filterName) return;
 
   // Attach input listeners
-  [
-    filterName,
-    filterDistance,
-    filterElevation,
-    filterType,
-    filterTags
-  ].forEach(el => {
-    el.addEventListener('input', () => {
-      applyFilters();
-      updateURLFromFilters();
-    });
-  });
 
   dbg('started loading - fired');
-
-  const filterIds = [
-    'filterName',
-    'filterDistance',
-    'filterElevation',
-    'filterType',
-    'filterTags'
-  ];
-
-    filterIds.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) {
-      dbg('Binding input listener to', id);
-      el.addEventListener('input', applyFilters);
-    } else {
-      dbg('Missing filter input:', id);
-    }
+[
+  filterName,
+  filterDistance,
+  filterElevation,
+  filterType,
+  filterTags
+].forEach(el => {
+  if (!el) return;
+  el.addEventListener('input', () => {
+    applyFilters();
+    updateURLFromFilters();
   });
+  el.addEventListener('change', () => {
+    applyFilters();
+    updateURLFromFilters();
+  });
+});
 
   // Clear filters button
   document.getElementById('clearFilters')?.addEventListener('click', () => {
