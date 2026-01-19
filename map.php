@@ -195,7 +195,7 @@ drawRoutes(routes);
     
 </script>
 
-<script src="routes_shared.js"></script>
+<script src="routes_shared.js?v=1.0.1"></script>
 
   <script>
   const mapLink = document.getElementById('mapLink');
