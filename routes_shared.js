@@ -1,5 +1,7 @@
 console.log('🔥 routes_shared.js loaded');
 
+const panel = document.getElementById('filterPanel');
+
 const DEBUG_FILTERS = true;
 function dbg(...args) {
   if (DEBUG_FILTERS) console.log('[filters]', ...args);
@@ -45,13 +47,25 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+
+const closeBtn = document.getElementById('closeFilters');
+  
+if (closeBtn && panel) {
+  closeBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    panel.classList.remove('open');
+    panel.setAttribute('aria-hidden', 'true');
+  });
+}
+
+  
   // Clear filters button
   document.getElementById('clearFilters')?.addEventListener('click', () => {
     clearFilters();
   });
 
   // Filter panel toggle
-  const panel = document.getElementById('filterPanel');
+  
   const openBtn = document.getElementById('openFilters');
 
   if (panel && openBtn) {
