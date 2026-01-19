@@ -9,9 +9,9 @@ header('Content-Type: text/html; charset=UTF-8');
 // --- CONFIG ---
 $db_host = 'db.fr-pari1.bengt.wasmernet.com';
 $db_port = 10272;
-$db_name = 'routes';
-$db_user = '68a00bc6768780007ea0fea26ffa';
-$db_pass = '069668a0-0bc6-788a-8000-597667343eee';
+$db_name = 'dbcmpLT2zrmwmur5UEjZ3Xj8';
+$db_user = 'de142c5d7a0180009884f0319fb7';
+$db_pass = '0696de14-2c5d-7bb2-8000-fe77e5a731bf';
 $strava_client_id = '6839';
 $strava_client_secret = '1a1057defe991fd6c2711f1199a3563cb3d5395f';
 $redirect_uri  = 'http://map-routes.wasmer.app/callback.php';
