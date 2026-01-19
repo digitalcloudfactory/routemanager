@@ -106,8 +106,6 @@ unset($route);
 <?php include 'header.php'; ?>
 
 
-<script src="https://unpkg.com/@mapbox/polyline"></script>
-
 <style>
 tr.route-row { cursor: pointer; font-size: 0.55rem;}
 .route-details article { margin-top: 1rem; }
