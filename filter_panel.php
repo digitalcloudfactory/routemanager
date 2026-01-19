@@ -2,7 +2,7 @@
   <article>
     <header class="grid">
       <strong>Filters</strong>
-      <a href="#" aria-label="Close" onclick="toggleFilters(false)"></a>
+      <a href="#" aria-label="Close" id="closeFilters"></a>
     </header>
 
     <label>
@@ -41,7 +41,7 @@
     </label>
 
     <footer>
-      <button class="secondary" type="button" onclick="clearFilters()">
+      <button class="secondary" type="button" id="clearFilters">
         Clear
       </button>
     </footer>
