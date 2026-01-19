@@ -402,9 +402,6 @@ document.getElementById('fetchRoutes').addEventListener('click', async () => {
   }
 });
 
-let filteredRoutes = [...routes];
-
-
 function routeTypeLabel(type) {
   return {
     1: 'Ride',
