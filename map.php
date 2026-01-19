@@ -117,7 +117,7 @@ unset($route);
          style="border-radius:50%">
     <div>
       <strong><?= htmlspecialchars($user['firstname'].' '.$user['lastname']) ?></strong><br>
-      <small>Last Strava Sync: <?= htmlspecialchars($user['last_routes_sync']) ?></small>
+      <small>Last Strava Sync:<?= $user['last_routes_sync']? htmlspecialchars($user['last_routes_sync']): '<em>Never synced</em>' ?></small>
     </div>
   </div>
 
