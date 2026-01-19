@@ -202,7 +202,7 @@ drawRoutes(routes);
 
   function updateMapLinkFromURL() {
     if (!mapLink) return;
-    mapLink.href = 'map.php' + window.location.search;
+    mapLink.href = 'routes.php' + window.location.search;
   }
 
   // Update initially and whenever filters change URL
