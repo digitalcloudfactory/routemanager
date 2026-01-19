@@ -180,7 +180,7 @@ dbg('URL params detected:', params.toString());
   const toggle = document.getElementById("themeToggle");
   const root = document.documentElement;
 
-  // Load saved theme
+  if (toggle) {
   const savedTheme = localStorage.getItem("theme");
   if (savedTheme) {
     root.setAttribute("data-theme", savedTheme);
@@ -200,3 +200,4 @@ dbg('URL params detected:', params.toString());
       ? "☀️ Light mode"
       : "🌙 Dark mode";
   });
+}
