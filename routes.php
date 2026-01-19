@@ -213,7 +213,7 @@ tr.route-row { cursor: pointer; font-size: 0.55rem;}
   <?php include 'filter_panel.php'; ?>  
 </main>
 
-<?php include 'footer.php'; ?>
+
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://unpkg.com/@mapbox/polyline"></script>
@@ -463,3 +463,4 @@ async function saveTags(routeId, value) {
 </script>
 
 <script src="routes_shared.js"></script>
+<?php include 'footer.php'; ?>
