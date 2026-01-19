@@ -151,9 +151,10 @@ unset($route);
 const routes = <?= json_encode($routes, JSON_UNESCAPED_UNICODE); ?>;
 
 const map = L.map('map');
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '© OpenStreetMap'
+L.tileLayer('https://tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap contributors'
 }).addTo(map);
+
 
 let routeLayers = [];
 
