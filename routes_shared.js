@@ -1,4 +1,4 @@
-console.log('🔥 routes_shared.js loaded');
+console.log('🔥🔥 routes_shared.js loaded');
 
 const panel = document.getElementById('filterPanel');
 
