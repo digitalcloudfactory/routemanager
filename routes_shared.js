@@ -129,6 +129,7 @@ dbg('applyFilters() called');
 function updateURLFromFilters() {
 
  dbg('updateURLFromFilters() called');
+ if (!filterName) return;
   
   const params = new URLSearchParams();
 
