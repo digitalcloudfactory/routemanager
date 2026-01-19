@@ -1,3 +1,10 @@
+
+const DEBUG_FILTERS = true;
+function dbg(...args) {
+  if (DEBUG_FILTERS) console.log('[filters]', ...args);
+}
+
+
 let filterName;
 let filterDistance;
 let filterElevation;
@@ -30,6 +37,26 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  dbg('started loading - fired');
+
+  const filterIds = [
+    'filterName',
+    'filterDistance',
+    'filterElevation',
+    'filterType',
+    'filterTags'
+  ];
+
+    filterIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      dbg('Binding input listener to', id);
+      el.addEventListener('input', applyFilters);
+    } else {
+      dbg('Missing filter input:', id);
+    }
+  });
+
   // Clear filters button
   document.getElementById('clearFilters')?.addEventListener('click', () => {
     clearFilters();
@@ -54,6 +81,15 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function applyFilters() {
+
+dbg('applyFilters() called');
+
+  const filterName = document.getElementById('filterName');
+  if (!filterName) {
+    dbg('applyFilters aborted: filterName not found');
+    return;
+  }
+  
   const name = filterName.value.trim().toLowerCase();
   const minDist = parseFloat(filterDistance.value) || 0;
   const minElev = parseFloat(filterElevation.value) || 0;
@@ -89,6 +125,9 @@ function applyFilters() {
 }
 
 function updateURLFromFilters() {
+
+ dbg('updateURLFromFilters() called');
+  
   const params = new URLSearchParams();
 
   if (filterName.value.trim()) params.set('name', filterName.value.trim());
@@ -97,10 +136,14 @@ function updateURLFromFilters() {
   if (filterType.value) params.set('type', filterType.value);
   if (filterTags.value.trim()) params.set('tags', filterTags.value.trim());
 
+  dbg('New URL params:', params.toString());
+  
   const newUrl =
     window.location.pathname +
     (params.toString() ? '?' + params.toString() : '');
 
+     dbg('Replacing URL with:', newUrl);
+  
   history.replaceState({}, '', newUrl);
 }
 
@@ -116,14 +159,20 @@ function clearFilters() {
 }
 
 function loadFiltersFromURL() {
+  dbg('loadFiltersFromURL()');
+  
   const params = new URLSearchParams(window.location.search);
-
+dbg('URL params detected:', params.toString());
+  
   if (params.has('name')) filterName.value = params.get('name');
   if (params.has('minDist')) filterDistance.value = params.get('minDist');
   if (params.has('minElev')) filterElevation.value = params.get('minElev');
   if (params.has('type')) filterType.value = params.get('type');
   if (params.has('tags')) filterTags.value = params.get('tags');
 
+  
+ dbg('Filters restored from URL');
+  
   applyFilters();
 }
 
