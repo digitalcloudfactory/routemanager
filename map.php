@@ -123,10 +123,7 @@ unset($route);
 
 <section class="grid">
 <div>
-<a href="routes.php<?= htmlspecialchars($_SERVER['QUERY_STRING'] ? '?' . $_SERVER['QUERY_STRING'] : '') ?>"
-   role="button"
-   class="secondary">
-   Table view
+<a id="mapLink" href="routes.php" role="button" class="secondary">Table view</a>
 </a>
 </div>    
     <div>
@@ -199,4 +196,26 @@ drawRoutes(routes);
 </script>
 
 <script src="routes_shared.js"></script>
+
+  <script>
+  const mapLink = document.getElementById('mapLink');
+
+  function updateMapLinkFromURL() {
+    if (!mapLink) return;
+    mapLink.href = 'map.php' + window.location.search;
+  }
+
+  // Update initially and whenever filters change URL
+  updateMapLinkFromURL();
+
+  window.addEventListener('popstate', updateMapLinkFromURL);
+
+  // Hook into URL updates from filters
+  const originalReplace = history.replaceState;
+  history.replaceState = function (...args) {
+    originalReplace.apply(this, args);
+    updateMapLinkFromURL();
+  };
+</script>
+    
 <?php include 'footer.php'; ?>
