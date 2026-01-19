@@ -1,3 +1,4 @@
+console.log('🔥 routes_shared.js loaded');
 
 const DEBUG_FILTERS = true;
 function dbg(...args) {
