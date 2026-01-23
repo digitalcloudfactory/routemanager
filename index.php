@@ -105,7 +105,8 @@ if (isset($_SESSION['internal_user_id'])) {
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($row && $row['strava_access_token']) {
-        $needsAuth = false;
+        header("Location: routes.php");
+        exit;
     }
 }
 
@@ -128,8 +129,6 @@ if ($needsAuth) {
    <?php if ($needsAuth): ?>
      <a class="strava-button" href="<?= htmlspecialchars($auth_url) ?>"><img src="https://www.dropbox.com/scl/fi/rzrnbkndn8y2u8if4hezd/btn_strava_connect_with_orange.png?rlkey=s0w9ewb5o9fimgsh33ekqt9lz&dl=1" 
            alt="Connect with Strava">Connect with Strava</a>
-   <?php else: ?>
-  <a href="routes.php">Go to routes</a>
   <?php endif; ?>
 
   </section>
