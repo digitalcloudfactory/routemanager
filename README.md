@@ -7,3 +7,5 @@ TODO
 - add start location country based on php code
 - tumbnail view instead of map or table view?
 - ability to have 'NOT' in filters
+
+- Strava Authentication with refresh token -- not yet fully working, needs to be further debugged
