@@ -74,19 +74,31 @@ error_log('Session contents: ' . print_r($_SESSION, true));
 $client_id = '6839';
 $redirect_uri = 'http://map-routes.wasmer.app/callback.php'; // Must match callback.php
 
-// If already logged in, redirect to activities
-if (isset($_SESSION['access_token'])) {
-    header("Location: routes.php");
-    exit;
+
+$needsAuth = true;
+
+if (isset($_SESSION['internal_user_id'])) {
+    $stmt = $pdo->prepare("
+        SELECT strava_access_token
+        FROM users
+        WHERE id = ?
+    ");
+    $stmt->execute([$_SESSION['internal_user_id']]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($row && $row['strava_access_token']) {
+        $needsAuth = false;
+    }
 }
 
-// Redirect user to Strava authorization page
-$auth_url = "https://www.strava.com/oauth/authorize" .
-    "?client_id={$client_id}" .
-    "&response_type=code" .
-    "&redirect_uri={$redirect_uri}" .
-    "&approval_prompt=auto" .
-    "&scope=activity:read_all";
+if ($needsAuth) {
+    $auth_url = "https://www.strava.com/oauth/authorize" .
+        "?client_id={$client_id}" .
+        "&response_type=code" .
+        "&redirect_uri={$redirect_uri}" .
+        "&approval_prompt=auto" .
+        "&scope=activity:read_all";
+}
 ?>
 
 
@@ -94,10 +106,14 @@ $auth_url = "https://www.strava.com/oauth/authorize" .
     <h1>Welcome to Strava Routes</h1>
     <p>Connect your Strava account to view and manage your routes.</p>
 
-    <a class="strava-button" href="<?= $auth_url ?>">
-      <img src="https://www.dropbox.com/scl/fi/rzrnbkndn8y2u8if4hezd/btn_strava_connect_with_orange.png?rlkey=s0w9ewb5o9fimgsh33ekqt9lz&dl=1" 
-           alt="Connect with Strava">
-    </a>
+
+   <?php if ($needsAuth): ?>
+     <a class="strava-button" href="<?= htmlspecialchars($auth_url) ?>"><img src="https://www.dropbox.com/scl/fi/rzrnbkndn8y2u8if4hezd/btn_strava_connect_with_orange.png?rlkey=s0w9ewb5o9fimgsh33ekqt9lz&dl=1" 
+           alt="Connect with Strava">Connect with Strava</a>
+   <?php else: ?>
+  <a href="routes.php">Go to routes</a>
+  <?php endif; ?>
+
   </section>
 </div>
 
