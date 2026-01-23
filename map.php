@@ -151,8 +151,10 @@ unset($route);
 const routes = <?= json_encode($routes, JSON_UNESCAPED_UNICODE); ?>;
 
 const map = L.map('map');
-L.tileLayer('https://tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png', {
-  attribution: '© OpenStreetMap contributors'
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  attribution: '© OpenStreetMap contributors © CARTO',
+  subdomains: 'abcd',
+  maxZoom: 20
 }).addTo(map);
 
 
