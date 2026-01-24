@@ -388,7 +388,9 @@ document.getElementById('fetchRoutes').addEventListener('click', async () => {
 
   try {
     const res = await fetch('fetch_routes.php');
-    const data = await res.json();
+    const text = await res.text();  // read raw text first
+    console.log('RAW response:', text);  // <-- log it
+    const data = JSON.parse(text);       // then parse JSON
 
     if (!data.success) {
       alert(data.error || 'Failed to fetch routes');
@@ -397,7 +399,8 @@ document.getElementById('fetchRoutes').addEventListener('click', async () => {
 
     location.reload();
   } catch (e) {
-    alert('Error fetching routes');
+    console.error('Fetch error:', e);
+    alert('Error fetching routes. Check console for details.');
   } finally {
     btn.removeAttribute('aria-busy');
   }
