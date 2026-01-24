@@ -108,8 +108,8 @@ if (!is_array($routes)) {
 // --- PREPARE INSERT/UPDATE ---
 $insert = $pdo->prepare("
     INSERT INTO strava_routes 
-    (user_id, route_id, name, description, distance_km, elevation, type, private, starred, created_at, estimated_moving_time, summary_polyline)
-    VALUES (:user, :rid, :name, :description, :distance, :elevation, :type, :private, :starred, :created_at, :estimated_moving_time ,:polyline)
+    (user_id, route_id, name, description, distance_km, elevation, type, private, starred, country ,created_at, estimated_moving_time, summary_polyline)
+    VALUES (:user, :rid, :name, :description, :distance, :elevation, :type, :private, :starred, :country ,:created_at, :estimated_moving_time ,:polyline)
     ON DUPLICATE KEY UPDATE
     name = VALUES(name),
     description = VALUES(description),
@@ -118,6 +118,7 @@ $insert = $pdo->prepare("
     type = VALUES(type),
     private = VALUES(private),
     starred = VALUES(starred),
+    country = IFNULL(country, VALUES(country)),
     estimated_moving_time = VALUES(estimated_moving_time),
     summary_polyline = VALUES(summary_polyline)
 ");
@@ -125,11 +126,50 @@ $insert = $pdo->prepare("
 
 $count = 0;
 
+$existingStmt = $pdo->prepare("
+  SELECT country
+  FROM strava_routes
+  WHERE route_id = :rid AND user_id = :uid
+  LIMIT 1
+");
+
+
 try {
     foreach ($routes as $route) {
         $routeType = $route['type'] ?? null;
         $createdAt = !empty($route['created_at']) ? date('Y-m-d H:i:s', strtotime($route['created_at'])) : null;
+        $country = null;
 
+        
+        $summaryPolyline = $route['map']['summary_polyline'] ?? null;
+        
+        // Look up existing country
+        $existingStmt->execute([
+            ':rid' => (string)$route['id'],
+            ':uid' => $internalUserId
+        ]);
+        
+        $existingRoute = $existingStmt->fetch(PDO::FETCH_ASSOC);
+        
+        $country = null;
+        
+        if (
+            !$existingRoute ||                          // new route
+            empty($existingRoute['country'])            // or missing country
+        ) {
+            if (!empty($summaryPolyline)) {
+                $country = getCountryFromPolyline($summaryPolyline);
+        
+                // Be polite to Nominatim
+                usleep(1200000); // 1.2s
+            }
+        } else {
+            // Reuse stored value
+            $country = $existingRoute['country'];
+        }
+
+        
+        
         $insert->execute([
             ':user'        => $internalUserId,
             ':rid'         => $route['id'],
@@ -140,6 +180,7 @@ try {
             ':type'        => $routeType,
             ':private'   => $route['private'],
             ':starred'   => $route['starred'],
+            ':country'  => $country,
             ':created_at'   => $createdAt,
             ':estimated_moving_time'    => $route['estimated_moving_time'],
             ':polyline'    => $route['map']['summary_polyline'] ?? null
@@ -163,3 +204,81 @@ echo json_encode([
     'routes_fetched' => $count,
     'last_sync' => date('Y-m-d H:i:s')
 ]);
+
+
+function getCountryFromPolyline(string $summaryPolyline): ?string
+{
+    if (!$summaryPolyline) return null;
+
+    // Decode polyline
+    $coords = decodePolyline($summaryPolyline);
+    if (!$coords || count($coords) === 0) return null;
+
+    $lat = $coords[0][0];
+    $lon = $coords[0][1];
+
+    $url = "https://nominatim.openstreetmap.org/reverse"
+         . "?lat=" . urlencode($lat)
+         . "&lon=" . urlencode($lon)
+         . "&format=json";
+
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 10,
+        CURLOPT_HTTPHEADER => [
+            'User-Agent: MapRoutesApp/1.0 (contact@yourdomain.com)'
+        ],
+    ]);
+
+    $res = curl_exec($ch);
+    curl_close($ch);
+
+    if (!$res) return null;
+
+    $data = json_decode($res, true);
+    return $data['address']['country'] ?? null;
+}
+
+
+
+function decodePolyline(string $encoded): array
+{
+    $points = [];
+    $index = 0;
+    $lat = 0;
+    $lng = 0;
+
+    $len = strlen($encoded);
+
+    while ($index < $len) {
+        $b = 0;
+        $shift = 0;
+        $result = 0;
+
+        do {
+            $b = ord($encoded[$index++]) - 63;
+            $result |= ($b & 0x1f) << $shift;
+            $shift += 5;
+        } while ($b >= 0x20);
+
+        $dlat = ($result & 1) ? ~($result >> 1) : ($result >> 1);
+        $lat += $dlat;
+
+        $shift = 0;
+        $result = 0;
+
+        do {
+            $b = ord($encoded[$index++]) - 63;
+            $result |= ($b & 0x1f) << $shift;
+            $shift += 5;
+        } while ($b >= 0x20);
+
+        $dlng = ($result & 1) ? ~($result >> 1) : ($result >> 1);
+        $lng += $dlng;
+
+        $points[] = [$lat / 1e5, $lng / 1e5];
+    }
+
+    return $points;
+}
