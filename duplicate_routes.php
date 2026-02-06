@@ -16,7 +16,7 @@ $lineB = decodePolyline("ezehG`lrHxFpAhCbDxI~^rc@p_@~EG~B`IxLz@vAlGbE`F\lKj`@l\v
 $overlap = polylineOverlapLength($lineA, $lineB);
 echo $overlap;
 
-$lat = $summaryLine[0][1]; // average latitude is fine
+$lat = $lineA[0][1]; // average latitude is fine
 $meters = $overlap * metersPerDegreeLng($lat);
 
 echo $meters;
