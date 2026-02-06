@@ -24,7 +24,8 @@ $lineAmeters = $lineA-Distance * 1000;
 $percent = ($overlapMeters / $lineAmeterse) * 100;
 
 echo $meters;
-echo $percent; echo "%"
+echo '<br>';
+echo $percent; echo "%";
 
     
 function decodePolyline(string $encoded): array {
