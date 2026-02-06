@@ -170,7 +170,7 @@ tr.route-row { cursor: pointer; font-size: 0.55rem;}
 }
 
 .route-map {
-  height: 320px;
+  height: 420px;
   border-radius: 12px;
   border: 1px solid #ddd;
 }
@@ -332,7 +332,7 @@ function renderTable(data) {
 
         <!-- RIGHT: DETAILS (≈25%) -->
         <div class="route-info">
-          <h4>${route.name}</h4>
+         <h4><a href="https://www.strava.com/routes/${route.route_id}" target="_blank">${route.name} </a></h4>
 
           <ul class="route-meta">
             <li><strong>Distance:</strong> ${Number(route.distance_km).toFixed(2)} km</li>
@@ -357,14 +357,6 @@ function renderTable(data) {
             <small>Comma separated</small>
           </div>
 
-          <p>
-            <a href="https://www.strava.com/routes/${route.route_id}"
-               target="_blank"
-               role="button"
-               class="outline">
-              Open on Strava
-            </a>
-          </p>
         </div>
 
       </div>
