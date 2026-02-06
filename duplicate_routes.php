@@ -7,17 +7,13 @@ require_once __DIR__ . '/vendor/geophp/geoPHP.inc';
 
 echo 'geoPHP loaded<br>';
 
-$lineA = geoPHP::load(
-    'LINESTRING(0 0, 10 0, 20 0)',
-    'wkt'
-);
 
-$lineB = geoPHP::load(
-    'LINESTRING(5 0, 15 0)',
-    'wkt'
-);
-echo($lineA);
-var_dump($lineA);
+$lineA = geoPHP::load('LINESTRING(0 0, 10 0)', 'wkt');
+$lineB = geoPHP::load('LINESTRING(5 0, 15 0)', 'wkt');
+
+$intersection = $lineA->intersection($lineB);
+
+var_dump($intersection);
 
 $intersection = $lineA->intersection($lineB);
 
