@@ -16,6 +16,8 @@ $lineB = geoPHP::load(
     'LINESTRING(5 0, 15 0)',
     'wkt'
 );
+echo($lineA);
+var_dump($lineA);
 
 $intersection = $lineA->intersection($lineB);
 
