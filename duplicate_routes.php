@@ -23,7 +23,7 @@ $overlapMeters = $overlap * metersPerDegreeLng($lat);
 $lineAmeters = $lineADistance * 1000;
 $percent = ($overlapMeters / $lineAmeters) * 100;
 
-echo $meters;
+echo $overlapMeters;
 echo $percent; echo "%";
 
     
