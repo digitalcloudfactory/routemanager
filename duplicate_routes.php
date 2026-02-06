@@ -1,5 +1,11 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 require_once __DIR__ . '/vendor/geophp/geoPHP.inc';
+
+echo 'geoPHP loaded<br>';
 
 $lineA = geoPHP::load(
     'LINESTRING(0 0, 10 0, 20 0)',
