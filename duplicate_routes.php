@@ -24,6 +24,7 @@ $lineAmeters = $lineADistance * 1000;
 $percent = ($overlapMeters / $lineAmeters) * 100;
 
 echo $overlapMeters;
+echo '<br>';
 echo $percent; echo "%";
 
     
