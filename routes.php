@@ -153,6 +153,63 @@ tr.route-row { cursor: pointer; font-size: 0.55rem;}
   font-weight: 600;
 }
 
+    .route-details {
+  margin-top: 0.5rem;
+}
+
+.route-layout {
+  display: flex;
+  gap: 1rem;
+  align-items: stretch;
+}
+
+/* LEFT: MAP */
+.route-map-wrap {
+  flex: 3;               /* ≈ 75% */
+  min-width: 0;
+}
+
+.route-map {
+  height: 320px;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+}
+
+/* RIGHT: INFO */
+.route-info {
+  flex: 1;               /* ≈ 25% */
+  font-size: 0.75rem;
+  line-height: 1.4;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.route-info h4 {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.route-meta {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.route-meta li {
+  margin-bottom: 0.25rem;
+}
+
+.route-description,
+.route-tags {
+  font-size: 0.7rem;
+}
+
+.route-tags input {
+  width: 100%;
+  font-size: 0.7rem;
+}
+
 </style>
 
 
@@ -264,43 +321,56 @@ function renderTable(data) {
     details.hidden = true;
 
     details.innerHTML = `
-      <td colspan="4">
-        <article>
-           <table><tbody>
-                      <tr>
-                        <td><strong>Name:</strong> ${route.name}</td>
-                        <td><strong>Distance:</strong> ${Number(route.distance_km).toFixed(2)}</td>
-                        <td><strong>Elevation:</strong> ${route.elevation}</td>
-                        <td><strong>Moving Time:</strong> ${formatDuration(route.estimated_moving_time)}</td>
-                      </tr>
-                      <tr>
-                        <td><strong>Created at:</strong> ${route.created_date}</td>
-                        <td><strong>Type:</strong>${routeTypeLabel(route.type)}</td>
-                        <td><strong>Starred:</strong></td>
-                        <td><strong>Private:</strong></td>
-                      </tr>
-                       <tr>
-                       <td><strong>Route ID:</strong> ${route.route_id}</td>
-                       <td><strong>Description</strong> ${route.description || 'No description'}</td>
-                       <td>
-                                <strong>Tags</strong>
-                                <input type="text" value="${route.tags || ''}" placeholder="e.g. Gravel, Mallorca, Favorite" onblur="saveTags('${route.route_id}', this.value)">
-                                <small>Comma separated</small>
-                       </td>
-                      </tr>
-                    </tbody>
-                    </table> 
+ <td colspan="4">
+    <article class="route-details">
+      <div class="route-layout">
+
+        <!-- LEFT: MAP (≈75%) -->
+        <div class="route-map-wrap">
           <div id="map-${route.route_id}" class="route-map"></div>
+        </div>
+
+        <!-- RIGHT: DETAILS (≈25%) -->
+        <div class="route-info">
+          <h4>${route.name}</h4>
+
+          <ul class="route-meta">
+            <li><strong>Distance:</strong> ${Number(route.distance_km).toFixed(2)} km</li>
+            <li><strong>Elevation:</strong> ${route.elevation} m</li>
+            <li><strong>Moving Time:</strong> ${formatDuration(route.estimated_moving_time)}</li>
+            <li><strong>Created:</strong> ${route.created_date}</li>
+            <li><strong>Type:</strong> ${routeTypeLabel(route.type)}</li>
+            <li><strong>Route ID:</strong> ${route.route_id}</li>
+          </ul>
+
+          <div class="route-description">
+            <strong>Description</strong><br>
+            ${route.description || '<em>No description</em>'}
+          </div>
+
+          <div class="route-tags">
+            <strong>Tags</strong><br>
+            <input type="text"
+                   value="${route.tags || ''}"
+                   placeholder="e.g. Gravel, Mallorca, Favorite"
+                   onblur="saveTags('${route.route_id}', this.value)">
+            <small>Comma separated</small>
+          </div>
+
           <p>
             <a href="https://www.strava.com/routes/${route.route_id}"
                target="_blank"
-               role="button">
+               role="button"
+               class="outline">
               Open on Strava
             </a>
           </p>
-        </article>
-      </td>
-    `;
+        </div>
+
+      </div>
+    </article>
+  </td>
+`;
 
     row.onclick = () => {
       details.hidden = !details.hidden;
