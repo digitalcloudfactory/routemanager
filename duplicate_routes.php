@@ -13,18 +13,8 @@ $lineB = decodePolyline("ezehG`lrHxFpAhCbDxI~^rc@p_@~EG~B`IxLz@vAlGbE`F\lKj`@l\v
 //$lineA = geoPHP::load('LINESTRING(0 0, 10 0)', 'wkt');
 //$lineB = geoPHP::load('LINESTRING(5 0, 15 0)', 'wkt');
 
-$intersection = $lineA->intersection($lineB);
-
-var_dump($intersection);
-echo get_class($intersection);
-
-$intersection = $lineA->intersection($lineB);
-
-if ($intersection && !$intersection->isEmpty()) {
-    echo $intersection->length();
-} else {
-    echo 0;
-}
+$overlap = polylineOverlapLength($lineA, $lineB);
+echo $overlap;
 
 function decodePolyline(string $encoded): array {
     $points = [];
@@ -64,4 +54,53 @@ function decodePolyline(string $encoded): array {
 
     return $points;
 }
+
+function segmentLength($a, $b) {
+    return hypot($b[0] - $a[0], $b[1] - $a[1]);
+}
+
+function collinear($a, $b, $c, $tol = 1e-9) {
+    return abs(
+        ($b[0] - $a[0]) * ($c[1] - $a[1]) -
+        ($b[1] - $a[1]) * ($c[0] - $a[0])
+    ) < $tol;
+}
+
+function overlap1D($a1, $a2, $b1, $b2) {
+    return max(0, min($a2, $b2) - max($a1, $b1));
+}
+
+function segmentOverlap($a1, $a2, $b1, $b2) {
+    if (!collinear($a1, $a2, $b1) || !collinear($a1, $a2, $b2)) {
+        return 0;
+    }
+
+    // project on dominant axis
+    if (abs($a2[0] - $a1[0]) >= abs($a2[1] - $a1[1])) {
+        return overlap1D(
+            min($a1[0], $a2[0]), max($a1[0], $a2[0]),
+            min($b1[0], $b2[0]), max($b1[0], $b2[0])
+        );
+    } else {
+        return overlap1D(
+            min($a1[1], $a2[1]), max($a1[1], $a2[1]),
+            min($b1[1], $b2[1]), max($b1[1], $b2[1])
+        );
+    }
+}
+
+function polylineOverlapLength($lineA, $lineB) {
+    $len = 0;
+
+    for ($i = 0; $i < count($lineA) - 1; $i++) {
+        for ($j = 0; $j < count($lineB) - 1; $j++) {
+            $len += segmentOverlap(
+                $lineA[$i], $lineA[$i+1],
+                $lineB[$j], $lineB[$j+1]
+            );
+        }
+    }
+    return $len;
+}
+
 ?>
