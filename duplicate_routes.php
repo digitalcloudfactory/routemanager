@@ -21,7 +21,7 @@ $lat = $lineA[0][1]; // average latitude is fine
 $overlapMeters = $overlap * metersPerDegreeLng($lat);
 
 $lineAmeters = $lineADistance * 1000;
-$percent = ($overlapMeters / $lineAmeterse) * 100;
+$percent = ($overlapMeters / $lineAmeters) * 100;
 
 echo $meters;
 echo $percent; echo "%";
