@@ -119,7 +119,8 @@ function findOverlap(latlngsA, latlngsB, tolerance = 8, window = 25) {
   for (let i = 0; i < pA.length - 1; i++) {
     const a1 = pA[i];
     const a2 = pA[i+1];
-    const segLen = Math.hypot(a2.x - a1.x, a2.y - a1.y);
+    //const segLen = Math.hypot(a2.x - a1.x, a2.y - a1.y);
+    const segLen = haversineDistance(latlngsA[i], latlngsA[i+1]);
     total += segLen;
 
 let matched = false;
@@ -156,6 +157,23 @@ A.segments.forEach(seg => {
   L.polyline(seg, { color:'lime', weight:7 }).addTo(map);
 });
 
+  /* =======================
+   Segment Overlap Calculation
+======================= */
+function haversineDistance(p1, p2) {
+  const R = 6371000; // meters
+  const toRad = Math.PI / 180;
+  const dLat = (p2[0] - p1[0]) * toRad;
+  const dLon = (p2[1] - p1[1]) * toRad;
+  const lat1 = p1[0] * toRad;
+  const lat2 = p2[0] * toRad;
+
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon/2)**2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+  
 /* =======================
    UI STATS
 ======================= */
