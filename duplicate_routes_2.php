@@ -18,7 +18,7 @@ $overlapPercent = min($stats1['percent'],   $stats2['percent']);
 
 echo "Overlap distance: " . round($overlapMeters) . " m\n";
 echo "Overlap percent: "  . round($overlapPercent, 2) . " %\n";
-
+echo "done v1.1";
 
 function project($p, $lat0) {
     $R = 6371000;
