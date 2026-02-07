@@ -136,37 +136,41 @@ function segmentDistanceMeters(p1a, p1b, p2a, p2b) {
 /* =======================
    OVERLAP MATCHING
 ======================= */
-function findOverlap(latlngsA, latlngsB, tolerance = 8, window = 25) {
-  const pA = projectLine(latlngsA);
-  const pB = projectLine(latlngsB);
-
+function findOverlap(latlngsA, latlngsB, tolerance = 8) {
   let total = 0;
   let overlap = 0;
   const segments = [];
 
-  for (let i = 0; i < pA.length - 1; i++) {
-    const a1 = pA[i];
-    const a2 = pA[i+1];
-    const segLen = Math.hypot(a2.x - a1.x, a2.y - a1.y);
+  for (let i = 0; i < latlngsA.length - 1; i++) {
+    const a1 = latlngsA[i];
+    const a2 = latlngsA[i+1];
+
+    // segment length in meters
+    const segLen = haversineDistance([a1.lat, a1.lng], [a2.lat, a2.lng]);
     total += segLen;
 
-let matched = false;
-    
-for (let j = 0; j < latlngsB.length-1; j++) {
-  if (segmentDistanceMeters(latlngsA[i], latlngsA[i+1], latlngsB[j], latlngsB[j+1]) <= toleranceMeters) {
-    matched = true;
-    break;
-  }
-}
+    // check if this segment matches any in latlngsB
+    let matched = false;
+    for (let j = 0; j < latlngsB.length - 1; j++) {
+      const b1 = latlngsB[j];
+      const b2 = latlngsB[j+1];
+
+      if (segmentDistanceMeters([a1.lat, a1.lng], [a2.lat, a2.lng],
+                                [b1.lat, b1.lng], [b2.lat, b2.lng]) <= tolerance) {
+        matched = true;
+        break;
+      }
+    }
 
     if (matched) {
       overlap += segLen;
-      segments.push([latlngsA[i], latlngsA[i+1]]);
+      segments.push([a1, a2]);
     }
   }
 
-  return { total, overlap, percent: (overlap/total)*100, segments };
+  return { total, overlap, percent: (overlap / total) * 100, segments };
 }
+
 
 /* =======================
    RUN MATCH (both ways)
