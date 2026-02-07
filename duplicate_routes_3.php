@@ -122,17 +122,13 @@ function findOverlap(latlngsA, latlngsB, tolerance = 12, window = 25) {
     const segLen = Math.hypot(a2.x - a1.x, a2.y - a1.y);
     total += segLen;
 
-    const start = Math.max(0, i - window);
-    const end   = Math.min(pB.length - 2, i + window);
-
-    let matched = false;
-
-    for (let j = start; j <= end; j++) {
-      if (segmentDistance(a1, a2, pB[j], pB[j+1]) <= tolerance) {
-        matched = true;
-        break;
-      }
-    }
+let matched = false;
+for (let j = 0; j < pB.length - 1; j++) {
+  if (segmentDistance(a1, a2, pB[j], pB[j+1]) <= tolerance) {
+    matched = true;
+    break;
+  }
+}
 
     if (matched) {
       overlap += segLen;
