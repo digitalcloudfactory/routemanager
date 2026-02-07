@@ -14,7 +14,8 @@ header('Content-Type: application/json');
 
 $data = json_decode(file_get_contents('php://input'), true);
 
-$routeId = (string)($data['route_id'] ?? '');
+//$routeId = (string)($data['route_id'] ?? '');
+$routeId = (int)($data['route_id'] ?? 0);
 $tags = $data['tags'] ?? [];
 
 error_log('Route ID received: ' . $routeId);
