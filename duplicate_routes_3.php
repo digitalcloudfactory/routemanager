@@ -79,25 +79,38 @@ function projectLine(latlngs) {
   return latlngs.map(ll => map.project(ll, map.getZoom()));
 }
 
-function pointToSegmentDistance(p, a, b) {
- // project onto the segment in lat/lng space
-  const x = [p[0], p[1]];
-  const A = [a[0], a[1]];
-  const B = [b[0], b[1]];
 
-  const dx = B[1] - A[1]; // lon
-  const dy = B[0] - A[0]; // lat
+
+// Compute Haversine distance between two [lat, lon] points
+function haversineDistance(p1, p2) {
+  const R = 6371000; // meters
+  const toRad = Math.PI / 180;
+  const dLat = (p2[0] - p1[0]) * toRad;
+  const dLon = (p2[1] - p1[1]) * toRad;
+  const lat1 = p1[0] * toRad;
+  const lat2 = p2[0] * toRad;
+
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon/2)**2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+// Distance from point p to segment a-b in lat/lon meters
+function pointToSegmentDistanceMeters(p, a, b) {
+  const dx = b[1] - a[1]; // lon difference
+  const dy = b[0] - a[0]; // lat difference
+
   if (dx === 0 && dy === 0) return haversineDistance(p, a);
 
-  let t = ((x[1]-A[1])*dx + (x[0]-A[0])*dy)/(dx*dx + dy*dy);
+  let t = ((p[1]-a[1])*dx + (p[0]-a[0])*dy)/(dx*dx + dy*dy);
   t = Math.max(0, Math.min(1, t));
 
-  const proj = [A[0] + t*dy, A[1] + t*dx];
+  const proj = [a[0] + t*dy, a[1] + t*dx];
   return haversineDistance(p, proj);
 }
 
+// Distance between two segments in meters
 function segmentDistanceMeters(p1a, p1b, p2a, p2b) {
-  // distance from segment endpoints to other segment
   return Math.min(
     pointToSegmentDistanceMeters(p1a, p2a, p2b),
     pointToSegmentDistanceMeters(p1b, p2a, p2b),
@@ -105,6 +118,19 @@ function segmentDistanceMeters(p1a, p1b, p2a, p2b) {
     pointToSegmentDistanceMeters(p2b, p1a, p1b)
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+  
 
 /* =======================
    OVERLAP MATCHING
@@ -157,21 +183,6 @@ A.segments.forEach(seg => {
   L.polyline(seg, { color:'lime', weight:7 }).addTo(map);
 });
 
-  /* =======================
-   Segment Overlap Calculation
-======================= */
-function haversineDistance(p1, p2) {
-  const R = 6371000; // meters
-  const toRad = Math.PI / 180;
-  const dLat = (p2[0] - p1[0]) * toRad;
-  const dLon = (p2[1] - p1[1]) * toRad;
-  const lat1 = p1[0] * toRad;
-  const lat2 = p2[0] * toRad;
-
-  const a = Math.sin(dLat/2)**2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon/2)**2;
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c;
-}
 
   
 /* =======================
