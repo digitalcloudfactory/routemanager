@@ -17,6 +17,9 @@ $stats2 = overlapStats(matchPoints($p2, $p1, 20), $p2);
 $overlapMeters  = min($stats1['overlap_m'], $stats2['overlap_m']);
 $overlapPercent = min($stats1['percent'],   $stats2['percent']);
 
+echo "Overlap distance: " . round($overlapMeters, 2) . " m\n";
+echo "Overlap percent: " . round($overlapPercent, 2) . " %\n";
+
 
 function haversine($p1, $p2) {
     $R = 6371000; // meters
