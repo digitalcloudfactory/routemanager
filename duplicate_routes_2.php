@@ -10,13 +10,12 @@ $p2 = decodePolyline("ezehG`lrHxFpAhCbDxI~^rc@p_@~EG~B`IxLz@vAlGbE`F\lKj`@l\v[vd
 //$p1 = decodePolyline($encoded1);
 //$p2 = decodePolyline($encoded2);
 
-$matches1 = matchPoints($p1, $p2, 20);
-$matches2 = matchPoints($p2, $p1, 20);
+$stats1 = overlapStats(matchPoints($p1, $p2, 20), $p1);
+$stats2 = overlapStats(matchPoints($p2, $p1, 20), $p2);
 
-$o1 = overlapPercent($matches1, $p1);
-$o2 = overlapPercent($matches2, $p2);
-
-echo "Overlap: " . round(min($o1, $o2), 2) . "%";
+// Conservative overlap (same idea as your Python code)
+$overlapMeters  = min($stats1['overlap_m'], $stats2['overlap_m']);
+$overlapPercent = min($stats1['percent'],   $stats2['percent']);
 
 
 function haversine($p1, $p2) {
@@ -49,20 +48,24 @@ function matchPoints($a, $b, $toleranceMeters) {
     return $matches;
 }
 
-function overlapPercent($matches, $points) {
-    $matched = 0;
+function overlapStats($matches, $points) {
+    $total = 0.0;
+    $overlap = 0.0;
+
     for ($i = 1; $i < count($points); $i++) {
-        if ($matches[$i]) {
-            $matched += haversine($points[$i-1], $points[$i]);
+        $seg = haversine($points[$i-1], $points[$i]);
+        $total += $seg;
+
+        if (!empty($matches[$i])) {
+            $overlap += $seg;
         }
     }
 
-    $total = 0;
-    for ($i = 1; $i < count($points); $i++) {
-        $total += haversine($points[$i-1], $points[$i]);
-    }
-
-    return ($matched / $total) * 100;
+    return [
+        'overlap_m' => $overlap,
+        'total_m'   => $total,
+        'percent'   => $total > 0 ? ($overlap / $total) * 100 : 0
+    ];
 }
 
 function decodePolyline($encoded) {
