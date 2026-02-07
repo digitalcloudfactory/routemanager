@@ -80,28 +80,29 @@ function projectLine(latlngs) {
 }
 
 function pointToSegmentDistance(p, a, b) {
-  const dx = b.x - a.x;
-  const dy = b.y - a.y;
+ // project onto the segment in lat/lng space
+  const x = [p[0], p[1]];
+  const A = [a[0], a[1]];
+  const B = [b[0], b[1]];
 
-  if (dx === 0 && dy === 0) {
-    return Math.hypot(p.x - a.x, p.y - a.y);
-  }
+  const dx = B[1] - A[1]; // lon
+  const dy = B[0] - A[0]; // lat
+  if (dx === 0 && dy === 0) return haversineDistance(p, a);
 
-  let t = ((p.x - a.x) * dx + (p.y - a.y) * dy) / (dx*dx + dy*dy);
+  let t = ((x[1]-A[1])*dx + (x[0]-A[0])*dy)/(dx*dx + dy*dy);
   t = Math.max(0, Math.min(1, t));
 
-  const cx = a.x + t * dx;
-  const cy = a.y + t * dy;
-
-  return Math.hypot(p.x - cx, p.y - cy);
+  const proj = [A[0] + t*dy, A[1] + t*dx];
+  return haversineDistance(p, proj);
 }
 
-function segmentDistance(a1, a2, b1, b2) {
+function segmentDistanceMeters(p1a, p1b, p2a, p2b) {
+  // distance from segment endpoints to other segment
   return Math.min(
-    pointToSegmentDistance(a1, b1, b2),
-    pointToSegmentDistance(a2, b1, b2),
-    pointToSegmentDistance(b1, a1, a2),
-    pointToSegmentDistance(b2, a1, a2)
+    pointToSegmentDistanceMeters(p1a, p2a, p2b),
+    pointToSegmentDistanceMeters(p1b, p2a, p2b),
+    pointToSegmentDistanceMeters(p2a, p1a, p1b),
+    pointToSegmentDistanceMeters(p2b, p1a, p1b)
   );
 }
 
@@ -119,13 +120,12 @@ function findOverlap(latlngsA, latlngsB, tolerance = 8, window = 25) {
   for (let i = 0; i < pA.length - 1; i++) {
     const a1 = pA[i];
     const a2 = pA[i+1];
-    //const segLen = Math.hypot(a2.x - a1.x, a2.y - a1.y);
-    const segLen = haversineDistance(latlngsA[i], latlngsA[i+1]);
+    const segLen = Math.hypot(a2.x - a1.x, a2.y - a1.y);
     total += segLen;
 
 let matched = false;
-for (let j = 0; j < pB.length - 1; j++) {
-  if (segmentDistance(a1, a2, pB[j], pB[j+1]) <= tolerance) {
+for (let j = 0; j < latlngsB.length-1; j++) {
+  if (segmentDistanceMeters(latlngsA[i], latlngsA[i+1], latlngsB[j], latlngsB[j+1]) <= toleranceMeters) {
     matched = true;
     break;
   }
