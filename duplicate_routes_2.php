@@ -202,7 +202,7 @@ function geojsonRoutes($p1, $p2, $overlapSegments) {
 <body>
 <div id="map" style="width:100%; height:90vh;"></div>
 <script>
-var map = L.map('map').setView([$lat, $lon], 13);
+var map = L.map('map').setView([<?= $lat ?>, <?= $lon ?>], 13);
 
 // Base layer
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
