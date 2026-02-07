@@ -150,6 +150,8 @@ function findOverlap(latlngsA, latlngsB, tolerance = 8, window = 25) {
     total += segLen;
 
 let matched = false;
+const toleranceMeters = 8;
+    
 for (let j = 0; j < latlngsB.length-1; j++) {
   if (segmentDistanceMeters(latlngsA[i], latlngsA[i+1], latlngsB[j], latlngsB[j+1]) <= toleranceMeters) {
     matched = true;
