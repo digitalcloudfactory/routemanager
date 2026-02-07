@@ -10,57 +10,82 @@ $p2 = decodePolyline("ezehG`lrHxFpAhCbDxI~^rc@p_@~EG~B`IxLz@vAlGbE`F\lKj`@l\v[vd
 //$p1 = decodePolyline($encoded1);
 //$p2 = decodePolyline($encoded2);
 
-$stats1 = overlapStats(matchPoints($p1, $p2, 20), $p1);
-$stats2 = overlapStats(matchPoints($p2, $p1, 20), $p2);
+$stats1 = overlapStatsSegment($p1, $p2, 20);
+$stats2 = overlapStatsSegment($p2, $p1, 20);
 
-// Conservative overlap (same idea as your Python code)
 $overlapMeters  = min($stats1['overlap_m'], $stats2['overlap_m']);
 $overlapPercent = min($stats1['percent'],   $stats2['percent']);
 
-echo "Overlap distance: " . round($overlapMeters, 2) . " m\n";
-echo "Overlap percent: " . round($overlapPercent, 2) . " %\n";
+echo "Overlap distance: " . round($overlapMeters) . " m\n";
+echo "Overlap percent: "  . round($overlapPercent, 2) . " %\n";
 
 
-function haversine($p1, $p2) {
-    $R = 6371000; // meters
-    $lat1 = deg2rad($p1['lat']);
-    $lat2 = deg2rad($p2['lat']);
-    $dLat = deg2rad($p2['lat'] - $p1['lat']);
-    $dLon = deg2rad($p2['lon'] - $p1['lon']);
-
-    $a = sin($dLat/2)**2 +
-         cos($lat1) * cos($lat2) *
-         sin($dLon/2)**2;
-
-    return 2 * $R * asin(sqrt($a));
+function project($p, $lat0) {
+    $R = 6371000;
+    $x = deg2rad($p['lon']) * cos(deg2rad($lat0)) * $R;
+    $y = deg2rad($p['lat']) * $R;
+    return [$x, $y];
 }
 
-function matchPoints($a, $b, $toleranceMeters) {
-    $matches = [];
+function pointToSegmentDistance($px, $py, $ax, $ay, $bx, $by) {
+    $dx = $bx - $ax;
+    $dy = $by - $ay;
 
-    foreach ($a as $i => $pa) {
+    if ($dx == 0 && $dy == 0) {
+        return hypot($px - $ax, $py - $ay);
+    }
+
+    $t = (($px - $ax) * $dx + ($py - $ay) * $dy) / ($dx*$dx + $dy*$dy);
+    $t = max(0, min(1, $t));
+
+    $cx = $ax + $t * $dx;
+    $cy = $ay + $t * $dy;
+
+    return hypot($px - $cx, $py - $cy);
+}
+
+function segmentDistance($a1, $a2, $b1, $b2) {
+    return min(
+        pointToSegmentDistance($a1[0], $a1[1], $b1[0], $b1[1], $b2[0], $b2[1]),
+        pointToSegmentDistance($a2[0], $a2[1], $b1[0], $b1[1], $b2[0], $b2[1]),
+        pointToSegmentDistance($b1[0], $b1[1], $a1[0], $a1[1], $a2[0], $a2[1]),
+        pointToSegmentDistance($b2[0], $b2[1], $a1[0], $a1[1], $a2[0], $a2[1])
+    );
+}
+
+function overlapStatsSegment($A, $B, $toleranceMeters) {
+    $lat0 = $A[0]['lat']; // reference latitude
+
+    // Project all points once
+    $Ap = array_map(fn($p) => project($p, $lat0), $A);
+    $Bp = array_map(fn($p) => project($p, $lat0), $B);
+
+    $total = 0.0;
+    $overlap = 0.0;
+
+    $window = 20; // limits comparisons, tweak if needed
+
+    for ($i = 0; $i < count($Ap) - 1; $i++) {
+        $a1 = $Ap[$i];
+        $a2 = $Ap[$i + 1];
+
+        $segLen = hypot($a2[0] - $a1[0], $a2[1] - $a1[1]);
+        $total += $segLen;
+
         $found = false;
-        foreach ($b as $pb) {
-            if (haversine($pa, $pb) <= $toleranceMeters) {
+
+        $start = max(0, $i - $window);
+        $end   = min(count($Bp) - 2, $i + $window);
+
+        for ($j = $start; $j <= $end; $j++) {
+            if (segmentDistance($a1, $a2, $Bp[$j], $Bp[$j + 1]) <= $toleranceMeters) {
                 $found = true;
                 break;
             }
         }
-        $matches[$i] = $found;
-    }
-    return $matches;
-}
 
-function overlapStats($matches, $points) {
-    $total = 0.0;
-    $overlap = 0.0;
-
-    for ($i = 1; $i < count($points); $i++) {
-        $seg = haversine($points[$i-1], $points[$i]);
-        $total += $seg;
-
-        if (!empty($matches[$i])) {
-            $overlap += $seg;
+        if ($found) {
+            $overlap += $segLen;
         }
     }
 
@@ -70,6 +95,8 @@ function overlapStats($matches, $points) {
         'percent'   => $total > 0 ? ($overlap / $total) * 100 : 0
     ];
 }
+
+
 
 function decodePolyline($encoded) {
     $points = [];
