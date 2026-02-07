@@ -18,6 +18,7 @@ $routeId = (string)($data['route_id'] ?? '');
 $tags = $data['tags'] ?? [];
 
 error_log('Route ID received: ' . $routeId);
+error_log('User ID received: ' . $internalUserId);
 error_log('Tags received: ' . json_encode($tags, JSON_UNESCAPED_UNICODE));
 
 if ($routeId === '') {
