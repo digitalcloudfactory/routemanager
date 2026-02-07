@@ -77,12 +77,7 @@ function overlapStatsSegment($A, $B, $toleranceMeters) {
         $start = max(0, $i - $window);
         $end   = min(count($Bp) - 2, $i + $window);
 
-        for ($j = $start; $j <= $end; $j++) {
-            if (segmentDistance($a1, $a2, $Bp[$j], $Bp[$j + 1]) <= $toleranceMeters) {
-                $found = true;
-                break;
-            }
-        }
+
 
         if ($found) {
             $overlap += $segLen;
