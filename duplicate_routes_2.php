@@ -10,15 +10,21 @@ $p2 = decodePolyline("ezehG`lrHxFpAhCbDxI~^rc@p_@~EG~B`IxLz@vAlGbE`F\lKj`@l\v[vd
 //$p1 = decodePolyline($encoded1);
 //$p2 = decodePolyline($encoded2);
 
+
 $stats1 = overlapStatsSegment($p1, $p2, 30);
 $stats2 = overlapStatsSegment($p2, $p1, 30);
 
+// Take the smaller overlap for distance/percent
 $overlapMeters  = min($stats1['overlap_m'], $stats2['overlap_m']);
 $overlapPercent = min($stats1['percent'],   $stats2['percent']);
 
+// Use the segments from the first comparison (or merge both)
+$overlapSegments = $stats1['segments'];
+
+
 echo "Overlap distance: " . round($overlapMeters) . " m\n";
 echo "Overlap percent: "  . round($overlapPercent, 2) . " %\n";
-echo "done v1.2";
+echo "done v1.3";
 
 $start = $p1[0];
 $lat = $start['lat'];
@@ -66,38 +72,41 @@ function overlapStatsSegment($A, $B, $toleranceMeters) {
 
     $total = 0.0;
     $overlap = 0.0;
+    $window = 20;
 
-    $window = 20; // limits comparisons, tweak if needed
+    $overlapSegments = [];
 
-$overlapSegments = [];
+    for ($i = 0; $i < count($Ap) - 1; $i++) {
+        $a1 = $Ap[$i];
+        $a2 = $Ap[$i + 1];
+        $segLen = hypot($a2[0] - $a1[0], $a2[1] - $a1[1]);
+        $total += $segLen;
 
-for ($i = 0; $i < count($Ap) - 1; $i++) {
-    $a1 = $Ap[$i];
-    $a2 = $Ap[$i+1];
-    $segLen = hypot($a2[0]-$a1[0], $a2[1]-$a1[1]);
+        $found = false;
+        $start = max(0, $i - $window);
+        $end   = min(count($Bp) - 2, $i + $window);
 
-    $found = false;
-    for ($j=0; $j<count($Bp)-1; $j++) {
-        if (segmentDistance($a1, $a2, $Bp[$j], $Bp[$j+1]) <= $toleranceMeters) {
-            $found = true;
-            break;
+        for ($j = $start; $j <= $end; $j++) {
+            if (segmentDistance($a1, $a2, $Bp[$j], $Bp[$j + 1]) <= $toleranceMeters) {
+                $found = true;
+                break;
+            }
+        }
+
+        if ($found) {
+            $overlap += $segLen;
+            $overlapSegments[] = [
+                'start' => ['lat'=>$A[$i]['lat'],'lon'=>$A[$i]['lon']],
+                'end'   => ['lat'=>$A[$i+1]['lat'],'lon'=>$A[$i+1]['lon']]
+            ];
         }
     }
-
-    if ($found) {
-        $overlap += $segLen;
-
-        $overlapSegments[] = [
-            'start' => ['lat'=>$A[$i]['lat'],'lon'=>$A[$i]['lon']],
-            'end'   => ['lat'=>$A[$i+1]['lat'],'lon'=>$A[$i+1]['lon']]
-        ];
-    }
-}
 
     return [
         'overlap_m' => $overlap,
         'total_m'   => $total,
-        'percent'   => $total > 0 ? ($overlap / $total) * 100 : 0
+        'percent'   => $total > 0 ? ($overlap / $total) * 100 : 0,
+        'segments'  => $overlapSegments // <- add this
     ];
 }
 
