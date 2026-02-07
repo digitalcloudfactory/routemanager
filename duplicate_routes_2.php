@@ -20,6 +20,10 @@ echo "Overlap distance: " . round($overlapMeters) . " m\n";
 echo "Overlap percent: "  . round($overlapPercent, 2) . " %\n";
 echo "done v1.2";
 
+$start = $p1[0];
+$lat = $start['lat'];
+$lon = $start['lon'];
+
 function project($p, $lat0) {
     $R = 6371000;
     $x = deg2rad($p['lon']) * cos(deg2rad($lat0)) * $R;
@@ -65,20 +69,16 @@ function overlapStatsSegment($A, $B, $toleranceMeters) {
 
     $window = 20; // limits comparisons, tweak if needed
 
+$overlapSegments = [];
+
 for ($i = 0; $i < count($Ap) - 1; $i++) {
     $a1 = $Ap[$i];
-    $a2 = $Ap[$i + 1];
-
-    $segLen = hypot($a2[0] - $a1[0], $a2[1] - $a1[1]);
-    $total += $segLen;
+    $a2 = $Ap[$i+1];
+    $segLen = hypot($a2[0]-$a1[0], $a2[1]-$a1[1]);
 
     $found = false;
-
-    for ($j = 0; $j < count($Bp) - 1; $j++) {
-        $b1 = $Bp[$j];
-        $b2 = $Bp[$j + 1];
-
-        if (segmentDistance($a1, $a2, $b1, $b2) <= $toleranceMeters) {
+    for ($j=0; $j<count($Bp)-1; $j++) {
+        if (segmentDistance($a1, $a2, $Bp[$j], $Bp[$j+1]) <= $toleranceMeters) {
             $found = true;
             break;
         }
@@ -86,6 +86,11 @@ for ($i = 0; $i < count($Ap) - 1; $i++) {
 
     if ($found) {
         $overlap += $segLen;
+
+        $overlapSegments[] = [
+            'start' => ['lat'=>$A[$i]['lat'],'lon'=>$A[$i]['lon']],
+            'end'   => ['lat'=>$A[$i+1]['lat'],'lon'=>$A[$i+1]['lon']]
+        ];
     }
 }
 
@@ -139,4 +144,67 @@ function decodePolyline($encoded) {
 
     return $points;
 }
+
+function geojsonRoutes($p1, $p2, $overlapSegments) {
+    $features = [];
+
+    // Route 1 (blue)
+    $coords1 = array_map(fn($p) => [$p['lon'], $p['lat']], $p1);
+    $features[] = [
+        'type' => 'Feature',
+        'geometry' => ['type' => 'LineString', 'coordinates' => $coords1],
+        'properties' => ['color' => 'blue', 'name' => 'Route 1']
+    ];
+
+    // Route 2 (red)
+    $coords2 = array_map(fn($p) => [$p['lon'], $p['lat']], $p2);
+    $features[] = [
+        'type' => 'Feature',
+        'geometry' => ['type' => 'LineString', 'coordinates' => $coords2],
+        'properties' => ['color' => 'red', 'name' => 'Route 2']
+    ];
+
+    // Overlap segments (green)
+    foreach ($overlapSegments as $seg) {
+        $coords = [
+            [$seg['start']['lon'], $seg['start']['lat']],
+            [$seg['end']['lon'],   $seg['end']['lat']]
+        ];
+        $features[] = [
+            'type' => 'Feature',
+            'geometry' => ['type' => 'LineString', 'coordinates' => $coords],
+            'properties' => ['color' => 'green', 'name' => 'Overlap']
+        ];
+    }
+
+    return json_encode([
+        'type' => 'FeatureCollection',
+        'features' => $features
+    ]);
+}
 ?>
+<html>
+<head>
+  <title>GPX Overlap</title>
+  <meta charset="utf-8"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+</head>
+<body>
+<div id="map" style="width:100%; height:90vh;"></div>
+<script>
+var map = L.map('map').setView([$lat, $lon], 13);
+
+// Base layer
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+// Routes GeoJSON (from PHP)
+var geojson = <?php echo geojsonRoutes($p1, $p2, $overlapSegments); ?>;
+
+// Add each feature with its color
+geojson.features.forEach(function(f) {
+    L.geoJSON(f, {color: f.properties.color, weight: 5}).addTo(map);
+});
+</script>
+</body>
+</html>
