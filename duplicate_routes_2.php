@@ -11,8 +11,8 @@ $p2 = decodePolyline("ezehG`lrHxFpAhCbDxI~^rc@p_@~EG~B`IxLz@vAlGbE`F\lKj`@l\v[vd
 //$p2 = decodePolyline($encoded2);
 
 
-$stats1 = overlapStatsSegment($p1, $p2, 30);
-$stats2 = overlapStatsSegment($p2, $p1, 30);
+$stats1 = overlapStatsSegment($p1, $p2, 10);
+$stats2 = overlapStatsSegment($p2, $p1, 10);
 
 // Take the smaller overlap for distance/percent
 $overlapMeters  = min($stats1['overlap_m'], $stats2['overlap_m']);
