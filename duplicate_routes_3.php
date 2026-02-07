@@ -59,7 +59,8 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 // Mapbox polyline.decode → [lat, lon]
 const route1 = polyline.decode(encoded1);
 const route2 = polyline.decode(encoded2);
-
+const toleranceMeters = 8;
+  
 // Convert to Leaflet LatLng
 const latlngs1 = route1.map(p => L.latLng(p[0], p[1]));
 const latlngs2 = route2.map(p => L.latLng(p[0], p[1]));
@@ -150,7 +151,6 @@ function findOverlap(latlngsA, latlngsB, tolerance = 8, window = 25) {
     total += segLen;
 
 let matched = false;
-const toleranceMeters = 8;
     
 for (let j = 0; j < latlngsB.length-1; j++) {
   if (segmentDistanceMeters(latlngsA[i], latlngsA[i+1], latlngsB[j], latlngsB[j+1]) <= toleranceMeters) {
