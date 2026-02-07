@@ -142,6 +142,8 @@ tr.route-row { cursor: pointer; font-size: 0.55rem;}
 
 .routesTable {
   font-size: 0.8rem;
+  width: 100%;        /* take full available width */
+  table-layout: auto; /* let columns size naturally */
 }
 
 .routesTable th,
@@ -210,6 +212,20 @@ tr.route-row { cursor: pointer; font-size: 0.55rem;}
   font-size: 0.7rem;
 }
 
+main.container {
+  max-width: 100%;    /* override container width */
+  padding: 1rem 2rem; /* some horizontal padding */
+  box-sizing: border-box;
+}
+
+
+/* Optional: ensure figure scrolls if table is wider than screen */
+figure {
+  width: 100%;
+  overflow-x: auto;
+  margin: 0;          /* remove default margins */
+}
+
 </style>
 
 
@@ -252,7 +268,7 @@ tr.route-row { cursor: pointer; font-size: 0.55rem;}
 
 
 <section>
-<figure style="overflow-x:auto">
+<figure>
 <table class="routesTable striped hover">
 <thead>
 <tr>
