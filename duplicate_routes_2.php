@@ -18,7 +18,7 @@ $overlapPercent = min($stats1['percent'],   $stats2['percent']);
 
 echo "Overlap distance: " . round($overlapMeters) . " m\n";
 echo "Overlap percent: "  . round($overlapPercent, 2) . " %\n";
-echo "done v1.1";
+echo "done v1.2";
 
 function project($p, $lat0) {
     $R = 6371000;
@@ -65,24 +65,29 @@ function overlapStatsSegment($A, $B, $toleranceMeters) {
 
     $window = 20; // limits comparisons, tweak if needed
 
-    for ($i = 0; $i < count($Ap) - 1; $i++) {
-        $a1 = $Ap[$i];
-        $a2 = $Ap[$i + 1];
+for ($i = 0; $i < count($Ap) - 1; $i++) {
+    $a1 = $Ap[$i];
+    $a2 = $Ap[$i + 1];
 
-        $segLen = hypot($a2[0] - $a1[0], $a2[1] - $a1[1]);
-        $total += $segLen;
+    $segLen = hypot($a2[0] - $a1[0], $a2[1] - $a1[1]);
+    $total += $segLen;
 
-        $found = false;
+    $found = false;
 
-        $start = max(0, $i - $window);
-        $end   = min(count($Bp) - 2, $i + $window);
+    for ($j = 0; $j < count($Bp) - 1; $j++) {
+        $b1 = $Bp[$j];
+        $b2 = $Bp[$j + 1];
 
-
-
-        if ($found) {
-            $overlap += $segLen;
+        if (segmentDistance($a1, $a2, $b1, $b2) <= $toleranceMeters) {
+            $found = true;
+            break;
         }
     }
+
+    if ($found) {
+        $overlap += $segLen;
+    }
+}
 
     return [
         'overlap_m' => $overlap,
