@@ -108,7 +108,7 @@ function segmentDistance(a1, a2, b1, b2) {
 /* =======================
    OVERLAP MATCHING
 ======================= */
-function findOverlap(latlngsA, latlngsB, tolerance = 12, window = 25) {
+function findOverlap(latlngsA, latlngsB, tolerance = 8, window = 25) {
   const pA = projectLine(latlngsA);
   const pB = projectLine(latlngsB);
 
