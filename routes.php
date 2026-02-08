@@ -226,6 +226,11 @@ figure {
   margin: 0;          /* remove default margins */
 }
 
+:root {
+  --pico-font-size: 0.85rem;
+  --pico-spacing: 0.5rem;
+}
+    
 </style>
 
 
