@@ -107,7 +107,7 @@ unset($route);
 
 
 <style>
-tr.route-row { cursor: pointer; font-size: 0.55rem;}
+tr.route-row { cursor: pointer;}
 .route-details article { margin-top: 1rem; }
 .route-map { height: 300px; border-radius: 12px; }
 
