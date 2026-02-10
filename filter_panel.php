@@ -10,6 +10,11 @@
       <input id="filterName" type="text" placeholder="Route name">
     </label>
 
+    <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; margin-top: -0.5rem; margin-bottom: 1rem;">
+    <input id="filterNameNot" type="checkbox" style="margin-bottom: 0;">
+    Exclude this name (NOT)
+    </label>
+
     <label>
       Min distance (km)
       <input id="filterDistance" type="number" min="0" step="0.1">
