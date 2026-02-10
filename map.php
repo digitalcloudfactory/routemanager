@@ -104,6 +104,29 @@ unset($route);
   height: calc(100vh - 120px);
   border-radius: 12px;
 }
+    
+#filterPanel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 320px;
+  height: 100%;
+  background: var(--background-color);
+  box-shadow: -4px 0 12px rgba(0,0,0,0.1);
+  padding: 1rem;
+  transform: translateX(100%);
+  transition: transform 0.25s ease;
+  z-index: 1000;
+}
+
+#filterPanel.open {
+  transform: translateX(0);
+}
+
+    /* Fix for Leaflet controls showing over the panel */
+.leaflet-control-container {
+  z-index: 500;
+}
 </style>
 
 <body>
