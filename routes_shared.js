@@ -31,26 +31,38 @@ document.addEventListener('DOMContentLoaded', () => {
   // Attach input listeners
 
   dbg('started loading - fired');
-// Inside the forEach loop in DOMContentLoaded
-[
-    filterName,
-    filterNameNot, // <--- Ensure this ID "filterNameNot" exists in HTML
-    filterDistance,
-    filterElevation,
-    filterType,
-    filterTags
-].forEach(el => {
-    if (!el) return;
+// Define the IDs you want to watch
+const filterIds = [
+    'filterName',
+    'filterNameNot',
+    'filterDistance',
+    'filterElevation',
+    'filterType',
+    'filterTags'
+];
 
-    // Use a named function to ensure it's exactly the same for both events
-    const triggerUpdate = () => {
-        dbg(`Event fired on: ${el.id}`);
+filterIds.forEach(id => {
+    const el = document.getElementById(id);
+    
+    if (!el) {
+        console.error(`❌ [filters] Could not find element with ID: ${id}`);
+        return;
+    }
+
+    const triggerUpdate = (e) => {
+        dbg(`Event (${e.type}) fired on: ${id}`);
         applyFilters();
         updateURLFromFilters();
     };
 
+    // Attach to multiple event types to ensure it catches the checkbox toggle
     el.addEventListener('input', triggerUpdate);
-    el.addEventListener('change', triggerUpdate); // Essential for checkboxes
+    el.addEventListener('change', triggerUpdate);
+    
+    // Specifically for the checkbox, 'click' is sometimes the only one that fires reliably
+    if (el.type === 'checkbox') {
+        el.addEventListener('click', triggerUpdate);
+    }
 });
 
 
