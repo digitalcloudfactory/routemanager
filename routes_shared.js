@@ -31,23 +31,26 @@ document.addEventListener('DOMContentLoaded', () => {
   // Attach input listeners
 
   dbg('started loading - fired');
+// Inside the forEach loop in DOMContentLoaded
 [
-  filterName,
-  filterNameNot,
-  filterDistance,
-  filterElevation,
-  filterType,
-  filterTags
+    filterName,
+    filterNameNot, // <--- Ensure this ID "filterNameNot" exists in HTML
+    filterDistance,
+    filterElevation,
+    filterType,
+    filterTags
 ].forEach(el => {
-  if (!el) return;
-  el.addEventListener('input', () => {
-    applyFilters();
-    updateURLFromFilters();
-  });
-  el.addEventListener('change', () => {
-    applyFilters();
-    updateURLFromFilters();
-  });
+    if (!el) return;
+
+    // Use a named function to ensure it's exactly the same for both events
+    const triggerUpdate = () => {
+        dbg(`Event fired on: ${el.id}`);
+        applyFilters();
+        updateURLFromFilters();
+    };
+
+    el.addEventListener('input', triggerUpdate);
+    el.addEventListener('change', triggerUpdate); // Essential for checkboxes
 });
 
 
