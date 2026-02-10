@@ -9,6 +9,7 @@ function dbg(...args) {
 
 
 let filterName;
+let filterNameNot;
 let filterDistance;
 let filterElevation;
 let filterType;
@@ -18,6 +19,7 @@ let filteredRoutes = [];
 document.addEventListener('DOMContentLoaded', () => {
   // Cache filter elements
   filterName = document.getElementById('filterName');
+  filterNameNot = document.getElementById('filterNameNot');
   filterDistance = document.getElementById('filterDistance');
   filterElevation = document.getElementById('filterElevation');
   filterType = document.getElementById('filterType');
@@ -31,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
   dbg('started loading - fired');
 [
   filterName,
+  filterNameNot,
   filterDistance,
   filterElevation,
   filterType,
@@ -83,16 +86,20 @@ if (closeBtn && panel) {
 });
 
 function applyFilters() {
+  dbg('applyFilters() called');
 
-dbg('applyFilters() called');
-
-  const filterName = document.getElementById('filterName');
-  if (!filterName) {
+  const filterNameEl = document.getElementById('filterName');
+  const filterNameNotEl = document.getElementById('filterNameNot');
+  
+  if (!filterNameEl) {
     dbg('applyFilters aborted: filterName not found');
     return;
   }
+
+  // 1. Gather current filter values
+  const nameQuery = filterNameEl.value.trim().toLowerCase();
+  const isNegated = filterNameNotEl ? filterNameNotEl.checked : false;
   
-  const name = filterName.value.trim().toLowerCase();
   const minDist = parseFloat(filterDistance.value) || 0;
   const minElev = parseFloat(filterElevation.value) || 0;
   const type = filterType.value;
@@ -102,21 +109,35 @@ dbg('applyFilters() called');
     .map(t => t.trim())
     .filter(Boolean);
 
+  // 2. Execute the filter
   filteredRoutes = routes.filter(r => {
+    // Handle Name Logic
+    let nameMatch = true;
+    if (nameQuery) {
+      const contains = r.name.toLowerCase().includes(nameQuery);
+      // If negated is true, we want routes that DON'T contain the string
+      nameMatch = isNegated ? !contains : contains;
+    }
+
+    // Handle Tags Logic
     const routeTags = (r.tags || '')
       .split(',')
       .map(t => t.trim().toLowerCase());
+    const tagsMatch = !tags.length || tags.every(t => routeTags.includes(t));
 
+    // Combined criteria
     return (
-      (!name || r.name.toLowerCase().includes(name)) &&
+      nameMatch &&
+      tagsMatch &&
       (!minDist || r.distance_km >= minDist) &&
       (!minElev || r.elevation >= minElev) &&
-      (!type || r.type == type) &&
-      (!tags.length || tags.every(t => routeTags.includes(t)))
+      (!type || r.type == type)
     );
   });
 
-  // Render depending on page
+  dbg(`Filters applied. Showing ${filteredRoutes.length} of ${routes.length} routes.`);
+
+  // 3. Render results to UI
   if (typeof renderTable === 'function') {
     renderTable(filteredRoutes);
   }
@@ -138,7 +159,8 @@ function updateURLFromFilters() {
   if (filterElevation.value) params.set('minElev', filterElevation.value);
   if (filterType.value) params.set('type', filterType.value);
   if (filterTags.value.trim()) params.set('tags', filterTags.value.trim());
-
+  if (filterNameNot.checked) params.set('notName', '1');
+  
   dbg('New URL params:', params.toString());
   
   const newUrl =
@@ -156,7 +178,8 @@ function clearFilters() {
   filterElevation.value = '';
   filterType.value = '';
   filterTags.value = '';
-
+  filterNameNot.checked = false;
+  
   applyFilters();
   updateURLFromFilters();
 }
@@ -172,7 +195,7 @@ dbg('URL params detected:', params.toString());
   if (params.has('minElev')) filterElevation.value = params.get('minElev');
   if (params.has('type')) filterType.value = params.get('type');
   if (params.has('tags')) filterTags.value = params.get('tags');
-
+  if (params.has('notName')) filterNameNot.checked = params.get('notName') === '1';
   
  dbg('Filters restored from URL');
   
