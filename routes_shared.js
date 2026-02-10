@@ -148,26 +148,32 @@ function applyFilters() {
 }
 
 function updateURLFromFilters() {
-
- dbg('updateURLFromFilters() called');
- if (!filterName) return;
+  dbg('updateURLFromFilters() called');
+  
+  // Grab elements directly to avoid global variable issues
+  const nameEl = document.getElementById('filterName');
+  const nameNotEl = document.getElementById('filterNameNot');
+  if (!nameEl) return;
   
   const params = new URLSearchParams();
 
-  if (filterName.value.trim()) params.set('name', filterName.value.trim());
+  const nameVal = nameEl.value.trim();
+  if (nameVal) {
+    params.set('name', nameVal);
+    // Only set 'notName' if there's actually text in the name field
+    if (nameNotEl && nameNotEl.checked) {
+      params.set('notName', '1');
+    }
+  }
+
+  // Handle other fields (Distance, Elevation, etc.)
   if (filterDistance.value) params.set('minDist', filterDistance.value);
   if (filterElevation.value) params.set('minElev', filterElevation.value);
   if (filterType.value) params.set('type', filterType.value);
   if (filterTags.value.trim()) params.set('tags', filterTags.value.trim());
-  if (filterNameNot.checked) params.set('filterNameNot', '1');
-  
-  dbg('New URL params:', params.toString());
-  
-  const newUrl =
-    window.location.pathname +
-    (params.toString() ? '?' + params.toString() : '');
 
-     dbg('Replacing URL with:', newUrl);
+  const queryString = params.toString();
+  const newUrl = window.location.pathname + (queryString ? '?' + queryString : '');
   
   history.replaceState({}, '', newUrl);
 }
@@ -175,13 +181,14 @@ function updateURLFromFilters() {
 function clearFilters() {
   dbg('clearFilters() called');
   
-  // Use direct references to ensure they exist in the DOM
+  // Directly target the elements by ID
   const nameEl = document.getElementById('filterName');
   const nameNotEl = document.getElementById('filterNameNot');
 
   if (nameEl) nameEl.value = '';
-  if (nameNotEl) nameNotEl.checked = false; // This is the fix for the checkbox
+  if (nameNotEl) nameNotEl.checked = false;
 
+  // Clear others using cached variables
   filterDistance.value = '';
   filterElevation.value = '';
   filterType.value = '';
