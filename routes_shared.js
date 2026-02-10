@@ -159,7 +159,7 @@ function updateURLFromFilters() {
   if (filterElevation.value) params.set('minElev', filterElevation.value);
   if (filterType.value) params.set('type', filterType.value);
   if (filterTags.value.trim()) params.set('tags', filterTags.value.trim());
-  if (filterNameNot.checked) params.set('notName', '1');
+  if (filterNameNot.checked) params.set('filterNameNot', '1');
   
   dbg('New URL params:', params.toString());
   
@@ -173,13 +173,20 @@ function updateURLFromFilters() {
 }
 
 function clearFilters() {
-  filterName.value = '';
+  dbg('clearFilters() called');
+  
+  // Use direct references to ensure they exist in the DOM
+  const nameEl = document.getElementById('filterName');
+  const nameNotEl = document.getElementById('filterNameNot');
+
+  if (nameEl) nameEl.value = '';
+  if (nameNotEl) nameNotEl.checked = false; // This is the fix for the checkbox
+
   filterDistance.value = '';
   filterElevation.value = '';
   filterType.value = '';
   filterTags.value = '';
-  filterNameNot.checked = false;
-  
+
   applyFilters();
   updateURLFromFilters();
 }
