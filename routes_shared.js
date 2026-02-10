@@ -151,54 +151,54 @@ function applyFilters() {
 }
 
 function updateURLFromFilters() {
-  dbg('updateURLFromFilters() called');
-  
-  // Grab elements directly to avoid global variable issues
-  const nameEl = document.getElementById('filterName');
-  const nameNotEl = document.getElementById('filterNameNot');
-  if (!nameEl) return;
-  
-  const params = new URLSearchParams();
+    dbg('updateURLFromFilters() called');
+    
+    // Use the cached variables since they are defined globally
+    if (!filterName) return;
+    
+    const params = new URLSearchParams();
 
-  const nameVal = nameEl.value.trim();
-  if (nameVal) {
-    params.set('name', nameVal);
-    // Only set 'notName' if there's actually text in the name field
-    if (nameNotEl && nameNotEl.checked) {
-      params.set('notName', '1');
+    // 1. Name text
+    const nameVal = filterName.value.trim();
+    if (nameVal) {
+        params.set('name', nameVal);
     }
-  }
 
-  // Handle other fields (Distance, Elevation, etc.)
-  if (filterDistance.value) params.set('minDist', filterDistance.value);
-  if (filterElevation.value) params.set('minElev', filterElevation.value);
-  if (filterType.value) params.set('type', filterType.value);
-  if (filterTags.value.trim()) params.set('tags', filterTags.value.trim());
+    // 2. The NOT Toggle (Moved OUTSIDE the name check)
+    // This ensures the URL updates even if the name field is empty
+    if (filterNameNot && filterNameNot.checked) {
+        params.set('notName', '1');
+    }
 
-  const queryString = params.toString();
-  const newUrl = window.location.pathname + (queryString ? '?' + queryString : '');
-  
-  history.replaceState({}, '', newUrl);
+    // 3. Distance, Elevation, Type, Tags
+    if (filterDistance && filterDistance.value) params.set('minDist', filterDistance.value);
+    if (filterElevation && filterElevation.value) params.set('minElev', filterElevation.value);
+    if (filterType && filterType.value) params.set('type', filterType.value);
+    
+    const tagsVal = filterTags ? filterTags.value.trim() : '';
+    if (tagsVal) params.set('tags', tagsVal);
+
+    const queryString = params.toString();
+    const newUrl = window.location.pathname + (queryString ? '?' + queryString : '');
+    
+    dbg('New URL:', newUrl);
+    history.replaceState({}, '', newUrl);
 }
 
 function clearFilters() {
-  dbg('clearFilters() called');
-  
-  // Directly target the elements by ID
-  const nameEl = document.getElementById('filterName');
-  const nameNotEl = document.getElementById('filterNameNot');
+    dbg('clearFilters() called');
+    
+    // Clear the actual DOM elements
+    if (filterName) filterName.value = '';
+    if (filterNameNot) filterNameNot.checked = false;
+    if (filterDistance) filterDistance.value = '';
+    if (filterElevation) filterElevation.value = '';
+    if (filterType) filterType.value = '';
+    if (filterTags) filterTags.value = '';
 
-  if (nameEl) nameEl.value = '';
-  if (nameNotEl) nameNotEl.checked = false;
-
-  // Clear others using cached variables
-  filterDistance.value = '';
-  filterElevation.value = '';
-  filterType.value = '';
-  filterTags.value = '';
-
-  applyFilters();
-  updateURLFromFilters();
+    // Re-run the logic to refresh the list and the URL
+    applyFilters();
+    updateURLFromFilters();
 }
 
 function loadFiltersFromURL() {
