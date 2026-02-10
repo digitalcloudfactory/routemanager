@@ -97,14 +97,14 @@ $needsAuth = true;
 
 if (isset($_SESSION['internal_user_id'])) {
     $stmt = $pdo->prepare("
-        SELECT strava_access_token
+        SELECT access_token
         FROM users
         WHERE id = ?
     ");
     $stmt->execute([$_SESSION['internal_user_id']]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if ($row && $row['strava_access_token']) {
+    if ($row && $row['access_token']) {
         header("Location: routes.php");
         exit;
     }
