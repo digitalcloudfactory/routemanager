@@ -281,6 +281,8 @@ figure {
   <th>Distance (km)</th>
   <th>Elevation (m)</th>
   <th>Estimated Moving Time</th>
+  <th>Private</th>
+  <th>Starred</th>
 </tr>
 </thead>
 <tbody id="routesBody"></tbody>
