@@ -65,6 +65,8 @@ $stmt = $pdo->prepare("
         elevation,
         type,
         estimated_moving_time,
+        private,
+        starred,
         summary_polyline,
         DATE(created_at) AS created_date
     FROM strava_routes
@@ -338,6 +340,8 @@ function renderTable(data) {
       <td>${Number(route.distance_km).toFixed(2)}</td>
       <td>${route.elevation}</td>
       <td>${formatDuration(route.estimated_moving_time)}</td>
+      <td>${formatDuration(route.starred)}</td>
+      <td>${formatDuration(route.private)}</td>
     `;
 
     const details = document.createElement('tr');
