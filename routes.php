@@ -340,7 +340,7 @@ function renderTable(data) {
       <td>${Number(route.distance_km).toFixed(2)}</td>
       <td>${route.elevation}</td>
       <td>${formatDuration(route.estimated_moving_time)}</td>
-      <td style="#ff6600">${route.starred == 1 ? '&#9733;' : ''}</td>
+      <td style="color: #ff6600;">${route.starred == 1 ? '&#9733;' : ''}</td>
       <td>${route.private == 1 ? '&#x1F512;' : ''}</td>
     `;
 
