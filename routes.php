@@ -154,6 +154,21 @@ tr.route-row { cursor: pointer;}
   font-weight: 600;
 }
 
+.routesTable th[data-sort] {
+  cursor: pointer;
+  position: relative;
+  user-select: none;
+}
+
+.routesTable th[data-sort]:after {
+  content: ' ↕';
+  opacity: 0.3;
+  font-size: 0.7rem;
+}
+
+.routesTable th.sort-asc:after { content: ' ↑'; opacity: 1; color: var(--pico-primary); }
+.routesTable th.sort-desc:after { content: ' ↓'; opacity: 1; color: var(--pico-primary); }
+
     .route-details {
   margin-top: 0.5rem;
 }
@@ -276,14 +291,14 @@ figure {
 <table class="routesTable striped hover">
 <thead>
 <tr>
-  <th>Name</th>
-  <th>Distance (km)</th>
-  <th>Elevation (m)</th>
-  <th>Estimated Moving Time</th>
-  <th>Creation Date</th>
-  <th>Starred</th>
-  <th>Private</th>
-</tr>
+    <th data-sort="name">Name</th>
+    <th data-sort="distance_km">Distance (km)</th>
+    <th data-sort="elevation">Elevation (m)</th>
+    <th data-sort="estimated_moving_time">Moving Time</th>
+    <th data-sort="created_date">Creation Date</th>
+    <th data-sort="starred">Starred</th>
+    <th data-sort="private">Private</th>
+  </tr>
 </thead>
 <tbody id="routesBody"></tbody>
 </table>
@@ -589,6 +604,53 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log("Main Page Ready. Data check:", typeof routes);
     renderTable(routes);
 });
+
+let currentSort = { column: null, direction: 'asc' };
+
+document.querySelectorAll('.routesTable th[data-sort]').forEach(th => {
+    th.addEventListener('click', () => {
+        const column = th.dataset.sort;
+        
+        // Toggle direction if clicking same column
+        if (currentSort.column === column) {
+            currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+        } else {
+            currentSort.column = column;
+            currentSort.direction = 'asc';
+        }
+
+        // Update UI classes
+        document.querySelectorAll('.routesTable th').forEach(el => el.classList.remove('sort-asc', 'sort-desc'));
+        th.classList.add(currentSort.direction === 'asc' ? 'sort-asc' : 'sort-desc');
+
+        // Sort the global 'routes' variable
+        routes.sort((a, b) => {
+            let valA = a[column];
+            let valB = b[column];
+
+            // Handle numeric values (distance, elevation, etc)
+            if (!isNaN(parseFloat(valA)) && isFinite(valA)) {
+                valA = parseFloat(valA);
+                valB = parseFloat(valB);
+            } else {
+                // Case insensitive string sort
+                valA = (valA || '').toString().toLowerCase();
+                valB = (valB || '').toString().toLowerCase();
+            }
+
+            if (valA < valB) return currentSort.direction === 'asc' ? -1 : 1;
+            if (valA > valB) return currentSort.direction === 'asc' ? 1 : -1;
+            return 0;
+        });
+
+        // Re-render the table with sorted data
+        // Note: If you have filters active, you might want to call 
+        // the filtering function from routes_shared.js instead!
+        //renderTable(routes);
+        applyfilters();
+    });
+});
+
 </script>
     
 <script src="routes_shared.js?v=1.0.1"></script>
