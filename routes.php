@@ -509,6 +509,8 @@ document.getElementById('fetchRoutes').addEventListener('click', async () => {
             
             if (data.has_more) {
                 page++;
+                // Add a 1-second pause before the next batch
+                await new Promise(resolve => setTimeout(resolve, 1000));
             } else {
                 keepGoing = false;
             }
