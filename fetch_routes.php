@@ -36,6 +36,11 @@ try {
     exit;
 }
 
+// ... at the very bottom of the script ...
+$insert = null;
+$existingStmt = null;
+$pdo = null; // This closes the connection
+
 // --- FETCH USER TOKENS ---
 $stmt = $pdo->prepare("SELECT access_token, refresh_token, token_expires_at FROM users WHERE id = :id");
 $stmt->execute([':id' => $internalUserId]);
