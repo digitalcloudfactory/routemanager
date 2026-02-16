@@ -647,7 +647,7 @@ document.querySelectorAll('.routesTable th[data-sort]').forEach(th => {
         // Note: If you have filters active, you might want to call 
         // the filtering function from routes_shared.js instead!
         //renderTable(routes);
-        applyfilters();
+        applyFilters();
     });
 });
 
