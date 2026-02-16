@@ -5,7 +5,7 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-// Set a higher time limit because fetching many routes + geocoding takes time
+// Increase time limit for pagination and geocoding delays
 set_time_limit(300); 
 
 if (!isset($_SESSION['internal_user_id'])) {
@@ -14,8 +14,6 @@ if (!isset($_SESSION['internal_user_id'])) {
 }
 
 $internalUserId = $_SESSION['internal_user_id'];
-$stravaId = $_SESSION['strava_id'];
-
 header('Content-Type: application/json');
 
 // --- CONFIG ---
@@ -80,7 +78,7 @@ if ($expiresAt < time()) {
 
 // --- FETCH ALL ROUTES USING PAGINATION ---
 $page = 1;
-$perPage = 100; // Strava max is 200, but 100 is safer for stability
+$perPage = 100; 
 $all_fetched_routes = [];
 $keepFetching = true;
 
@@ -100,9 +98,8 @@ while ($keepFetching) {
     } else {
         $keepFetching = false;
     }
-
-    // Safety break to prevent infinite loops if API fails
-    if ($page > 20) break; 
+    
+    if ($page > 30) break; // Hard limit to prevent loops
 }
 
 // --- PREPARE QUERIES ---
@@ -139,7 +136,7 @@ foreach ($all_fetched_routes as $route) {
     // Only geocode if we don't have a country yet
     if (empty($country) && !empty($summaryPolyline)) {
         $country = getCountryFromPolyline($summaryPolyline);
-        // Nominatim Rate Limit: 1 request per second
+        // Be polite to Nominatim (OSM)
         usleep(1200000); 
     }
 
@@ -153,8 +150,8 @@ foreach ($all_fetched_routes as $route) {
         ':distance'             => $route['distance'] / 1000,
         ':elevation'            => $route['elevation_gain'],
         ':type'                 => $route['type'] ?? null,
-        ':private'              => $route['private'],
-        ':starred'              => $route['starred'],
+        ':private'              => $route['private'] ? 1 : 0,
+        ':starred'              => $route['starred'] ? 1 : 0,
         ':country'              => $country,
         ':created_at'           => $createdAt,
         ':estimated_moving_time'=> $route['estimated_moving_time'],
@@ -174,4 +171,70 @@ echo json_encode([
     'last_sync' => date('Y-m-d H:i:s')
 ]);
 
-// ... (Keep your getCountryFromPolyline and decodePolyline functions here) ...
+
+// --- HELPER FUNCTIONS ---
+
+function getCountryFromPolyline(string $summaryPolyline): ?string
+{
+    if (!$summaryPolyline) return null;
+
+    $coords = decodePolyline($summaryPolyline);
+    if (!$coords || count($coords) === 0) return null;
+
+    $lat = $coords[0][0];
+    $lon = $coords[0][1];
+
+    $url = "https://nominatim.openstreetmap.org/reverse"
+         . "?lat=" . urlencode($lat)
+         . "&lon=" . urlencode($lon)
+         . "&format=json";
+
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 10,
+        CURLOPT_HTTPHEADER => [
+            'User-Agent: MapRoutesApp/1.0 (contact@yourdomain.com)'
+        ],
+    ]);
+
+    $res = curl_exec($ch);
+    curl_close($ch);
+
+    if (!$res) return null;
+
+    $data = json_decode($res, true);
+    return $data['address']['country'] ?? null;
+}
+
+function decodePolyline(string $encoded): array
+{
+    $points = [];
+    $index = 0;
+    $lat = 0;
+    $lng = 0;
+    $len = strlen($encoded);
+
+    while ($index < $len) {
+        $b = 0; $shift = 0; $result = 0;
+        do {
+            $b = ord($encoded[$index++]) - 63;
+            $result |= ($b & 0x1f) << $shift;
+            $shift += 5;
+        } while ($b >= 0x20);
+        $dlat = ($result & 1) ? ~($result >> 1) : ($result >> 1);
+        $lat += $dlat;
+
+        $shift = 0; $result = 0;
+        do {
+            $b = ord($encoded[$index++]) - 63;
+            $result |= ($b & 0x1f) << $shift;
+            $shift += 5;
+        } while ($b >= 0x20);
+        $dlng = ($result & 1) ? ~($result >> 1) : ($result >> 1);
+        $lng += $dlng;
+
+        $points[] = [$lat / 1e5, $lng / 1e5];
+    }
+    return $points;
+}
