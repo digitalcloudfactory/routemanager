@@ -36,10 +36,6 @@ try {
     exit;
 }
 
-// ... at the very bottom of the script ...
-$insert = null;
-$existingStmt = null;
-$pdo = null; // This closes the connection
 
 // --- FETCH USER TOKENS ---
 $stmt = $pdo->prepare("SELECT access_token, refresh_token, token_expires_at FROM users WHERE id = :id");
@@ -142,3 +138,9 @@ echo json_encode([
 // --- HELPERS (Keep your existing functions below) ---
 function getCountryFromPolyline($summaryPolyline) { /* same as before */ }
 function decodePolyline($encoded) { /* same as before */ }
+
+
+// ... at the very bottom of the script ...
+$insert = null;
+$existingStmt = null;
+$pdo = null; // This closes the connection
