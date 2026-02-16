@@ -569,26 +569,30 @@ async function saveTags(routeId, value) {
   <script>
   const mapLink = document.getElementById('mapLink');
 
-  function updateMapLinkFromURL() {
+function updateMapLinkFromURL() {
     if (!mapLink) return;
     mapLink.href = 'map.php' + window.location.search;
-  }
+}
 
-  // Update initially and whenever filters change URL
-  updateMapLinkFromURL();
+updateMapLinkFromURL();
+window.addEventListener('popstate', updateMapLinkFromURL);
 
-  window.addEventListener('popstate', updateMapLinkFromURL);
-
-  // Hook into URL updates from filters
-  const originalReplace = history.replaceState;
-  history.replaceState = function (...args) {
+const originalReplace = history.replaceState;
+history.replaceState = function (...args) {
     originalReplace.apply(this, args);
     updateMapLinkFromURL();
-  };
+};
 
+// FIX IS HERE: Change 'routes' to 'routeData'
 window.addEventListener('DOMContentLoaded', () => {
-    console.log("DOM Ready, rendering routes...");
-    renderTable(routes);
+    console.log("DOM Ready. Checking routeData...");
+    if (typeof routeData !== 'undefined' && routeData.length > 0) {
+        console.table(routeData); // This will show your data in the console as a table
+        renderTable(routeData);
+    } else {
+        console.warn("routeData is empty or undefined.");
+        renderTable([]); // Force the "No routes found" message
+    }
 });
 </script>
 
