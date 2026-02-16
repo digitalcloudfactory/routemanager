@@ -332,7 +332,16 @@ function renderTable(data) {
 
   data.forEach(route => {
     const row = document.createElement('tr');
-        
+
+    let coords = [];
+    if (route.summary_polyline) {
+        try {
+            coords = polyline.decode(route.summary_polyline);
+        } catch (e) {
+            console.warn("Could not decode polyline for route: " + route.route_id);
+        }
+    }
+      
     row.className = 'route-row';
 
     row.innerHTML = `
