@@ -531,6 +531,7 @@ document.getElementById('fetchRoutes').addEventListener('click', async () => {
         btn.disabled = false;
     }
 });
+    
 function routeTypeLabel(type) {
   return {
     1: 'Ride',
