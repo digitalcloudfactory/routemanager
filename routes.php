@@ -12,7 +12,7 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-
+console.log("Page Started. Query DB is next...");
 
 if (!isset($_SESSION['internal_user_id'])) {
     header("Location: index.php");
@@ -565,7 +565,6 @@ async function saveTags(routeId, value) {
 </script>
 
 
-
   <script>
   const mapLink = document.getElementById('mapLink');
 
@@ -583,7 +582,6 @@ history.replaceState = function (...args) {
     updateMapLinkFromURL();
 };
 
-// FIX IS HERE: Change 'routes' to 'routeData'
 window.addEventListener('DOMContentLoaded', () => {
     console.log("DOM Ready. Checking routeData...");
     if (typeof routeData !== 'undefined' && routeData.length > 0) {
@@ -595,7 +593,8 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 });
 </script>
-
+    
+<script src="routes_shared.js?v=1.0.1"></script>
 
 
 <?php include 'footer.php'; ?>
