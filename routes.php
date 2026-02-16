@@ -471,30 +471,64 @@ addDistanceMarkers(map, coords, 10);
    FETCH ROUTES (AJAX)
 ================================ */
 
+/* ===============================
+   BATCH FETCH ROUTES (AJAX)
+================================ */
 document.getElementById('fetchRoutes').addEventListener('click', async () => {
-  const btn = document.getElementById('fetchRoutes');
-  btn.setAttribute('aria-busy', 'true');
+    const btn = document.getElementById('fetchRoutes');
+    const originalText = btn.innerText;
+    
+    btn.setAttribute('aria-busy', 'true');
+    btn.disabled = true;
 
-  try {
-    const res = await fetch('fetch_routes.php');
-    const text = await res.text();  // read raw text first
-    console.log('RAW response:', text);  // <-- log it
-    const data = JSON.parse(text);       // then parse JSON
+    let page = 1;
+    let keepGoing = true;
+    let totalSynced = 0;
 
-    if (!data.success) {
-      alert(data.error || 'Failed to fetch routes');
-      return;
+    try {
+        while (keepGoing) {
+            // Update button text to show progress
+            btn.innerText = `Syncing page ${page}... (${totalSynced} routes)`;
+
+            const res = await fetch(`fetch_routes.php?page=${page}`);
+            const text = await res.text();
+            
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch (jsonErr) {
+                console.error('Invalid JSON response:', text);
+                throw new Error('Server returned an invalid response.');
+            }
+
+            if (!data.success) {
+                throw new Error(data.error || 'Failed to fetch batch');
+            }
+
+            totalSynced += data.routes_in_batch;
+            
+            if (data.has_more) {
+                page++;
+            } else {
+                keepGoing = false;
+            }
+        }
+
+        // Final success state
+        btn.innerText = `Success! ${totalSynced} routes synced.`;
+        setTimeout(() => {
+            location.reload(); // Refresh to show new routes
+        }, 1000);
+
+    } catch (e) {
+        console.error('Fetch error:', e);
+        alert('Error: ' + e.message);
+        btn.innerText = originalText;
+    } finally {
+        btn.removeAttribute('aria-busy');
+        btn.disabled = false;
     }
-
-    location.reload();
-  } catch (e) {
-    console.error('Fetch error:', e);
-    alert('Error fetching routes. Check console for details.');
-  } finally {
-    btn.removeAttribute('aria-busy');
-  }
 });
-
 function routeTypeLabel(type) {
   return {
     1: 'Ride',
