@@ -280,6 +280,7 @@ figure {
   <th>Distance (km)</th>
   <th>Elevation (m)</th>
   <th>Estimated Moving Time</th>
+  <th>Creation Date</th>
   <th>Starred</th>
   <th>Private</th>
 </tr>
@@ -336,6 +337,7 @@ async function renderTable(data) {
             <td>${route.distance_km ? Number(route.distance_km).toFixed(2) : '0.00'}</td>
             <td>${route.elevation || 0}</td>
             <td>${formatDuration(route.estimated_moving_time)}</td>
+            <td>${route.created_date}</td>
             <td style="color: #ff6600;">${route.starred == 1 ? '&#9733;' : ''}</td>
             <td>${route.private == 1 ? '&#x1F512;' : ''}</td>
         `;
