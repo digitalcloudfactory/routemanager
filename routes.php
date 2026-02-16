@@ -373,9 +373,26 @@ function renderTable(data) {
                                 </div>
                             </div>
                         </article>`;
-                    // Give the browser 50ms to render the DIV before Leaflet touches it
-                    setTimeout(() => initMap(route), 50);
+
+                    // 2. Fetch the polyline ONLY if we haven't already
+                    if (!route.summary_polyline) {
+                        try {
+                            const response = await fetch(`get_polyline.php?route_id=${route.route_id}`);
+                            const data = await response.json();
+                            route.summary_polyline = data.polyline; // Save it to the object so we don't fetch again
+                        } catch (err) {
+                            console.error("Failed to fetch polyline", err);
+                        }
+                    }
+            
+                    // 3. Initialize Map with the fetched data
+                    if (route.summary_polyline) {
+                        setTimeout(() => initMap(route), 50);
+                    } else {
+                        document.getElementById(`map-${route.route_id}`).innerHTML = "Map unavailable";
+                    }
                 }
+
             };
             tbody.appendChild(row);
             tbody.appendChild(details);
