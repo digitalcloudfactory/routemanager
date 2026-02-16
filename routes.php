@@ -393,13 +393,6 @@ function renderTable(data) {
     });
 }
 
-
-/* INITIAL RENDER */
-renderTable(routes);
-
-
-
-
 /* ===============================
    LEAFLET MAP INIT (VISIBLE ONLY)
 ================================ */
@@ -600,6 +593,13 @@ async function saveTags(routeId, value) {
     originalReplace.apply(this, args);
     updateMapLinkFromURL();
   };
+
+window.addEventListener('DOMContentLoaded', () => {
+    console.log("DOM Ready, rendering routes...");
+    renderTable(routes);
+});
 </script>
-  
+
+
+
 <?php include 'footer.php'; ?>
