@@ -12,8 +12,6 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-console.log("Page Started. Query DB is next...");
-
 if (!isset($_SESSION['internal_user_id'])) {
     header("Location: index.php");
     exit;
