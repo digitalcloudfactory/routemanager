@@ -298,7 +298,7 @@ figure {
 <script src="https://unpkg.com/@mapbox/polyline"></script>
 
 <script>
-const routes = <?= json_encode($routes, JSON_UNESCAPED_UNICODE) ?: '[]'; ?>;
+var routes = <?= json_encode($routes, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?: '[]'; ?>;
 const tbody = document.getElementById('routesBody');
     
 /* ===============================
@@ -317,12 +317,19 @@ function formatDuration(seconds) {
    RENDER TABLE + INLINE DETAILS
 ================================ */ 
 
+
 function renderTable(data) {
-    if (!tbody) return;
+    console.log("Rendering table with", data.length, "routes");
+    const tbody = document.getElementById('routesBody');
+    if (!tbody) {
+        console.error("Could not find table body element!");
+        return;
+    }
+    
     tbody.innerHTML = '';
 
     if (!data || data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center">No routes found</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center">No routes found matching filters.</td></tr>`;
         return;
     }
 
@@ -367,21 +374,14 @@ function renderTable(data) {
                                 </div>
                             </div>
                         </article>`;
-                    
-                    // Only init map if we have polyline data
-                    if (route.summary_polyline && typeof polyline !== 'undefined') {
-                        initMap(route);
-                    } else {
-                        const mapEl = document.getElementById(`map-${route.route_id}`);
-                        if (mapEl) mapEl.innerHTML = "<p style='padding:20px'>Map data unavailable</p>";
-                    }
+                    // Give the browser 50ms to render the DIV before Leaflet touches it
+                    setTimeout(() => initMap(route), 50);
                 }
             };
-
             tbody.appendChild(row);
             tbody.appendChild(details);
-        } catch (e) {
-            console.error("Error rendering route row:", e);
+        } catch (err) {
+            console.error("Error rendering a specific row:", err, route);
         }
     });
 }
@@ -580,15 +580,10 @@ history.replaceState = function (...args) {
     updateMapLinkFromURL();
 };
 
-window.addEventListener('DOMContentLoaded', () => {
-    console.log("DOM Ready. Checking routeData...");
-    if (typeof routes !== 'undefined' && routes.length > 0) {
-        console.table(routes); // This will show your data in the console as a table
-        renderTable(routes);
-    } else {
-        console.warn("routes is empty or undefined.");
-        renderTable([]); // Force the "No routes found" message
-    }
+// 5. Initial Run
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("Main Page Ready. Data check:", typeof routes);
+    renderTable(routes);
 });
 </script>
     
