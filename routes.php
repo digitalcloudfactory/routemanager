@@ -317,88 +317,74 @@ function formatDuration(seconds) {
 ================================ */ 
 
 
-function renderTable(data) {
-    console.log("Rendering table with", data.length, "routes");
+// 3. RENDER TABLE (Fixed with 'async')
+async function renderTable(data) {
     const tbody = document.getElementById('routesBody');
-    if (!tbody) {
-        console.error("Could not find table body element!");
-        return;
-    }
-    
+    if (!tbody) return;
     tbody.innerHTML = '';
 
     if (!data || data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center">No routes found matching filters.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center">No routes found.</td></tr>`;
         return;
     }
 
     data.forEach(route => {
-        try {
-            const row = document.createElement('tr');
-            row.className = 'route-row';
-            row.innerHTML = `
-                <td>${route.name || 'Untitled'}</td>
-                <td>${route.distance_km ? Number(route.distance_km).toFixed(2) : '0.00'}</td>
-                <td>${route.elevation || 0}</td>
-                <td>${formatDuration(route.estimated_moving_time)}</td>
-                <td style="color: #ff6600;">${route.starred == 1 ? '&#9733;' : ''}</td>
-                <td>${route.private == 1 ? '&#x1F512;' : ''}</td>
-            `;
+        const row = document.createElement('tr');
+        row.className = 'route-row';
+        row.innerHTML = `
+            <td>${route.name || 'Untitled'}</td>
+            <td>${route.distance_km ? Number(route.distance_km).toFixed(2) : '0.00'}</td>
+            <td>${route.elevation || 0}</td>
+            <td>${formatDuration(route.estimated_moving_time)}</td>
+            <td style="color: #ff6600;">${route.starred == 1 ? '&#9733;' : ''}</td>
+            <td>${route.private == 1 ? '&#x1F512;' : ''}</td>
+        `;
 
-            const details = document.createElement('tr');
-            details.hidden = true;
-            details.innerHTML = `<td colspan="6"><div id="details-content-${route.route_id}">Loading...</div></td>`;
+        const details = document.createElement('tr');
+        details.hidden = true;
+        details.innerHTML = `<td colspan="6"><div id="details-content-${route.route_id}">Loading...</div></td>`;
 
-            row.onclick = () => {
-                details.hidden = !details.hidden;
-                if (!details.hidden) {
-                    const container = document.getElementById(`details-content-${route.route_id}`);
-                    container.innerHTML = `
-                        <article class="route-details">
-                            <div class="route-layout">
-                                <div class="route-map-wrap">
-                                    <div id="map-${route.route_id}" class="route-map"></div>
-                                </div>
-                                <div class="route-info">
-                                    <h4><a href="https://www.strava.com/routes/${route.route_id}" target="_blank">${route.name}</a></h4>
-                                    <ul class="route-meta">
-                                        <li><strong>Distance:</strong> ${Number(route.distance_km).toFixed(2)} km</li>
-                                        <li><strong>Elevation:</strong> ${route.elevation} m</li>
-                                        <li><strong>Type:</strong> ${routeTypeLabel(route.type)}</li>
-                                    </ul>
-                                    <div class="route-tags">
-                                        <strong>Tags</strong><br>
-                                        <input type="text" value="${route.tags || ''}" onblur="saveTags('${route.route_id}', this.value)">
-                                    </div>
+        row.onclick = async () => {
+            details.hidden = !details.hidden;
+            if (!details.hidden) {
+                const container = document.getElementById(`details-content-${route.route_id}`);
+                
+                // Show info immediately
+                container.innerHTML = `
+                    <article class="route-details">
+                        <div class="route-layout">
+                            <div class="route-map-wrap"><div id="map-${route.route_id}" class="route-map"></div></div>
+                            <div class="route-info">
+                                <h4><a href="https://www.strava.com/routes/${route.route_id}" target="_blank">${route.name}</a></h4>
+                                <ul class="route-meta">
+                                    <li><strong>Distance:</strong> ${Number(route.distance_km).toFixed(2)} km</li>
+                                    <li><strong>Elevation:</strong> ${route.elevation} m</li>
+                                    <li><strong>Type:</strong> ${routeTypeLabel(route.type)}</li>
+                                </ul>
+                                <div class="route-tags">
+                                    <strong>Tags</strong><br>
+                                    <input type="text" value="${route.tags || ''}" onblur="saveTags('${route.route_id}', this.value)">
                                 </div>
                             </div>
-                        </article>`;
+                        </div>
+                    </article>`;
 
-                    // 2. Fetch the polyline ONLY if we haven't already
-                    if (!route.summary_polyline) {
-                        try {
-                            const response = await fetch(`get_polyline.php?route_id=${route.route_id}`);
-                            const data = await response.json();
-                            route.summary_polyline = data.polyline; // Save it to the object so we don't fetch again
-                        } catch (err) {
-                            console.error("Failed to fetch polyline", err);
-                        }
-                    }
-            
-                    // 3. Initialize Map with the fetched data
-                    if (route.summary_polyline) {
-                        setTimeout(() => initMap(route), 50);
-                    } else {
-                        document.getElementById(`map-${route.route_id}`).innerHTML = "Map unavailable";
-                    }
+                // Fetch polyline if missing
+                if (!route.summary_polyline) {
+                    try {
+                        const res = await fetch(`get_polyline.php?route_id=${route.route_id}`);
+                        const polyData = await res.json();
+                        route.summary_polyline = polyData.polyline;
+                    } catch (e) { console.error("Polyline fetch failed", e); }
                 }
 
-            };
-            tbody.appendChild(row);
-            tbody.appendChild(details);
-        } catch (err) {
-            console.error("Error rendering a specific row:", err, route);
-        }
+                if (route.summary_polyline) {
+                    setTimeout(() => initMap(route), 50);
+                }
+            }
+        };
+        tbody.appendChild(row);
+        tbody.appendChild(details);
     });
 }
 
