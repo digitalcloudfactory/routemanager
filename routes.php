@@ -300,7 +300,7 @@ figure {
 <script src="https://unpkg.com/@mapbox/polyline"></script>
 
 <script>
-const routeData = <?= json_encode($routes, JSON_UNESCAPED_UNICODE) ?: '[]'; ?>;
+const routes = <?= json_encode($routes, JSON_UNESCAPED_UNICODE) ?: '[]'; ?>;
 const tbody = document.getElementById('routesBody');
     
 /* ===============================
@@ -584,11 +584,11 @@ history.replaceState = function (...args) {
 
 window.addEventListener('DOMContentLoaded', () => {
     console.log("DOM Ready. Checking routeData...");
-    if (typeof routeData !== 'undefined' && routeData.length > 0) {
-        console.table(routeData); // This will show your data in the console as a table
-        renderTable(routeData);
+    if (typeof routes !== 'undefined' && routes.length > 0) {
+        console.table(routes); // This will show your data in the console as a table
+        renderTable(routes);
     } else {
-        console.warn("routeData is empty or undefined.");
+        console.warn("routes is empty or undefined.");
         renderTable([]); // Force the "No routes found" message
     }
 });
