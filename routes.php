@@ -313,101 +313,84 @@ function formatDuration(seconds) {
   const s = seconds % 60;
   return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
-/* ===============================
+
+    /* ===============================
    RENDER TABLE + INLINE DETAILS
 ================================ */ 
+
 function renderTable(data) {
-  tbody.innerHTML = '';
-
-  if (data.length === 0) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="4" style="text-align:center">
-          No routes match the filters
-        </td>
-      </tr>
-    `;
-    return;
-  }
-
-  data.forEach(route => {
-    const row = document.createElement('tr');
-
-    let coords = [];
-    if (route.summary_polyline) {
-        try {
-            coords = polyline.decode(route.summary_polyline);
-        } catch (e) {
-            console.warn("Could not decode polyline for route: " + route.route_id);
-        }
+    if (!tbody) {
+        console.error("Table body 'routesBody' not found!");
+        return;
     }
-      
-    row.className = 'route-row';
+    
+    tbody.innerHTML = '';
 
-    row.innerHTML = `
-      <td>${route.name}</td>
-      <td>${Number(route.distance_km).toFixed(2)}</td>
-      <td>${route.elevation}</td>
-      <td>${formatDuration(route.estimated_moving_time)}</td>
-      <td style="color: #ff6600;">${route.starred == 1 ? '&#9733;' : ''}</td>
-      <td>${route.private == 1 ? '&#x1F512;' : ''}</td>
-    `;
+    if (!data || data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center">No routes found</td></tr>`;
+        return;
+    }
 
-    const details = document.createElement('tr');
-    details.hidden = true;
+    data.forEach(route => {
+        try {
+            const row = document.createElement('tr');
+            row.className = 'route-row';
 
-    details.innerHTML = `
- <td colspan="4">
-    <article class="route-details">
-      <div class="route-layout">
+            // Use 6 columns to match your <thead>
+            row.innerHTML = `
+                <td>${route.name || 'Untitled'}</td>
+                <td>${route.distance_km ? Number(route.distance_km).toFixed(2) : '0.00'}</td>
+                <td>${route.elevation || 0}</td>
+                <td>${formatDuration(route.estimated_moving_time || 0)}</td>
+                <td style="color: #ff6600;">${route.starred == 1 ? '&#9733;' : ''}</td>
+                <td>${route.private == 1 ? '&#x1F512;' : ''}</td>
+            `;
 
-        <!-- LEFT: MAP (≈75%) -->
-        <div class="route-map-wrap">
-          <div id="map-${route.route_id}" class="route-map"></div>
-        </div>
+            const details = document.createElement('tr');
+            details.hidden = true;
+            // Match the colspan to your header (6 columns)
+            details.innerHTML = `<td colspan="6"><div id="details-content-${route.route_id}">Loading...</div></td>`;
 
-        <!-- RIGHT: DETAILS (≈25%) -->
-        <div class="route-info">
-         <h4><a href="https://www.strava.com/routes/${route.route_id}" target="_blank">${route.name} </a></h4>
+            row.onclick = () => {
+                details.hidden = !details.hidden;
+                if (!details.hidden) {
+                    // Check if polyline exists before trying to render the map
+                    if (route.summary_polyline) {
+                        const container = document.getElementById(`details-content-${route.route_id}`);
+                        // Populate the actual HTML only when clicked
+                        container.innerHTML = `
+                            <article class="route-details">
+                                <div class="route-layout">
+                                    <div class="route-map-wrap">
+                                        <div id="map-${route.route_id}" class="route-map"></div>
+                                    </div>
+                                    <div class="route-info">
+                                        <h4><a href="https://www.strava.com/routes/${route.route_id}" target="_blank">${route.name}</a></h4>
+                                        <ul class="route-meta">
+                                            <li><strong>Distance:</strong> ${Number(route.distance_km).toFixed(2)} km</li>
+                                            <li><strong>Elevation:</strong> ${route.elevation} m</li>
+                                            <li><strong>Created:</strong> ${route.created_date}</li>
+                                        </ul>
+                                        <div class="route-tags">
+                                            <strong>Tags</strong><br>
+                                            <input type="text" value="${route.tags || ''}" onblur="saveTags('${route.route_id}', this.value)">
+                                        </div>
+                                    </div>
+                                </div>
+                            </article>`;
+                        initMap(route);
+                    } else {
+                        document.getElementById(`details-content-${route.route_id}`).innerHTML = "No map data available for this route.";
+                    }
+                }
+            };
 
-          <ul class="route-meta">
-            <li><strong>Distance:</strong> ${Number(route.distance_km).toFixed(2)} km</li>
-            <li><strong>Elevation:</strong> ${route.elevation} m</li>
-            <li><strong>Moving Time:</strong> ${formatDuration(route.estimated_moving_time)}</li>
-            <li><strong>Created:</strong> ${route.created_date}</li>
-            <li><strong>Type:</strong> ${routeTypeLabel(route.type)}</li>
-            <li><strong>Route ID:</strong> ${route.route_id}</li>
-          </ul>
-
-          <div class="route-description">
-            <strong>Description</strong><br>
-            ${route.description || '<em>No description</em>'}
-          </div>
-
-          <div class="route-tags">
-            <strong>Tags</strong><br>
-            <input type="text"
-                   value="${route.tags || ''}"
-                   placeholder="e.g. Gravel, Mallorca, Favorite"
-                   onblur="saveTags('${route.route_id}', this.value)">
-            <small>Comma separated</small>
-          </div>
-
-        </div>
-
-      </div>
-    </article>
-  </td>
-`;
-
-    row.onclick = () => {
-      details.hidden = !details.hidden;
-      if (!details.hidden) initMap(route);
-    };
-
-    tbody.appendChild(row);
-    tbody.appendChild(details);
-  });
+            tbody.appendChild(row);
+            tbody.appendChild(details);
+        } catch (err) {
+            console.error("Error rendering row for route:", route, err);
+        }
+    });
 }
 
 
