@@ -5,8 +5,7 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-// Increase time limit for pagination and geocoding delays
-set_time_limit(300); 
+set_time_limit(600); // Increased to 10 mins for large accounts
 
 if (!isset($_SESSION['internal_user_id'])) {
     echo json_encode(['success' => false, 'error' => 'Not logged in']);
@@ -76,13 +75,16 @@ if ($expiresAt < time()) {
     }
 }
 
-// --- FETCH ALL ROUTES USING PAGINATION ---
+// --- FETCH ALL ROUTES ---
 $page = 1;
 $perPage = 100; 
 $all_fetched_routes = [];
 $keepFetching = true;
 
+error_log("Starting Strava sync for User $internalUserId");
+
 while ($keepFetching) {
+    error_log("Fetching page $page from Strava...");
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, "https://www.strava.com/api/v3/athlete/routes?page=$page&per_page=$perPage");
     curl_setopt($ch, CURLOPT_HTTPHEADER, ["Authorization: Bearer $accessToken"]);
@@ -94,15 +96,19 @@ while ($keepFetching) {
 
     if (is_array($pageRoutes) && count($pageRoutes) > 0) {
         $all_fetched_routes = array_merge($all_fetched_routes, $pageRoutes);
+        error_log("Found " . count($pageRoutes) . " routes on page $page.");
         $page++;
     } else {
         $keepFetching = false;
     }
     
-    if ($page > 30) break; // Hard limit to prevent loops
+    if ($page > 50) break; 
 }
 
-// --- PREPARE QUERIES ---
+$totalRoutes = count($all_fetched_routes);
+error_log("Total routes to process: $totalRoutes");
+
+// --- PROCESS ROUTES ---
 $insert = $pdo->prepare("
     INSERT INTO strava_routes 
     (user_id, route_id, name, description, distance_km, elevation, type, private, starred, country, created_at, estimated_moving_time, summary_polyline)
@@ -123,21 +129,21 @@ $insert = $pdo->prepare("
 $existingStmt = $pdo->prepare("SELECT country FROM strava_routes WHERE route_id = :rid AND user_id = :uid LIMIT 1");
 
 $count = 0;
-foreach ($all_fetched_routes as $route) {
+foreach ($all_fetched_routes as $index => $route) {
+    $currentNum = $index + 1;
     $routeIdStr = (string)$route['id'];
-    $summaryPolyline = $route['map']['summary_polyline'] ?? null;
     
     // Check for existing country
     $existingStmt->execute([':rid' => $routeIdStr, ':uid' => $internalUserId]);
     $existingRoute = $existingStmt->fetch(PDO::FETCH_ASSOC);
-    
     $country = $existingRoute['country'] ?? null;
 
-    // Only geocode if we don't have a country yet
-    if (empty($country) && !empty($summaryPolyline)) {
-        $country = getCountryFromPolyline($summaryPolyline);
-        // Be polite to Nominatim (OSM)
+    if (empty($country) && !empty($route['map']['summary_polyline'])) {
+        error_log("[$currentNum/$totalRoutes] Geocoding new route: " . $route['name']);
+        $country = getCountryFromPolyline($route['map']['summary_polyline']);
         usleep(1200000); 
+    } else {
+        error_log("[$currentNum/$totalRoutes] Skipping geocode (already exists): " . $route['name']);
     }
 
     $createdAt = !empty($route['created_at']) ? date('Y-m-d H:i:s', strtotime($route['created_at'])) : null;
@@ -155,7 +161,7 @@ foreach ($all_fetched_routes as $route) {
         ':country'              => $country,
         ':created_at'           => $createdAt,
         ':estimated_moving_time'=> $route['estimated_moving_time'],
-        ':polyline'             => $summaryPolyline
+        ':polyline'             => $route['map']['summary_polyline'] ?? null
     ]);
     $count++;
 }
@@ -165,75 +171,51 @@ if ($count > 0) {
     $updateSync->execute([':id' => $internalUserId]);
 }
 
+error_log("Sync complete for User $internalUserId. $count routes processed.");
+
 echo json_encode([
     'success' => true,
     'routes_fetched' => $count,
     'last_sync' => date('Y-m-d H:i:s')
 ]);
 
-
 // --- HELPER FUNCTIONS ---
-
-function getCountryFromPolyline(string $summaryPolyline): ?string
-{
+function getCountryFromPolyline(string $summaryPolyline): ?string {
     if (!$summaryPolyline) return null;
-
     $coords = decodePolyline($summaryPolyline);
     if (!$coords || count($coords) === 0) return null;
-
     $lat = $coords[0][0];
     $lon = $coords[0][1];
-
+    
+    // Added &accept-language=nl to the URL
     $url = "https://nominatim.openstreetmap.org/reverse"
          . "?lat=" . urlencode($lat)
          . "&lon=" . urlencode($lon)
-         . "&format=json";
-
+         . "&format=json"
+         . "&accept-language=nl"; // Forces Dutch naming
+    
     $ch = curl_init($url);
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_TIMEOUT => 10,
-        CURLOPT_HTTPHEADER => [
-            'User-Agent: MapRoutesApp/1.0 (contact@yourdomain.com)'
-        ],
+        CURLOPT_HTTPHEADER => ['User-Agent: MapRoutesApp/1.0 (contact@yourdomain.com)'],
     ]);
-
     $res = curl_exec($ch);
     curl_close($ch);
-
     if (!$res) return null;
-
     $data = json_decode($res, true);
     return $data['address']['country'] ?? null;
 }
 
-function decodePolyline(string $encoded): array
-{
-    $points = [];
-    $index = 0;
-    $lat = 0;
-    $lng = 0;
-    $len = strlen($encoded);
-
+function decodePolyline(string $encoded): array {
+    $points = []; $index = 0; $lat = 0; $lng = 0; $len = strlen($encoded);
     while ($index < $len) {
         $b = 0; $shift = 0; $result = 0;
-        do {
-            $b = ord($encoded[$index++]) - 63;
-            $result |= ($b & 0x1f) << $shift;
-            $shift += 5;
-        } while ($b >= 0x20);
-        $dlat = ($result & 1) ? ~($result >> 1) : ($result >> 1);
-        $lat += $dlat;
-
+        do { $b = ord($encoded[$index++]) - 63; $result |= ($b & 0x1f) << $shift; $shift += 5; } while ($b >= 0x20);
+        $dlat = ($result & 1) ? ~($result >> 1) : ($result >> 1); $lat += $dlat;
         $shift = 0; $result = 0;
-        do {
-            $b = ord($encoded[$index++]) - 63;
-            $result |= ($b & 0x1f) << $shift;
-            $shift += 5;
-        } while ($b >= 0x20);
-        $dlng = ($result & 1) ? ~($result >> 1) : ($result >> 1);
-        $lng += $dlng;
-
+        do { $b = ord($encoded[$index++]) - 63; $result |= ($b & 0x1f) << $shift; $shift += 5; } while ($b >= 0x20);
+        $dlng = ($result & 1) ? ~($result >> 1) : ($result >> 1); $lng += $dlng;
         $points[] = [$lat / 1e5, $lng / 1e5];
     }
     return $points;
