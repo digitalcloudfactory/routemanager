@@ -300,7 +300,7 @@ figure {
 <script src="https://unpkg.com/@mapbox/polyline"></script>
 
 <script>
-const routes = <?= json_encode($routes, JSON_UNESCAPED_UNICODE); ?>;
+const routeData = <?= json_encode($routes, JSON_UNESCAPED_UNICODE) ?: '[]'; ?>;
 const tbody = document.getElementById('routesBody');
     
 /* ===============================
@@ -308,10 +308,11 @@ const tbody = document.getElementById('routesBody');
 ================================ */
 
 function formatDuration(seconds) {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-  return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    if (!seconds) return "0:00:00";
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
     /* ===============================
@@ -319,11 +320,7 @@ function formatDuration(seconds) {
 ================================ */ 
 
 function renderTable(data) {
-    if (!tbody) {
-        console.error("Table body 'routesBody' not found!");
-        return;
-    }
-    
+    if (!tbody) return;
     tbody.innerHTML = '';
 
     if (!data || data.length === 0) {
@@ -335,60 +332,58 @@ function renderTable(data) {
         try {
             const row = document.createElement('tr');
             row.className = 'route-row';
-
-            // Use 6 columns to match your <thead>
             row.innerHTML = `
                 <td>${route.name || 'Untitled'}</td>
                 <td>${route.distance_km ? Number(route.distance_km).toFixed(2) : '0.00'}</td>
                 <td>${route.elevation || 0}</td>
-                <td>${formatDuration(route.estimated_moving_time || 0)}</td>
+                <td>${formatDuration(route.estimated_moving_time)}</td>
                 <td style="color: #ff6600;">${route.starred == 1 ? '&#9733;' : ''}</td>
                 <td>${route.private == 1 ? '&#x1F512;' : ''}</td>
             `;
 
             const details = document.createElement('tr');
             details.hidden = true;
-            // Match the colspan to your header (6 columns)
             details.innerHTML = `<td colspan="6"><div id="details-content-${route.route_id}">Loading...</div></td>`;
 
             row.onclick = () => {
                 details.hidden = !details.hidden;
                 if (!details.hidden) {
-                    // Check if polyline exists before trying to render the map
-                    if (route.summary_polyline) {
-                        const container = document.getElementById(`details-content-${route.route_id}`);
-                        // Populate the actual HTML only when clicked
-                        container.innerHTML = `
-                            <article class="route-details">
-                                <div class="route-layout">
-                                    <div class="route-map-wrap">
-                                        <div id="map-${route.route_id}" class="route-map"></div>
-                                    </div>
-                                    <div class="route-info">
-                                        <h4><a href="https://www.strava.com/routes/${route.route_id}" target="_blank">${route.name}</a></h4>
-                                        <ul class="route-meta">
-                                            <li><strong>Distance:</strong> ${Number(route.distance_km).toFixed(2)} km</li>
-                                            <li><strong>Elevation:</strong> ${route.elevation} m</li>
-                                            <li><strong>Created:</strong> ${route.created_date}</li>
-                                        </ul>
-                                        <div class="route-tags">
-                                            <strong>Tags</strong><br>
-                                            <input type="text" value="${route.tags || ''}" onblur="saveTags('${route.route_id}', this.value)">
-                                        </div>
+                    const container = document.getElementById(`details-content-${route.route_id}`);
+                    container.innerHTML = `
+                        <article class="route-details">
+                            <div class="route-layout">
+                                <div class="route-map-wrap">
+                                    <div id="map-${route.route_id}" class="route-map"></div>
+                                </div>
+                                <div class="route-info">
+                                    <h4><a href="https://www.strava.com/routes/${route.route_id}" target="_blank">${route.name}</a></h4>
+                                    <ul class="route-meta">
+                                        <li><strong>Distance:</strong> ${Number(route.distance_km).toFixed(2)} km</li>
+                                        <li><strong>Elevation:</strong> ${route.elevation} m</li>
+                                        <li><strong>Type:</strong> ${routeTypeLabel(route.type)}</li>
+                                    </ul>
+                                    <div class="route-tags">
+                                        <strong>Tags</strong><br>
+                                        <input type="text" value="${route.tags || ''}" onblur="saveTags('${route.route_id}', this.value)">
                                     </div>
                                 </div>
-                            </article>`;
+                            </div>
+                        </article>`;
+                    
+                    // Only init map if we have polyline data
+                    if (route.summary_polyline && typeof polyline !== 'undefined') {
                         initMap(route);
                     } else {
-                        document.getElementById(`details-content-${route.route_id}`).innerHTML = "No map data available for this route.";
+                        const mapEl = document.getElementById(`map-${route.route_id}`);
+                        if (mapEl) mapEl.innerHTML = "<p style='padding:20px'>Map data unavailable</p>";
                     }
                 }
             };
 
             tbody.appendChild(row);
             tbody.appendChild(details);
-        } catch (err) {
-            console.error("Error rendering row for route:", route, err);
+        } catch (e) {
+            console.error("Error rendering route row:", e);
         }
     });
 }
@@ -424,30 +419,27 @@ function addDistanceMarkers(map, latlngs, stepKm = 10) {
   }
 }
     
+// Map Initialization Fix
 function initMap(route) {
-  const mapId = `map-${route.route_id}`;
-  const el = document.getElementById(mapId);
- const coords = polyline.decode(route.summary_polyline);
-    
-  if (!el || el.dataset.loaded) return;
+    const mapId = `map-${route.route_id}`;
+    const el = document.getElementById(mapId);
+    if (!el || el.dataset.loaded || !route.summary_polyline) return;
 
-  const map = L.map(mapId);
+    try {
+        const coords = polyline.decode(route.summary_polyline).map(c => [c[0], c[1]]);
+        const map = L.map(mapId);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap'
-  }).addTo(map);
-
-  if (route.summary_polyline) {
-    const coords = polyline.decode(route.summary_polyline)
-      .map(c => [c[0], c[1]]);
-    const line = L.polyline(coords).addTo(map);
-    map.fitBounds(line.getBounds());
-  }
-
-  map.invalidateSize();
-  el.dataset.loaded = "true";
-
-addDistanceMarkers(map, coords, 10);
+        const line = L.polyline(coords).addTo(map);
+        map.fitBounds(line.getBounds());
+        map.invalidateSize();
+        el.dataset.loaded = "true";
+        if (typeof addDistanceMarkers === 'function') addDistanceMarkers(map, coords, 10);
+    } catch (err) {
+        console.error("Map failure:", err);
+    }
 }
 
 
