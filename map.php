@@ -123,6 +123,17 @@ unset($route);
   transform: translateX(0);
 }
 
+main.container {
+  max-width: 100%;    /* override container width */
+  padding: 1rem 2rem; /* some horizontal padding */
+  box-sizing: border-box;
+}
+
+:root {
+  --pico-font-size: 0.85rem;
+  --pico-spacing: 0.5rem;
+}
+
     /* Fix for Leaflet controls showing over the panel */
 .leaflet-control-container {
   z-index: 500;
