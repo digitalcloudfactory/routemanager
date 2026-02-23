@@ -83,27 +83,79 @@ const decodedRoutes = allRoutesData.map(r => ({
 }));
 
 // --- YOUR ORIGINAL FUNCTIONS (UNTOUCHED) ---
-function haversineDistance(p1, p2) { /* ... same as your code ... */ }
-function pointToSegmentDistanceMeters(p, a, b) { /* ... same as your code ... */ }
-function segmentDistanceMeters(p1a, p1b, p2a, p2b) { /* ... same as your code ... */ }
+// Compute Haversine distance between two [lat, lon] points
+function haversineDistance(p1, p2) {
+  const R = 6371000; // meters
+  const toRad = Math.PI / 180;
+  const dLat = (p2[0] - p1[0]) * toRad;
+  const dLon = (p2[1] - p1[1]) * toRad;
+  const lat1 = p1[0] * toRad;
+  const lat2 = p2[0] * toRad;
 
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon/2)**2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+// Distance from point p to segment a-b in lat/lon meters
+function pointToSegmentDistanceMeters(p, a, b) {
+  const dx = b[1] - a[1]; // lon difference
+  const dy = b[0] - a[0]; // lat difference
+
+  if (dx === 0 && dy === 0) return haversineDistance(p, a);
+
+  let t = ((p[1]-a[1])*dx + (p[0]-a[0])*dy)/(dx*dx + dy*dy);
+  t = Math.max(0, Math.min(1, t));
+
+  const proj = [a[0] + t*dy, a[1] + t*dx];
+  return haversineDistance(p, proj);
+}
+
+// Distance between two segments in meters
+function segmentDistanceMeters(p1a, p1b, p2a, p2b) {
+  return Math.min(
+    pointToSegmentDistanceMeters(p1a, p2a, p2b),
+    pointToSegmentDistanceMeters(p1b, p2a, p2b),
+    pointToSegmentDistanceMeters(p2a, p1a, p1b),
+    pointToSegmentDistanceMeters(p2b, p1a, p1b)
+  );
+}
+
+
+    
 function findOverlap(latlngsA, latlngsB, tolerance = 8) {
-    let total = 0, overlap = 0;
-    for (let i = 0; i < latlngsA.length - 1; i++) {
-        const a1 = latlngsA[i], a2 = latlngsA[i+1];
-        const segLen = haversineDistance([a1.lat, a1.lng], [a2.lat, a2.lng]);
-        total += segLen;
-        let matched = false;
-        for (let j = 0; j < latlngsB.length - 1; j++) {
-            const b1 = latlngsB[j], b2 = latlngsB[j+1];
-            if (segmentDistanceMeters([a1.lat, a1.lng], [a2.lat, a2.lng], [b1.lat, b1.lng], [b2.lat, b2.lng]) <= tolerance) {
-                matched = true;
-                break;
-            }
-        }
-        if (matched) overlap += segLen;
+  let total = 0;
+  let overlap = 0;
+  const segments = [];
+
+  for (let i = 0; i < latlngsA.length - 1; i++) {
+    const a1 = latlngsA[i];
+    const a2 = latlngsA[i+1];
+
+    // segment length in meters
+    const segLen = haversineDistance([a1.lat, a1.lng], [a2.lat, a2.lng]);
+    total += segLen;
+
+    // check if this segment matches any in latlngsB
+    let matched = false;
+    for (let j = 0; j < latlngsB.length - 1; j++) {
+      const b1 = latlngsB[j];
+      const b2 = latlngsB[j+1];
+
+      if (segmentDistanceMeters([a1.lat, a1.lng], [a2.lat, a2.lng],
+                                [b1.lat, b1.lng], [b2.lat, b2.lng]) <= tolerance) {
+        matched = true;
+        break;
+      }
     }
-    return { percent: (overlap / total) * 100 };
+
+    if (matched) {
+      overlap += segLen;
+      segments.push([a1, a2]);
+    }
+  }
+
+  return { total, overlap, percent: (overlap / total) * 100, segments };
 }
 // --- END ORIGINAL FUNCTIONS ---
 
