@@ -42,7 +42,7 @@ $pdo = new PDO(
 );
 
 // Query to get all routes for the user
-$stmt = $pdo->prepare("SELECT route_id, name, map_polyline, distance_km FROM strava_routes WHERE user_id = ?");
+$stmt = $pdo->prepare("SELECT route_id, name, summary_polyline, distance_km FROM strava_routes WHERE user_id = ?");
 $stmt->execute([$internalUserId]);
 $allRoutes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
