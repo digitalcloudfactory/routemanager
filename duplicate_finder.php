@@ -82,12 +82,26 @@ $encoded2 = 'ezehG`lrHxFpAhCbDxI~^rc@p_@~EG~B`IxLz@vAlGbE`F\lKj`@l\v[vd@~@vF~DIt
 // 1. Data from PHP
 const allRoutesData = <?= json_encode($allRoutes ?? []) ?>;
 
-// 2. Pre-decode all routes so we don't do it inside the loop
-const decodedRoutes = allRoutesData.map(r => ({
-    name: r.name,
-    id: r.route_id,
-    latlngs: polyline.decode(r.summary_polyline).map(p => L.latLng(p[0], p[1]))
-}));
+
+// 2. Pre-decode with Safety Check
+const decodedRoutes = allRoutesData.map(r => {
+    // CRITICAL: Check if polyline exists before trying to decode
+    if (!r.summary_polyline || r.summary_polyline.length < 5) return null;
+    
+    try {
+        const points = polyline.decode(r.summary_polyline);
+        return {
+            name: r.name,
+            id: r.route_id,
+            // Convert to simple [lat, lon] arrays for faster math
+            pts: points, 
+            latlngs: points.map(p => L.latLng(p[0], p[1]))
+        };
+    } catch (e) {
+        console.error("Failed to decode route:", r.name);
+        return null;
+    }
+}).filter(r => r !== null);
 
 // --- YOUR ORIGINAL FUNCTIONS (UNTOUCHED) ---
 // Compute Haversine distance between two [lat, lon] points
@@ -170,36 +184,40 @@ function findOverlap(latlngsA, latlngsB, tolerance = 8) {
 function runDuplicateCheck() {
     const threshold = parseInt(document.getElementById('overlapSlider').value);
     const tbody = document.getElementById('resultsBody');
-    tbody.innerHTML = "<tr><td colspan='3'>Analyzing routes...</td></tr>";
+    tbody.innerHTML = "<tr><td colspan='3' style='text-align:center; padding:20px;'>Analyzing... this may take a moment.</td></tr>";
 
-    // Small delay to allow UI to update
+    // We use setTimeout to allow the "Analyzing" text to actually appear before the CPU-heavy loop starts
     setTimeout(() => {
         let html = "";
         
-        // Compare every route against every other route
         for (let i = 0; i < decodedRoutes.length; i++) {
             for (let j = i + 1; j < decodedRoutes.length; j++) {
                 const rA = decodedRoutes[i];
                 const rB = decodedRoutes[j];
 
-                // Run your match both ways (like your original code)
-                const resA = findOverlap(rA.latlngs, rB.latlngs);
-                const resB = findOverlap(rB.latlngs, rA.latlngs);
-                
-                // Use the conservative result (the lower of the two)
-                const finalPercent = Math.min(resA.percent, resB.percent);
+                // OPTIMIZATION: Quick check - if distance is wildly different, don't waste CPU
+                // (Optional: add distance check here)
 
-                if (finalPercent >= threshold) {
-                    html += `<tr>
-                        <td style="padding:8px;">${rA.name}</td>
-                        <td style="padding:8px;">${rB.name}</td>
-                        <td style="padding:8px;"><strong>${finalPercent.toFixed(1)}%</strong></td>
-                    </tr>`;
+                try {
+                    const resA = findOverlap(rA.latlngs, rB.latlngs);
+                    const resB = findOverlap(rB.latlngs, rA.latlngs);
+                    const finalPercent = Math.min(resA.percent, resB.percent);
+
+                    if (finalPercent >= threshold) {
+                        html += `<tr>
+                            <td style="padding:8px;">${rA.name}</td>
+                            <td style="padding:8px;">${rB.name}</td>
+                            <td style="padding:8px;"><strong>${finalPercent.toFixed(1)}%</strong></td>
+                        </tr>`;
+                    }
+                } catch (err) {
+                    console.error("Error comparing " + rA.name + " and " + rB.name, err);
                 }
             }
         }
-        tbody.innerHTML = html || "<tr><td colspan='3'>No matches found at this threshold.</td></tr>";
-    }, 50);
+        
+        tbody.innerHTML = html || "<tr><td colspan='3' style='text-align:center; padding:20px;'>No duplicates found.</td></tr>";
+    }, 100);
 }
 
 // 4. Slider Listener
