@@ -274,7 +274,7 @@ async function runDuplicateCheck() {
                 <td style="padding:10px;">${rB.name}</td>
                 <td style="padding:10px;"><strong>${finalPercent.toFixed(1)}%</strong></td>
                 <td style="padding:10px;">
-                    <button onclick="showComparison(${i}, ${j})">View Map</button>
+                    <button onclick="showComparison('${rA.id}', '${rB.id}')">View Map</button>
                 </td>
             </tr>`;
             }
@@ -309,27 +309,34 @@ document.getElementById('overlapSlider').oninput = function() {
 
 let previewMap;
 
-function showComparison(indexA, indexB) {
+function showComparison(idA, idB) {
     document.getElementById('mapModal').style.display = 'block';
-    const rA = decodedRoutes[indexA];
-    const rB = decodedRoutes[indexB];
+
+    // Find the actual route objects from the full list using the IDs
+    const rA = decodedRoutes.find(r => r.id === idA);
+    const rB = decodedRoutes.find(r => r.id === idB);
+
+    if (!rA || !rB) {
+        console.error("Could not find routes for IDs:", idA, idB);
+        return;
+    }
 
     if (!previewMap) {
         previewMap = L.map('compareMap');
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(previewMap);
     } else {
+        // Clear old lines
         previewMap.eachLayer(layer => {
             if (layer instanceof L.Polyline) previewMap.removeLayer(layer);
         });
     }
 
+    // Draw the routes
     const lineA = L.polyline(rA.latlngs, {color: 'blue', weight: 3, opacity: 0.5}).addTo(previewMap);
     const lineB = L.polyline(rB.latlngs, {color: 'red', weight: 3, opacity: 0.5}).addTo(previewMap);
 
-    // FIX: Run the overlap check and safely access segments
+    // Calculate and draw overlap
     const matchData = findOverlap(rA.latlngs, rB.latlngs);
-    
-    // The "|| []" ensures that if segments is undefined, the code doesn't crash
     const overlapSegments = matchData.segments || []; 
     
     overlapSegments.forEach(seg => {
@@ -338,6 +345,9 @@ function showComparison(indexA, indexB) {
 
     const group = new L.featureGroup([lineA, lineB]);
     previewMap.fitBounds(group.getBounds(), {padding: [20, 20]});
+    
+    // Force Leaflet to recalculate size (fixes grey box issues in modals)
+    setTimeout(() => { previewMap.invalidateSize(); }, 200);
 }
 
 function closeMap() {
