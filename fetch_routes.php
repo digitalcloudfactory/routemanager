@@ -70,6 +70,14 @@ if ($user['token_expires_at'] < time()) {
     }
 }
 
+// 1. Fetch all existing route IDs for this user into an associative array (O(1) lookup)
+$existingStmt = $pdo->prepare("SELECT route_id FROM strava_routes WHERE user_id = ?");
+$existingStmt->execute([$internalUserId]);
+$existingIds = $existingStmt->fetchAll(PDO::FETCH_COLUMN);
+$existingIdsMap = array_flip($existingIds); // Flips [ID] to [ID => index] for faster lookup
+
+
+
 // --- FETCH ONE PAGE FROM STRAVA ---
 $ch = curl_init("https://www.strava.com/api/v3/athlete/routes?page=$page&per_page=$perPage");
 curl_setopt($ch, CURLOPT_HTTPHEADER, ["Authorization: Bearer $accessToken"]);
@@ -103,28 +111,35 @@ $maxGeocodesPerBatch = 5; // Low limit to keep request fast
 
 foreach ($routes as $route) {
     $rid = (string)$route['id_str'];
-    $existingStmt->execute([':rid' => $rid, ':uid' => $internalUserId]);
-    $existing = $existingStmt->fetch(PDO::FETCH_ASSOC);
-    $country = $existing['country'] ?? null;
 
-    // Geocode only if missing AND we haven't hit the small batch limit
-    if (empty($country) && !empty($route['map']['summary_polyline']) && $geocodesInThisBatch < $maxGeocodesPerBatch) {
-        $country = getCountryFromPolyline($route['map']['summary_polyline']);
-        $geocodesInThisBatch++;
-        if ($country) usleep(1200000); 
-    }
-
-    $insert->execute([
-        ':user' => $internalUserId, ':rid' => $rid, ':name' => $route['name'],
-        ':description' => $route['description'] ?? null, ':distance' => $route['distance'] / 1000,
-        ':elevation' => $route['elevation_gain'], ':type' => $route['type'] ?? null,
-        ':private' => $route['private'] ? 1 : 0, ':starred' => $route['starred'] ? 1 : 0,
-        ':country' => $country, ':created_at' => !empty($route['created_at']) ? date('Y-m-d H:i:s', strtotime($route['created_at'])) : null,
-        ':estimated_moving_time' => $route['estimated_moving_time'], ':polyline' => $route['map']['summary_polyline'] ?? null
-    ]);
-    $processed++;
+    if (isset($existingIdsMap[$rid])) {
+        // Option A: Skip completely for maximum speed
+        // continue; 
+        
+    } else {
+        // New route found!
+            $existingStmt->execute([':rid' => $rid, ':uid' => $internalUserId]);
+            $existing = $existingStmt->fetch(PDO::FETCH_ASSOC);
+            $country = $existing['country'] ?? null;
+        
+            // Geocode only if missing AND we haven't hit the small batch limit
+            if (empty($country) && !empty($route['map']['summary_polyline']) && $geocodesInThisBatch < $maxGeocodesPerBatch) {
+                $country = getCountryFromPolyline($route['map']['summary_polyline']);
+                $geocodesInThisBatch++;
+                if ($country) usleep(1200000); 
+            }
+        
+            $insert->execute([
+                ':user' => $internalUserId, ':rid' => $rid, ':name' => $route['name'],
+                ':description' => $route['description'] ?? null, ':distance' => $route['distance'] / 1000,
+                ':elevation' => $route['elevation_gain'], ':type' => $route['type'] ?? null,
+                ':private' => $route['private'] ? 1 : 0, ':starred' => $route['starred'] ? 1 : 0,
+                ':country' => $country, ':created_at' => !empty($route['created_at']) ? date('Y-m-d H:i:s', strtotime($route['created_at'])) : null,
+                ':estimated_moving_time' => $route['estimated_moving_time'], ':polyline' => $route['map']['summary_polyline'] ?? null
+            ]);
+            $processed++;
+        }
 }
-
 // Update sync timestamp
 $pdo->prepare("UPDATE users SET last_routes_sync = NOW() WHERE id = ?")->execute([$internalUserId]);
 
