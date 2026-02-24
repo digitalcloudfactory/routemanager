@@ -145,39 +145,43 @@ function segmentDistanceMeters(p1a, p1b, p2a, p2b) {
 
 
     
-function findOverlap(latlngsA, latlngsB, tolerance = 8) {
-  let total = 0;
-  let overlap = 0;
-  const segments = [];
+function findOverlap(latlngsA, latlngsB, tolerance = 15) {
+    let total = 0;
+    let overlap = 0;
+    
+    // 1. Point Sampling: increase 'i += 1' to 'i += 4' for 4x speed
+    const step = 4; 
 
-  for (let i = 0; i < latlngsA.length - 1; i++) {
-    const a1 = latlngsA[i];
-    const a2 = latlngsA[i+1];
+    for (let i = 0; i < latlngsA.length - 1; i += step) {
+        const a1 = latlngsA[i];
+        const a2 = latlngsA[i+1] || latlngsA[i];
+        const segLen = haversineDistance([a1.lat, a1.lng], [a2.lat, a2.lng]);
+        total += segLen;
 
-    // segment length in meters
-    const segLen = haversineDistance([a1.lat, a1.lng], [a2.lat, a2.lng]);
-    total += segLen;
+        let matched = false;
+        
+        // 2. Proximity Filter: Only check segments in B that are roughly nearby
+        for (let j = 0; j < latlngsB.length - 1; j += step) {
+            const b1 = latlngsB[j];
+            
+            // QUICK BOX CHECK: If the points are more than ~200m apart, 
+            // don't do the heavy segment math. (0.002 degrees is ~220m)
+            if (Math.abs(a1.lat - b1.lat) > 0.002 || Math.abs(a1.lng - b1.lng) > 0.002) {
+                continue; 
+            }
 
-    // check if this segment matches any in latlngsB
-    let matched = false;
-    for (let j = 0; j < latlngsB.length - 1; j++) {
-      const b1 = latlngsB[j];
-      const b2 = latlngsB[j+1];
+            const b2 = latlngsB[j+1];
+            if (segmentDistanceMeters([a1.lat, a1.lng], [a2.lat, a2.lng],
+                                      [b1.lat, b1.lng], [b2.lat, b2.lng]) <= tolerance) {
+                matched = true;
+                break;
+            }
+        }
 
-      if (segmentDistanceMeters([a1.lat, a1.lng], [a2.lat, a2.lng],
-                                [b1.lat, b1.lng], [b2.lat, b2.lng]) <= tolerance) {
-        matched = true;
-        break;
-      }
+        if (matched) overlap += segLen;
     }
 
-    if (matched) {
-      overlap += segLen;
-      segments.push([a1, a2]);
-    }
-  }
-
-  return { total, overlap, percent: (overlap / total) * 100, segments };
+    return { percent: total > 0 ? (overlap / total) * 100 : 0 };
 }
 // --- END ORIGINAL FUNCTIONS ---
 
