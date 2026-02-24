@@ -78,12 +78,15 @@ $encoded2 = 'ezehG`lrHxFpAhCbDxI~^rc@p_@~EG~B`IxLz@vAlGbE`F\lKj`@l\v[vd@~@vF~DIt
     <tbody id="resultsBody"></tbody>
 </table>
 
- <div id="mapModal" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.8);">
-    <div style="background:white; margin:5% auto; padding:20px; width:80%; height:80%; border-radius:10px; position:relative;">
-        <span onclick="closeMap()" style="position:absolute; right:20px; top:10px; cursor:pointer; font-size:30px;">&times;</span>
+<div id="mapModal" onclick="closeMap()" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.8);">
+    
+    <div onclick="event.stopPropagation()" style="background:white; margin:5% auto; padding:20px; width:80%; height:80%; border-radius:10px; position:relative;">
+        
+        <span onclick="closeMap()" style="position:absolute; right:20px; top:10px; cursor:pointer; font-size:30px; font-family:Arial;">&times;</span>
+        
         <div id="compareMap" style="width:100%; height:100%;"></div>
     </div>
-</div>   
+</div>
 <script>
 // 1. Data from PHP
 const allRoutesData = <?= json_encode($allRoutes ?? []) ?>;
@@ -306,7 +309,11 @@ function showComparison(indexA, indexB) {
 }
 
 function closeMap() {
+    // Hide the modal
     document.getElementById('mapModal').style.display = 'none';
+    
+    // Optional: Stop any background processing or clear map if needed
+    console.log("Map closed.");
 }
 
     
