@@ -211,6 +211,9 @@ async function runDuplicateCheck() {
                 await new Promise(resolve => setTimeout(resolve, 1));
             }
 
+            // IF THE SLIDER MOVED AGAIN, KILL THIS LOOP
+            if (!isRunning) return;
+
             const rA = decodedRoutes[i];
             const rB = decodedRoutes[j];
 
@@ -239,9 +242,26 @@ async function runDuplicateCheck() {
 }
 
 // 4. Slider Listener
+let isRunning = false; // Flag to check if a process is active
+let debounceTimer;
+
 document.getElementById('overlapSlider').oninput = function() {
-    document.getElementById('sliderVal').innerText = this.value;
-    runDuplicateCheck();
+    const val = this.value;
+    document.getElementById('sliderVal').innerText = val;
+
+    // 1. Clear the timer every time the slider moves
+    clearTimeout(debounceTimer);
+
+    // 2. Set a new timer
+    debounceTimer = setTimeout(() => {
+        // 3. Stop any currently running comparison
+        isRunning = false; 
+        
+        // 4. Start the new comparison after a small delay
+        setTimeout(() => {
+            runDuplicateCheck();
+        }, 10);
+    }, 300); // 300ms delay
 };
 
 let previewMap;
