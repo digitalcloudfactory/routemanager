@@ -184,7 +184,10 @@ function findOverlap(latlngsA, latlngsB, tolerance = 15) {
             }
         }
 
-        if (matched) overlap += segLen;
+        if (matched) {
+            overlap += segLen;
+            segments.push([a1, a2]); // Store for the map
+        }
     }
 
     return { percent: total > 0 ? (overlap / total) * 100 : 0 };
@@ -192,6 +195,7 @@ function findOverlap(latlngsA, latlngsB, tolerance = 15) {
 // --- END ORIGINAL FUNCTIONS ---
 
 async function runDuplicateCheck() {
+    isRunning = true; // CRITICAL: Set to true at the start
     const threshold = parseInt(document.getElementById('overlapSlider').value);
     const tbody = document.getElementById('resultsBody');
     tbody.innerHTML = "<tr><td colspan='3' style='text-align:center; padding:20px;'>Checking database... <span id='progress'>0</span>%</td></tr>";
