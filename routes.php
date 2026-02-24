@@ -510,11 +510,38 @@ document.getElementById('fetchRoutes').addEventListener('click', async () => {
             }
         }
 
+        // --- NEW: START COUNTRY GEOCODING ---
+        btn.innerText = "Sync complete! Filling in country data...";
+        
+        let geocodingDone = false;
+        let totalFixed = 0;
+
+        while (!geocodingDone) {
+            try {
+                // Call the maintenance script we discussed
+                const geoRes = await fetch('sync_countries.php'); 
+                const geoData = await geoRes.json();
+
+                if (geoData.updated_count > 0) {
+                    totalFixed += geoData.updated_count;
+                    btn.innerText = `Geocoding... (${totalFixed} countries fixed)`;
+                    // Small delay to keep things smooth
+                    await new Promise(r => setTimeout(r, 500));
+                } else {
+                    // No more rows to update
+                    geocodingDone = true;
+                }
+            } catch (err) {
+                console.warn("Geocoding batch failed, stopping maintenance loop.", err);
+                geocodingDone = true; // Stop if the script errors out
+            }
+        }
+
         // Final success state
-        btn.innerText = `Success! ${totalSynced} routes synced.`;
+        btn.innerText = `All Done! ${totalSynced} synced, ${totalFixed} geocoded.`;
         setTimeout(() => {
-            location.reload(); // Refresh to show new routes
-        }, 1000);
+            location.reload(); 
+        }, 1500);
 
     } catch (e) {
         console.error('Fetch error:', e);
