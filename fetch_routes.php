@@ -136,9 +136,46 @@ echo json_encode([
 ]);
 
 // --- HELPERS (Keep your existing functions below) ---
-function getCountryFromPolyline($summaryPolyline) { /* same as before */ }
-function decodePolyline($encoded) { /* same as before */ }
+function getCountryFromPolyline(string $summaryPolyline): ?string {
+    if (!$summaryPolyline) return null;
+    $coords = decodePolyline($summaryPolyline);
+    if (!$coords || count($coords) === 0) return null;
+    $lat = $coords[0][0];
+    $lon = $coords[0][1];
+    
+    // Added &accept-language=nl to the URL
+    $url = "https://nominatim.openstreetmap.org/reverse"
+         . "?lat=" . urlencode($lat)
+         . "&lon=" . urlencode($lon)
+         . "&format=json"
+         . "&accept-language=nl"; // Forces Dutch naming
+    
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 10,
+        CURLOPT_HTTPHEADER => ['User-Agent: MapRoutesApp/1.0 (contact@yourdomain.com)'],
+    ]);
+    $res = curl_exec($ch);
+    curl_close($ch);
+    if (!$res) return null;
+    $data = json_decode($res, true);
+    return $data['address']['country'] ?? null;
+}
 
+function decodePolyline(string $encoded): array {
+    $points = []; $index = 0; $lat = 0; $lng = 0; $len = strlen($encoded);
+    while ($index < $len) {
+        $b = 0; $shift = 0; $result = 0;
+        do { $b = ord($encoded[$index++]) - 63; $result |= ($b & 0x1f) << $shift; $shift += 5; } while ($b >= 0x20);
+        $dlat = ($result & 1) ? ~($result >> 1) : ($result >> 1); $lat += $dlat;
+        $shift = 0; $result = 0;
+        do { $b = ord($encoded[$index++]) - 63; $result |= ($b & 0x1f) << $shift; $shift += 5; } while ($b >= 0x20);
+        $dlng = ($result & 1) ? ~($result >> 1) : ($result >> 1); $lng += $dlng;
+        $points[] = [$lat / 1e5, $lng / 1e5];
+    }
+    return $points;
+}
 
 // ... at the very bottom of the script ...
 $insert = null;
