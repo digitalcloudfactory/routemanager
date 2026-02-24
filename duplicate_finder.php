@@ -154,13 +154,13 @@ function segmentDistanceMeters(p1a, p1b, p2a, p2b) {
 
 
     
-function findOverlap(latlngsA, latlngsB, tolerance = 15) {
+function findOverlap(latlngsA, latlngsB, tolerance = 8) {
     let total = 0;
     let overlap = 0;
     let segments = [];
     
     // 1. Point Sampling: increase 'i += 1' to 'i += 4' for 4x speed
-    const step = 4; 
+    const step = 2; 
 
     for (let i = 0; i < latlngsA.length - 1; i += step) {
         const a1 = latlngsA[i];
