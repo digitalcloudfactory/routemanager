@@ -191,7 +191,10 @@ function findOverlap(latlngsA, latlngsB, tolerance = 15) {
         }
     }
 
-    return { percent: total > 0 ? (overlap / total) * 100 : 0 };
+    return { 
+        percent: total > 0 ? (overlap / total) * 100 : 0, 
+        segments: segments // This must match the key used in showComparison
+    };
 }
 // --- END ORIGINAL FUNCTIONS ---
 
@@ -276,30 +279,28 @@ function showComparison(indexA, indexB) {
     const rA = decodedRoutes[indexA];
     const rB = decodedRoutes[indexB];
 
-    // Initialize map if it doesn't exist
     if (!previewMap) {
         previewMap = L.map('compareMap');
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(previewMap);
     } else {
-        // Clear old layers
         previewMap.eachLayer(layer => {
             if (layer instanceof L.Polyline) previewMap.removeLayer(layer);
         });
     }
 
-    // 1. Draw Route A (Blue)
     const lineA = L.polyline(rA.latlngs, {color: 'blue', weight: 3, opacity: 0.5}).addTo(previewMap);
-    // 2. Draw Route B (Red)
     const lineB = L.polyline(rB.latlngs, {color: 'red', weight: 3, opacity: 0.5}).addTo(previewMap);
 
-    // 3. Draw Overlap Segments (Lime Green - highlight)
-    // We run findOverlap one more time to get the 'segments' array
+    // FIX: Run the overlap check and safely access segments
     const matchData = findOverlap(rA.latlngs, rB.latlngs);
-    matchData.segments.forEach(seg => {
+    
+    // The "|| []" ensures that if segments is undefined, the code doesn't crash
+    const overlapSegments = matchData.segments || []; 
+    
+    overlapSegments.forEach(seg => {
         L.polyline(seg, {color: '#32CD32', weight: 6, opacity: 1}).addTo(previewMap);
     });
 
-    // Zoom to fit the routes
     const group = new L.featureGroup([lineA, lineB]);
     previewMap.fitBounds(group.getBounds(), {padding: [20, 20]});
 }
