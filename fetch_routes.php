@@ -103,8 +103,6 @@ $insert = $pdo->prepare("
     estimated_moving_time=VALUES(estimated_moving_time), summary_polyline=VALUES(summary_polyline)
 ");
 
-$existingStmt = $pdo->prepare("SELECT country FROM strava_routes WHERE route_id = :rid AND user_id = :uid LIMIT 1");
-
 $processed = 0;
 $geocodesInThisBatch = 0;
 $maxGeocodesPerBatch = 5; // Low limit to keep request fast
@@ -112,23 +110,16 @@ $maxGeocodesPerBatch = 5; // Low limit to keep request fast
 foreach ($routes as $route) {
     $rid = (string)$route['id_str'];
 
-    if (isset($existingIdsMap[$rid])) {
-        // Option A: Skip completely for maximum speed
-        // continue; 
-        
-    } else {
+    if (isset($existingIdsMap[$rid])) { continue; }
         // New route found!
-            $existingStmt->execute([':rid' => $rid, ':uid' => $internalUserId]);
-            $existing = $existingStmt->fetch(PDO::FETCH_ASSOC);
-            $country = $existing['country'] ?? null;
+                $country = null;
         
-            // Geocode only if missing AND we haven't hit the small batch limit
-            if (empty($country) && !empty($route['map']['summary_polyline']) && $geocodesInThisBatch < $maxGeocodesPerBatch) {
-                $country = getCountryFromPolyline($route['map']['summary_polyline']);
-                $geocodesInThisBatch++;
-                if ($country) usleep(1200000); 
-            }
-        
+    // Geocode only if it's a new route and we have a polyline
+        if (!empty($route['map']['summary_polyline']) && $geocodesInThisBatch < $maxGeocodesPerBatch) {
+            $country = getCountryFromPolyline($route['map']['summary_polyline']);
+            $geocodesInThisBatch++;
+            if ($country) usleep(1200000); 
+        }
             $insert->execute([
                 ':user' => $internalUserId, ':rid' => $rid, ':name' => $route['name'],
                 ':description' => $route['description'] ?? null, ':distance' => $route['distance'] / 1000,
@@ -138,8 +129,8 @@ foreach ($routes as $route) {
                 ':estimated_moving_time' => $route['estimated_moving_time'], ':polyline' => $route['map']['summary_polyline'] ?? null
             ]);
             $processed++;
-        }
 }
+
 // Update sync timestamp
 $pdo->prepare("UPDATE users SET last_routes_sync = NOW() WHERE id = ?")->execute([$internalUserId]);
 
