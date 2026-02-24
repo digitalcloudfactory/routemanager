@@ -83,25 +83,26 @@ $encoded2 = 'ezehG`lrHxFpAhCbDxI~^rc@p_@~EG~B`IxLz@vAlGbE`F\lKj`@l\v[vd@~@vF~DIt
 const allRoutesData = <?= json_encode($allRoutes ?? []) ?>;
 
 
-// 2. Pre-decode with Safety Check
+// 1. Pre-process and categorize
 const decodedRoutes = allRoutesData.map(r => {
-    // CRITICAL: Check if polyline exists before trying to decode
-    if (!r.summary_polyline || r.summary_polyline.length < 5) return null;
-    
+    if (!r.summary_polyline || r.summary_polyline.length < 10) return null;
     try {
         const points = polyline.decode(r.summary_polyline);
         return {
             name: r.name,
             id: r.route_id,
-            // Convert to simple [lat, lon] arrays for faster math
-            pts: points, 
-            latlngs: points.map(p => L.latLng(p[0], p[1]))
+            latlngs: points.map(p => L.latLng(p[0], p[1])),
+            startPoint: [points[0][0], points[0][1]] // [lat, lon]
         };
-    } catch (e) {
-        console.error("Failed to decode route:", r.name);
-        return null;
-    }
+    } catch (e) { return null; }
 }).filter(r => r !== null);
+
+// 2. Simple distance check for the "Guard"
+function fastDist(p1, p2) {
+    const dy = p1[0] - p2[0];
+    const dx = p1[1] - p2[1];
+    return Math.sqrt(dx*dx + dy*dy); // Simple Euclidean for rough filtering
+}
 
 // --- YOUR ORIGINAL FUNCTIONS (UNTOUCHED) ---
 // Compute Haversine distance between two [lat, lon] points
@@ -180,44 +181,45 @@ function findOverlap(latlngsA, latlngsB, tolerance = 8) {
 }
 // --- END ORIGINAL FUNCTIONS ---
 
-// 3. The Logic to find duplicates in the database
 function runDuplicateCheck() {
     const threshold = parseInt(document.getElementById('overlapSlider').value);
     const tbody = document.getElementById('resultsBody');
-    tbody.innerHTML = "<tr><td colspan='3' style='text-align:center; padding:20px;'>Analyzing... this may take a moment.</td></tr>";
+    tbody.innerHTML = "<tr><td colspan='3' style='text-align:center;'>Filtering routes...</td></tr>";
 
-    // We use setTimeout to allow the "Analyzing" text to actually appear before the CPU-heavy loop starts
+    // Use a tiny timeout so the "Filtering" text shows up
     setTimeout(() => {
         let html = "";
-        
+        let matchCount = 0;
+
         for (let i = 0; i < decodedRoutes.length; i++) {
             for (let j = i + 1; j < decodedRoutes.length; j++) {
                 const rA = decodedRoutes[i];
                 const rB = decodedRoutes[j];
 
-                // OPTIMIZATION: Quick check - if distance is wildly different, don't waste CPU
-                // (Optional: add distance check here)
+                // --- THE COUNTRY/DISTANCE GUARD ---
+                // 0.5 degrees is roughly 50-60km. 
+                // If they start further apart than this, they aren't duplicates.
+                if (fastDist(rA.startPoint, rB.startPoint) > 0.5) {
+                    continue; 
+                }
 
-                try {
-                    const resA = findOverlap(rA.latlngs, rB.latlngs);
-                    const resB = findOverlap(rB.latlngs, rA.latlngs);
-                    const finalPercent = Math.min(resA.percent, resB.percent);
+                // Only run the heavy math if they are in the same region
+                const resA = findOverlap(rA.latlngs, rB.latlngs);
+                const resB = findOverlap(rB.latlngs, rA.latlngs);
+                const finalPercent = Math.min(resA.percent, resB.percent);
 
-                    if (finalPercent >= threshold) {
-                        html += `<tr>
-                            <td style="padding:8px;">${rA.name}</td>
-                            <td style="padding:8px;">${rB.name}</td>
-                            <td style="padding:8px;"><strong>${finalPercent.toFixed(1)}%</strong></td>
-                        </tr>`;
-                    }
-                } catch (err) {
-                    console.error("Error comparing " + rA.name + " and " + rB.name, err);
+                if (finalPercent >= threshold) {
+                    matchCount++;
+                    html += `<tr>
+                        <td style="padding:10px;">${rA.name}</td>
+                        <td style="padding:10px;">${rB.name}</td>
+                        <td style="padding:10px;"><strong>${finalPercent.toFixed(1)}%</strong></td>
+                    </tr>`;
                 }
             }
         }
-        
-        tbody.innerHTML = html || "<tr><td colspan='3' style='text-align:center; padding:20px;'>No duplicates found.</td></tr>";
-    }, 100);
+        tbody.innerHTML = html || `<tr><td colspan='3' style='text-align:center;'>No matches found above ${threshold}%.</td></tr>`;
+    }, 50);
 }
 
 // 4. Slider Listener
