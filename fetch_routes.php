@@ -102,7 +102,7 @@ $geocodesInThisBatch = 0;
 $maxGeocodesPerBatch = 5; // Low limit to keep request fast
 
 foreach ($routes as $route) {
-    $rid = (string)$route['id'];
+    $rid = (string)$route['id_str'];
     $existingStmt->execute([':rid' => $rid, ':uid' => $internalUserId]);
     $existing = $existingStmt->fetch(PDO::FETCH_ASSOC);
     $country = $existing['country'] ?? null;
