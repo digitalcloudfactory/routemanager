@@ -38,18 +38,18 @@ $pdo = new PDO(
     ]
 );
 
-// Query to get all routes for the user
-$stmt = $pdo->prepare("SELECT route_id, name, summary_polyline, distance_km FROM strava_routes WHERE user_id = ?");
+// Query to get distinct countries for the dropdown
+$countryStmt = $pdo->prepare("SELECT DISTINCT country FROM strava_routes WHERE user_id = ? AND country IS NOT NULL ORDER BY country ASC");
+$countryStmt->execute([$internalUserId]);
+$countries = $countryStmt->fetchAll(PDO::FETCH_COLUMN);
+
+// Also make sure your main route query includes the country column
+$stmt = $pdo->prepare("SELECT route_id, name, summary_polyline, distance_km, country FROM strava_routes WHERE user_id = ?");
 $stmt->execute([$internalUserId]);
 $allRoutes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-
-
-
-// PHP only provides encoded polylines (no geometry math here)
-$encoded1 = 'kzehG`lrH~FpAhCbDxI~^rc@p_@~EG~B`IxLz@vAlGbE`F\lKj`@l\v[vd@~@vF~DItSrGtHSfElKxLpDb]th@`EpRjpA~nCrF|JxEpBOnGbb@p_A`HiEta@kDfEqBvE_MFoh@tK{QrP}Orj@t@dVmMfX|D`KeC~QwVbXiHvD{ChJy[pLaAnEqJtSuMlDaIv@kQlP[dF_CzI`@xI}DfDeJfEkEy@}Kd@mGbDyApNu`@lU}DrMyFjDdBdJwH`CtA~@wIlEqAbDzChNkJBoFbLkLqDcMuEcDaCFoAuClFoDzKg@oM_CnD}DrCkPlDkEpH~ErK?nMpIdUfb@vGxF~G}@lLyPpFiA`GpAdm@rc@bAzGdG|GnNh]h@zKvEjIOdMzCdElBvRRdNsEnRt@nd@nJxWzDdGxF`Cc@pBcDQ}DdDgC`FyAlQ|BlKuBrI}J|DiF`GbCfNfSzXfF|[i@bJiDrKt@hOgCtClDzXeChm@n@nJjCdI@|OaPfG{Fi@qCtC{GiAiJ~BoCdLl@vFcIhGpBzCEhDmAD~@z@xAgDQuDhFB{CT^bEqAbHsDG{DnKqC_@m@tDuC|AgA{A{BdCmAyEaFuC}ICiEzDuDeFoP|A_JuEmD`IuCuDkEvAgAcBmBl@b@uGzCiAVsBaEcEMkEwB{DyLdCy^bA{T?yC_E{ClI{JlCiDiAaEzB}Cq@mMjBkEiEnCwIe@cKbAqEiBrB[hE}A`@E~DaEtAmEtGq@jEaK`A{CyrAbAcKUsMyC{GmE_Bs@wB_@mFnBuJ?iH}XecCeHmGaBaGd@aKmBiHnAeJ}EySaAc[{CyOoKhAeKvKkCqAiKZE{JoCiHaRmJyQg\oOoQcBaIq@wh@gZkb@u@{XtEcWlBaGdHiHlHoYhPyY~Eel@dFwOuHSmHlFwEG}OcLkLcOsDh@wAdFoCnAmPsKqH{CsEXkHqH}DMiMrBuS`TmKRyDeH}P}Eg^hP_FhG{Cn@_IcGqCpAuBcB}BhBaI}VcLqEwEtNiG|Hc@|FmFvHoIy@l@xEc[hOcFh@sKpI}JwAmXfF{Ux`@}Bu@{EmM_R`CwCiDqByJ}LeCuRVc]hGke@}GiJfCmJ}AwHeJgGaC';
-$encoded2 = 'ezehG`lrHxFpAhCbDxI~^rc@p_@~EG~B`IxLz@vAlGbE`F\lKj`@l\v[vd@~@vF~DItSrGtHSfElKxLpDb]th@`EpRjpA~nCrF|JxEpBOnGn]|s@`I~WtKxFdHzU|DfC|@{Bx@j@tGnSs@vDlDnEhKZnNdLzDxFdD|OjIxTlRpTt@hDxQlJtElNtNdL|G|KxExNfBKzA_FvElF~NcAtv@gU|DrBjBmBdCLjJdFra@jEfJcAzJpA~IuGtDyL`KaAp@kElEuG`EuAD_E|Aa@ZiEhBsBcApEd@bKoCvIjEhElMkB|Cp@`E{BhDhAzJmCzCmIxC~DzT?x^cAxLeCvBzDLjE`EbEWrB{ChAc@tGlBm@fAbBjEwAtCtD`DcIjJvEnP}AtDdFhE{D|IB`FtClAxEzBeCfAzAtC}Al@uDpC^zDoKrDFpAcH_@cEzCUiFCPtDyAfD_A{@lAEDiDqB{CbIiGm@wFnCeLhJ_CzGhApCuCzFh@`PgGn@pMtBrB`C~LnA~[zF`ChSqA|@vLzF|@|MqKpDuJvBgO~EmFxBE~R|KrLZrFcDrGkTnIiJfDW~QhHtNyB~BuG_@qVxBgHp^a\tRdHdAuBxO_CNmBeGcFi@eExKwDoAyNz@wE~PeHhBoH}CwDeCgNrD_RxEiGc@mXsCc^nDkPbGeBTsJyLsEyAiEeIsFaFo@K{GyBiHyL_BqIqPyJcDb@sJ_FoGqA_GmEcDjCLVgGe@}DmCsCWeEbGpHpFfRoA{CJ}EuSql@qBxFyC{GcDnDi@nHt@pHlC~EaD{CyB{J|@{OkCzNj@hH{Kf@oGhRmDrDvBtG?bLxC`CDlBqPkOsFmUiC~AkCkAgIdBeAoGtBxDnAk@tEwHxC{LjCeATsBe@s@]fCaCPgEvHb@wOiBgD{AJLqEiDwL`BeGe@cChAlAMtH|@kEo@cPqGz@uBoDuQMgHgC~@hKoK}K_Dn@qOmCiDLaCvEUdFeBLMmQeNeFiE?Lec@}HsLcCmGe@cHcUki@cLuRcb@mRgJmJ}GuNqJoC{AmDmEgByQlQsSwL_I|@gK_A{A_GfCeJs@yHkDiHgL{GwHsJeCsJsFlA{HkIaK{SmBuM}D{G}A{MiS_Ha`@o[oDpAmHfNqEnD_b@rMgVmJqS`UqNv@y@}CuNyLmIhXuOhB{Ar[_IfG|G|GWd\|AtNiAlCqIGqG`FsFOcKsHiPkRsDh@wAdFoCnA_ZoPwFDaHiHmRpB{TfTgJLyDeH}QwEg]bP{I|H_JgGqCpAuBcB}BhBaI}VcLqEwEtNiG|Hc@|FmFvHoIy@l@xEc[hOcFh@sKpI}JwAmXfF_Ur`@yCo@{EmM_R`CwCiDqByJ}LeCuRVc]hGke@}GiJfCyEi@sImG';
 ?>
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -64,7 +64,15 @@ $encoded2 = 'ezehG`lrHxFpAhCbDxI~^rc@p_@~EG~B`IxLz@vAlGbE`F\lKj`@l\v[vd@~@vF~DIt
 <div class="stats" style="margin-bottom: 20px; font-family: sans-serif;">
     <b>Duplicate Finder</b><br>
     Min Match: <input type="range" id="overlapSlider" min="10" max="100" value="80"> 
-    <span id="sliderVal">80</span>%
+    <span id="sliderVal">80</span>% | 
+    
+    Country: 
+    <select id="countryFilter">
+        <option value="all">All Countries</option>
+        <?php foreach ($countries as $country): ?>
+            <option value="<?= htmlspecialchars($country) ?>"><?= htmlspecialchars($country) ?></option>
+        <?php endforeach; ?>
+    </select>
 </div>
 
 <table id="duplicateTable" border="1" style="width:100%; border-collapse: collapse; font-family: sans-serif;">
@@ -99,6 +107,7 @@ const decodedRoutes = allRoutesData.map(r => {
         const points = polyline.decode(r.summary_polyline);
         return {
             name: r.name,
+            country: r.country,
             id: r.route_id,
             latlngs: points.map(p => L.latLng(p[0], p[1])),
             startPoint: [points[0][0], points[0][1]] // [lat, lon]
@@ -202,34 +211,46 @@ function findOverlap(latlngsA, latlngsB, tolerance = 8) {
 // --- END ORIGINAL FUNCTIONS ---
 
 async function runDuplicateCheck() {
-    isRunning = true; // CRITICAL: Set to true at the start
+    isRunning = true;
     const threshold = parseInt(document.getElementById('overlapSlider').value);
+    const selectedCountry = document.getElementById('countryFilter').value; // Get selected country
     const tbody = document.getElementById('resultsBody');
-    tbody.innerHTML = "<tr><td colspan='3' style='text-align:center; padding:20px;'>Checking database... <span id='progress'>0</span>%</td></tr>";
+    
+    // STEP 1: Filter the routes list before starting the loop
+    const activeRoutes = decodedRoutes.filter(r => {
+        if (selectedCountry === "all") return true;
+        return r.country === selectedCountry;
+    });
+    
+    
+    tbody.innerHTML = `<tr><td colspan='4' style='text-align:center; padding:20px;'>Checking ${activeRoutes.length} routes... <span id='progress'>0</span>%</td></tr>`;
 
     let html = "";
-    const totalPairs = (decodedRoutes.length * (decodedRoutes.length - 1)) / 2;
+    const totalPairs = (activeRoutes.length * (activeRoutes.length - 1)) / 2;
     let processedPairs = 0;
 
-    for (let i = 0; i < decodedRoutes.length; i++) {
-        for (let j = i + 1; j < decodedRoutes.length; j++) {
-            processedPairs++;
+    // STEP 2: Use 'activeRoutes' instead of 'decodedRoutes'
+    for (let i = 0; i < activeRoutes.length; i++) {
+        for (let j = i + 1; j < activeRoutes.length; j++) {
+            if (!isRunning) return;
             
-            // Update progress text every few iterations
-            if (processedPairs % 5 === 0) {
+            processedPairs++;
+            if (processedPairs % 10 === 0) {
                 document.getElementById('progress').innerText = Math.round((processedPairs / totalPairs) * 100);
-                // This "await" is the secret: it pauses the script for 1ms to let the browser stay alive
-                await new Promise(resolve => setTimeout(resolve, 1));
+                await new Promise(r => setTimeout(r, 1));
             }
 
-            // IF THE SLIDER MOVED AGAIN, KILL THIS LOOP
-            if (!isRunning) return;
-
-            const rA = decodedRoutes[i];
-            const rB = decodedRoutes[j];
+            const rA = activeRoutes[i];
+            const rB = activeRoutes[j];
 
             // 1. DISTANCE GUARD (Keep this! It saves massive CPU)
             if (fastDist(rA.startPoint, rB.startPoint) > 0.5) continue;
+
+            // If the "box" of Route A doesn't even touch the "box" of Route B, skip.
+            if (rA.maxLat < rB.minLat || rA.minLat > rB.maxLat || 
+                rA.maxLon < rB.minLon || rA.minLon > rB.maxLon) {
+                continue;
+            }
 
             // 2. THE CALCULATION
             const resA = findOverlap(rA.latlngs, rB.latlngs);
@@ -316,8 +337,13 @@ function closeMap() {
     console.log("Map closed.");
 }
 
-    
-// Run on load
-runDuplicateCheck();
+// Add an event listener for the country dropdown
+document.getElementById('countryFilter').onchange = function() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+        isRunning = false;
+        setTimeout(() => { runDuplicateCheck(); }, 10);
+    }, 300);
+};
 
 </script>
