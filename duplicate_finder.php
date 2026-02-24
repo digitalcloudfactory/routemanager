@@ -38,15 +38,18 @@ $pdo = new PDO(
     ]
 );
 
-// Query to get distinct countries for the dropdown
-$countryStmt = $pdo->prepare("SELECT DISTINCT country FROM strava_routes WHERE user_id = ? AND country IS NOT NULL ORDER BY country ASC");
+// 1. Fetch unique countries
+$countryStmt = $pdo->prepare("SELECT DISTINCT country FROM strava_routes WHERE user_id = ? AND country IS NOT NULL AND country != '' ORDER BY country ASC");
 $countryStmt->execute([$internalUserId]);
 $countries = $countryStmt->fetchAll(PDO::FETCH_COLUMN);
 
-// Also make sure your main route query includes the country column
+// 2. Fetch all routes (Make sure 'country' is in the SELECT)
 $stmt = $pdo->prepare("SELECT route_id, name, summary_polyline, distance_km, country FROM strava_routes WHERE user_id = ?");
 $stmt->execute([$internalUserId]);
 $allRoutes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// DEBUG: Uncomment the line below to see if PHP actually found countries
+ print_r($countries);
 
 ?>
 
@@ -65,14 +68,20 @@ $allRoutes = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <b>Duplicate Finder</b><br>
     Min Match: <input type="range" id="overlapSlider" min="10" max="100" value="80"> 
     <span id="sliderVal">80</span>% | 
-    
-    Country: 
-    <select id="countryFilter">
-        <option value="all">All Countries</option>
+
+Country: 
+<select id="countryFilter">
+    <option value="all">All Countries (<?= count($allRoutes) ?> routes)</option>
+    <?php if (!empty($countries)): ?>
         <?php foreach ($countries as $country): ?>
-            <option value="<?= htmlspecialchars($country) ?>"><?= htmlspecialchars($country) ?></option>
+            <option value="<?= htmlspecialchars($country) ?>">
+                <?= htmlspecialchars($country) ?>
+            </option>
         <?php endforeach; ?>
-    </select>
+    <?php else: ?>
+        <option disabled>No countries found in DB</option>
+    <?php endif; ?>
+</select>
 </div>
 
 <table id="duplicateTable" border="1" style="width:100%; border-collapse: collapse; font-family: sans-serif;">
@@ -99,6 +108,8 @@ $allRoutes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 // 1. Data from PHP
 const allRoutesData = <?= json_encode($allRoutes ?? []) ?>;
 
+
+    
 
 // 1. Pre-process and categorize
 const decodedRoutes = allRoutesData.map(r => {
