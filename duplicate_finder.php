@@ -55,8 +55,9 @@ $encoded2 = 'ezehG`lrHxFpAhCbDxI~^rc@p_@~EG~B`IxLz@vAlGbE`F\lKj`@l\v[vd@~@vF~DIt
 <head>
     <meta charset="utf-8"/>
     <title>Route Duplicate Finder</title>
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/@mapbox/polyline"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/@mapbox/polyline"></script>
 </head>
 <body>
 
@@ -79,7 +80,7 @@ $encoded2 = 'ezehG`lrHxFpAhCbDxI~^rc@p_@~EG~B`IxLz@vAlGbE`F\lKj`@l\v[vd@~@vF~DIt
 
 <script>
 // 1. Data from PHP
-const allRoutesData = <?= json_encode($routes) ?>;
+const allRoutesData = <?= json_encode($allRoutes ?? []) ?>;
 
 // 2. Pre-decode all routes so we don't do it inside the loop
 const decodedRoutes = allRoutesData.map(r => ({
