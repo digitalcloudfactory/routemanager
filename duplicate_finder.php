@@ -78,6 +78,12 @@ $encoded2 = 'ezehG`lrHxFpAhCbDxI~^rc@p_@~EG~B`IxLz@vAlGbE`F\lKj`@l\v[vd@~@vF~DIt
     <tbody id="resultsBody"></tbody>
 </table>
 
+ <div id="mapModal" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.8);">
+    <div style="background:white; margin:5% auto; padding:20px; width:80%; height:80%; border-radius:10px; position:relative;">
+        <span onclick="closeMap()" style="position:absolute; right:20px; top:10px; cursor:pointer; font-size:30px;">&times;</span>
+        <div id="compareMap" style="width:100%; height:100%;"></div>
+    </div>
+</div>   
 <script>
 // 1. Data from PHP
 const allRoutesData = <?= json_encode($allRoutes ?? []) ?>;
@@ -217,11 +223,14 @@ async function runDuplicateCheck() {
             const finalPercent = Math.min(resA.percent, resB.percent);
 
             if (finalPercent >= threshold) {
-                html += `<tr>
-                    <td style="padding:10px;">${rA.name}</td>
-                    <td style="padding:10px;">${rB.name}</td>
-                    <td style="padding:10px;"><strong>${finalPercent.toFixed(1)}%</strong></td>
-                </tr>`;
+            html += `<tr>
+                <td style="padding:10px;">${rA.name}</td>
+                <td style="padding:10px;">${rB.name}</td>
+                <td style="padding:10px;"><strong>${finalPercent.toFixed(1)}%</strong></td>
+                <td style="padding:10px;">
+                    <button onclick="showComparison(${i}, ${j})">View Map</button>
+                </td>
+            </tr>`;
             }
         }
     }
@@ -235,6 +244,46 @@ document.getElementById('overlapSlider').oninput = function() {
     runDuplicateCheck();
 };
 
+let previewMap;
+
+function showComparison(indexA, indexB) {
+    document.getElementById('mapModal').style.display = 'block';
+    const rA = decodedRoutes[indexA];
+    const rB = decodedRoutes[indexB];
+
+    // Initialize map if it doesn't exist
+    if (!previewMap) {
+        previewMap = L.map('compareMap');
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(previewMap);
+    } else {
+        // Clear old layers
+        previewMap.eachLayer(layer => {
+            if (layer instanceof L.Polyline) previewMap.removeLayer(layer);
+        });
+    }
+
+    // 1. Draw Route A (Blue)
+    const lineA = L.polyline(rA.latlngs, {color: 'blue', weight: 3, opacity: 0.5}).addTo(previewMap);
+    // 2. Draw Route B (Red)
+    const lineB = L.polyline(rB.latlngs, {color: 'red', weight: 3, opacity: 0.5}).addTo(previewMap);
+
+    // 3. Draw Overlap Segments (Lime Green - highlight)
+    // We run findOverlap one more time to get the 'segments' array
+    const matchData = findOverlap(rA.latlngs, rB.latlngs);
+    matchData.segments.forEach(seg => {
+        L.polyline(seg, {color: '#32CD32', weight: 6, opacity: 1}).addTo(previewMap);
+    });
+
+    // Zoom to fit the routes
+    const group = new L.featureGroup([lineA, lineB]);
+    previewMap.fitBounds(group.getBounds(), {padding: [20, 20]});
+}
+
+function closeMap() {
+    document.getElementById('mapModal').style.display = 'none';
+}
+
+    
 // Run on load
 runDuplicateCheck();
 
