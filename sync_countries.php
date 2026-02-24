@@ -31,8 +31,6 @@ $pdo = new PDO(
     ]
 );
 
-// 1. Get a batch of routes that are missing a country
-// We limit to 50 to keep the script from timing out
 $stmt = $pdo->prepare("
     SELECT route_id, summary_polyline 
     FROM strava_routes 
@@ -43,11 +41,7 @@ $stmt = $pdo->prepare("
 $stmt->execute();
 $routes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-if (empty($routes)) {
-    die("All routes already have countries! 🎉");
-}
-
-echo "Starting geocoding for " . count($routes) . " routes...<br>";
+$updatedCount = 0;
 
 foreach ($routes as $route) {
     $country = getCountryFromPolyline($route['summary_polyline']);
@@ -55,18 +49,22 @@ foreach ($routes as $route) {
     if ($country) {
         $update = $pdo->prepare("UPDATE strava_routes SET country = ? WHERE route_id = ?");
         $update->execute([$country, $route['route_id']]);
-        echo "✅ Fixed: " . htmlspecialchars($route['route_id']) . " -> $country<br>";
-    } else {
-        echo "❌ Failed to geocode: " . htmlspecialchars($route['route_id']) . "<br>";
+        $updatedCount++;
     }
 
-    // MANDATORY: Wait 1.2 seconds between requests to respect OpenStreetMap usage policy
-    // This prevents 429 Too Many Requests errors
-    flush(); // Push output to browser so you can watch progress
+    // Still mandatory for API limits
     usleep(1200000); 
 }
 
-echo "Batch complete.";
+// 2. Output ONLY clean JSON
+header('Content-Type: application/json');
+echo json_encode([
+    'success' => true,
+    'updated_count' => $updatedCount,
+    'finished' => (count($routes) === 0)
+]);
+exit;
+
 
 // --- Helper Function ---
 function getCountryFromPolyline(string $summaryPolyline): ?string {
