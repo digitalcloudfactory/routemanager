@@ -181,45 +181,48 @@ function findOverlap(latlngsA, latlngsB, tolerance = 8) {
 }
 // --- END ORIGINAL FUNCTIONS ---
 
-function runDuplicateCheck() {
+async function runDuplicateCheck() {
     const threshold = parseInt(document.getElementById('overlapSlider').value);
     const tbody = document.getElementById('resultsBody');
-    tbody.innerHTML = "<tr><td colspan='3' style='text-align:center;'>Filtering routes...</td></tr>";
+    tbody.innerHTML = "<tr><td colspan='3' style='text-align:center; padding:20px;'>Checking database... <span id='progress'>0</span>%</td></tr>";
 
-    // Use a tiny timeout so the "Filtering" text shows up
-    setTimeout(() => {
-        let html = "";
-        let matchCount = 0;
+    let html = "";
+    const totalPairs = (decodedRoutes.length * (decodedRoutes.length - 1)) / 2;
+    let processedPairs = 0;
 
-        for (let i = 0; i < decodedRoutes.length; i++) {
-            for (let j = i + 1; j < decodedRoutes.length; j++) {
-                const rA = decodedRoutes[i];
-                const rB = decodedRoutes[j];
+    for (let i = 0; i < decodedRoutes.length; i++) {
+        for (let j = i + 1; j < decodedRoutes.length; j++) {
+            processedPairs++;
+            
+            // Update progress text every few iterations
+            if (processedPairs % 5 === 0) {
+                document.getElementById('progress').innerText = Math.round((processedPairs / totalPairs) * 100);
+                // This "await" is the secret: it pauses the script for 1ms to let the browser stay alive
+                await new Promise(resolve => setTimeout(resolve, 1));
+            }
 
-                // --- THE COUNTRY/DISTANCE GUARD ---
-                // 0.5 degrees is roughly 50-60km. 
-                // If they start further apart than this, they aren't duplicates.
-                if (fastDist(rA.startPoint, rB.startPoint) > 0.5) {
-                    continue; 
-                }
+            const rA = decodedRoutes[i];
+            const rB = decodedRoutes[j];
 
-                // Only run the heavy math if they are in the same region
-                const resA = findOverlap(rA.latlngs, rB.latlngs);
-                const resB = findOverlap(rB.latlngs, rA.latlngs);
-                const finalPercent = Math.min(resA.percent, resB.percent);
+            // 1. DISTANCE GUARD (Keep this! It saves massive CPU)
+            if (fastDist(rA.startPoint, rB.startPoint) > 0.5) continue;
 
-                if (finalPercent >= threshold) {
-                    matchCount++;
-                    html += `<tr>
-                        <td style="padding:10px;">${rA.name}</td>
-                        <td style="padding:10px;">${rB.name}</td>
-                        <td style="padding:10px;"><strong>${finalPercent.toFixed(1)}%</strong></td>
-                    </tr>`;
-                }
+            // 2. THE CALCULATION
+            const resA = findOverlap(rA.latlngs, rB.latlngs);
+            const resB = findOverlap(rB.latlngs, rA.latlngs);
+            const finalPercent = Math.min(resA.percent, resB.percent);
+
+            if (finalPercent >= threshold) {
+                html += `<tr>
+                    <td style="padding:10px;">${rA.name}</td>
+                    <td style="padding:10px;">${rB.name}</td>
+                    <td style="padding:10px;"><strong>${finalPercent.toFixed(1)}%</strong></td>
+                </tr>`;
             }
         }
-        tbody.innerHTML = html || `<tr><td colspan='3' style='text-align:center;'>No matches found above ${threshold}%.</td></tr>`;
-    }, 50);
+    }
+    
+    tbody.innerHTML = html || `<tr><td colspan='3' style='text-align:center; padding:20px;'>No duplicates found above ${threshold}%.</td></tr>`;
 }
 
 // 4. Slider Listener
