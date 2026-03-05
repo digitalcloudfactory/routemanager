@@ -100,6 +100,11 @@ foreach ($routes as &$route) {
     $route['tags'] = $tagsByRoute[$route['route_id']] ?? '';
 }
 unset($route);
+
+$countryStmt = $pdo->prepare("SELECT DISTINCT country FROM strava_routes WHERE user_id = ? AND country IS NOT NULL AND country != '' ORDER BY country ASC");
+$countryStmt->execute([$internalUserId]);
+$countries = $countryStmt->fetchAll(PDO::FETCH_COLUMN);
+
 ?>
 
 <?php include 'header.php'; ?>
