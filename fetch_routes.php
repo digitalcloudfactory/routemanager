@@ -96,11 +96,31 @@ $hasMore = (is_array($routes) && count($routes) === $perPage);
 
 // --- PROCESS BATCH ---
 $insert = $pdo->prepare("
-    INSERT INTO strava_routes (user_id, route_id, name, description, distance_km, elevation, type, private, starred, country, created_at, estimated_moving_time, summary_polyline)
-    VALUES (:user, :rid, :name, :description, :distance, :elevation, :type, :private, :starred, :country, :created_at, :estimated_moving_time, :polyline)
-    ON DUPLICATE KEY UPDATE name=VALUES(name), description=VALUES(description), distance_km=VALUES(distance_km), elevation=VALUES(elevation), 
-    type=VALUES(type), private=VALUES(private), starred=VALUES(starred), country=IFNULL(country, VALUES(country)), 
-    estimated_moving_time=VALUES(estimated_moving_time), summary_polyline=VALUES(summary_polyline)
+    INSERT INTO strava_routes (
+        user_id, route_id, name, description, distance_km, elevation, type, private, starred, country, 
+        created_at, estimated_moving_time, summary_polyline,
+        start_latlng_lat, start_latlng_lng, end_latlng_lat, end_latlng_lng
+    )
+    VALUES (
+        :user, :rid, :name, :description, :distance, :elevation, :type, :private, :starred, :country, 
+        :created_at, :estimated_moving_time, :polyline,
+        :s_lat, :s_lng, :e_lat, :e_lng
+    )
+    ON DUPLICATE KEY UPDATE 
+        name=VALUES(name), 
+        description=VALUES(description), 
+        distance_km=VALUES(distance_km), 
+        elevation=VALUES(elevation), 
+        type=VALUES(type), 
+        private=VALUES(private), 
+        starred=VALUES(starred), 
+        country=IFNULL(country, VALUES(country)), 
+        estimated_moving_time=VALUES(estimated_moving_time), 
+        summary_polyline=VALUES(summary_polyline),
+        start_latlng_lat=VALUES(start_latlng_lat),
+        start_latlng_lng=VALUES(start_latlng_lng),
+        end_latlng_lat=VALUES(end_latlng_lat),
+        end_latlng_lng=VALUES(end_latlng_lng)
 ");
 
 $processed = 0;
@@ -110,24 +130,43 @@ $maxGeocodesPerBatch = 5; // Low limit to keep request fast
 foreach ($routes as $route) {
     $rid = (string)$route['id_str'];
 
-    if (isset($existingIdsMap[$rid])) { continue; }
+    if (isset($existingIdsMap[$rid])) {  }
         // New route found!
-                $country = null;
+    $country = null;
         
     // Geocode only if it's a new route and we have a polyline
-        if (!empty($route['map']['summary_polyline']) && $geocodesInThisBatch < $maxGeocodesPerBatch) {
-            $country = getCountryFromPolyline($route['map']['summary_polyline']);
-            $geocodesInThisBatch++;
-            if ($country) usleep(1200000); 
+    $start_lat = null; $start_lng = null;
+    $end_lat = null; $end_lng = null;
+
+    if (!empty($route['map']['summary_polyline'])) {
+        $decoded = decodePolyline($route['map']['summary_polyline']);
+        if (count($decoded) >= 2) {
+            $start_lat = $decoded[0][0];
+            $start_lng = $decoded[0][1];
+            $end_lat   = end($decoded)[0];
+            $end_lng   = end($decoded)[1];
+            
+            // Now, instead of re-decoding inside getCountryFromPolyline, 
+            // you could technically optimize further, but for now:
+            if ($geocodesInThisBatch < $maxGeocodesPerBatch) {
+                $country = getCountryFromPolyline($route['map']['summary_polyline']);
+                $geocodesInThisBatch++;
+                if ($country) usleep(1200000); 
+            }
         }
-            $insert->execute([
-                ':user' => $internalUserId, ':rid' => $rid, ':name' => $route['name'],
-                ':description' => $route['description'] ?? null, ':distance' => $route['distance'] / 1000,
-                ':elevation' => $route['elevation_gain'], ':type' => $route['type'] ?? null,
-                ':private' => $route['private'] ? 1 : 0, ':starred' => $route['starred'] ? 1 : 0,
-                ':country' => $country, ':created_at' => !empty($route['created_at']) ? date('Y-m-d H:i:s', strtotime($route['created_at'])) : null,
-                ':estimated_moving_time' => $route['estimated_moving_time'], ':polyline' => $route['map']['summary_polyline'] ?? null
-            ]);
+    }   
+        $insert->execute([
+        ':user' => $internalUserId, ':rid' => $rid, ':name' => $route['name'],
+        ':description' => $route['description'] ?? null, ':distance' => $route['distance'] / 1000,
+        ':elevation' => $route['elevation_gain'], ':type' => $route['type'] ?? null,
+        ':private' => $route['private'] ? 1 : 0, ':starred' => $route['starred'] ? 1 : 0,
+        ':country' => $country, 
+        ':created_at' => !empty($route['created_at']) ? date('Y-m-d H:i:s', strtotime($route['created_at'])) : null,
+        ':estimated_moving_time' => $route['estimated_moving_time'], 
+        ':polyline' => $route['map']['summary_polyline'] ?? null,
+        ':s_lat' => $start_lat, ':s_lng' => $start_lng,
+        ':e_lat' => $end_lat, ':e_lng' => $end_lng
+    ]);
             $processed++;
 }
 
