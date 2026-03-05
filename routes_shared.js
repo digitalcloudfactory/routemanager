@@ -28,6 +28,12 @@ document.addEventListener('DOMContentLoaded', () => {
   filterDistanceMax = document.getElementById('filterDistanceMax');
   distValueDisplay = document.getElementById('distValue');
 
+  // 2. Safety Check
+  if (!filterName || !filterDistanceMin) {
+    console.error("❌ Filter elements missing from DOM");
+    return;
+  }
+
   // If filter panel not present (safety)
   if (!filterName) return;
 
