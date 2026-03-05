@@ -124,7 +124,7 @@ function applyFilters() {
 
   const filterNameEl = document.getElementById('filterName');
   const filterNameNotEl = document.getElementById('filterNameNot');
-  const country = document.getElementById('filterCountry');
+  const selectedCountry = filterCountry ? filterCountry.value : '';
   
   const minDist = parseFloat(filterDistanceMin.value) || 0;
   const maxDist = parseFloat(filterDistanceMax.value) || 9999;
@@ -177,7 +177,7 @@ function applyFilters() {
       (r.distance_km >= minDist && r.distance_km <= maxDist) &&
       (!minElev || r.elevation >= minElev) &&
       (!type || r.type == type) &&
-      (!country || r.country === country)
+      (!selectedCountry || r.country === selectedCountry)
     );
   });
 
