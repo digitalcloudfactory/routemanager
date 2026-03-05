@@ -16,8 +16,13 @@
     </label>
 
     <label>
-      Min distance (km)
-      <input id="filterDistance" type="number" min="0" step="0.1">
+      Distance (km): <span id="distValue">0 - 400</span>
+      <div class="range-slider" style="position: relative; height: 35px; margin-top: 10px;">
+        <input id="filterDistanceMin" type="range" min="0" max="400" step="1" value="0" 
+               style="position: absolute; pointer-events: none; width: 100%; z-index: 2; appearance: none; background: none;">
+        <input id="filterDistanceMax" type="range" min="0" max="400" step="1" value="400" 
+               style="position: absolute; width: 100%; z-index: 1;">
+      </div>
     </label>
 
     <label>
