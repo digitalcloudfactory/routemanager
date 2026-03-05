@@ -42,6 +42,16 @@
     </label>
 
     <label>
+    Country
+    <select id="filterCountry">
+      <option value="">All Countries</option>
+      <?php foreach ($countries as $country): ?>
+        <option value="<?= htmlspecialchars($country) ?>"><?= htmlspecialchars($country) ?></option>
+      <?php endforeach; ?>
+    </select>
+  </label>
+
+    <label>
       Tags
       <input
         id="filterTags"
