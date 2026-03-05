@@ -170,6 +170,16 @@ function applyFilters() {
       .map(t => t.trim().toLowerCase());
     const tagsMatch = !tags.length || tags.every(t => routeTags.includes(t));
 
+
+    
+    const countryMatch = !selectedCountry || (r.country === selectedCountry);
+    // TEMPORARY DEBUG: Open your console to see this
+    if (selectedCountry && !countryMatch) {
+        console.log(`Mismatch: Route "${r.name}" has country "${r.country}", but you searched for "${selectedCountry}"`);
+    }
+
+
+    
     // Combined criteria
     return (
       nameMatch &&
@@ -177,7 +187,7 @@ function applyFilters() {
       (r.distance_km >= minDist && r.distance_km <= maxDist) &&
       (!minElev || r.elevation >= minElev) &&
       (!type || r.type == type) &&
-      (!selectedCountry || r.country === selectedCountry)
+      (!selectedCountry || (r.country && r.country.trim() === selectedCountry.trim()))
     );
   });
 
