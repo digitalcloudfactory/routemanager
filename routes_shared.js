@@ -124,7 +124,7 @@ function applyFilters() {
 
   const filterNameEl = document.getElementById('filterName');
   const filterNameNotEl = document.getElementById('filterNameNot');
-  const country = filterCountry ? filterCountry.value : '';
+  const country = document.getElementById('filterCountry');
   
   const minDist = parseFloat(filterDistanceMin.value) || 0;
   const maxDist = parseFloat(filterDistanceMax.value) || 9999;
