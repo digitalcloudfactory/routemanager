@@ -14,6 +14,7 @@ let filterDistanceMin, filterDistanceMax, distValueDisplay;
 let filterElevation;
 let filterType;
 let filterTags;
+let filterCountry;
 let filteredRoutes = [];
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -23,7 +24,8 @@ document.addEventListener('DOMContentLoaded', () => {
   filterElevation = document.getElementById('filterElevation');
   filterType = document.getElementById('filterType');
   filterTags = document.getElementById('filterTags');
-
+  filterCountry = document.getElementById('filterCountry');
+  
   filterDistanceMin = document.getElementById('filterDistanceMin');
   filterDistanceMax = document.getElementById('filterDistanceMax');
   distValueDisplay = document.getElementById('distValue');
@@ -41,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   dbg('started loading - fired');
 // Define the IDs you want to watch
-const filterIds = ['filterName', 'filterNameNot', 'filterElevation', 'filterType', 'filterTags'];
+const filterIds = ['filterName', 'filterNameNot', 'filterElevation', 'filterType', 'filterTags', 'filterCountry'];
   
   const rangeUpdate = (e) => {
     // Prevent Min from exceeding Max
@@ -122,7 +124,8 @@ function applyFilters() {
 
   const filterNameEl = document.getElementById('filterName');
   const filterNameNotEl = document.getElementById('filterNameNot');
-
+  const country = filterCountry ? filterCountry.value : '';
+  
   const minDist = parseFloat(filterDistanceMin.value) || 0;
   const maxDist = parseFloat(filterDistanceMax.value) || 9999;
   const minElev = parseFloat(filterElevation.value) || 0;
@@ -171,9 +174,10 @@ function applyFilters() {
     return (
       nameMatch &&
       tagsMatch &&
-      (r.distance_km >= minDist && r.distance_km <= maxDist) && // Range check
+      (r.distance_km >= minDist && r.distance_km <= maxDist) &&
       (!minElev || r.elevation >= minElev) &&
-      (!type || r.type == type)
+      (!type || r.type == type) &&
+      (!country || r.country === country)
     );
   });
 
@@ -212,7 +216,7 @@ function updateURLFromFilters() {
     // 3. Distance, Elevation, Type, Tags
     if (filterDistanceMin.value != 0) params.set('minDist', filterDistanceMin.value);
     if (filterDistanceMax.value != 400) params.set('maxDist', filterDistanceMax.value);
-  
+    if (filterCountry && filterCountry.value) params.set('country', filterCountry.value);
     if (filterElevation && filterElevation.value) params.set('minElev', filterElevation.value);
     if (filterType && filterType.value) params.set('type', filterType.value);
     
@@ -235,7 +239,9 @@ function clearFilters() {
     if (filterElevation) filterElevation.value = '';
     if (filterType) filterType.value = '';
     if (filterTags) filterTags.value = '';
-
+    if (filterCountry) filterCountry.value = '';
+  
+    
     filterDistanceMin.value = 0;
     filterDistanceMax.value = 400;
     distValueDisplay.textContent = "0 - 400";
@@ -258,6 +264,7 @@ dbg('URL params detected:', params.toString());
 
   
   if (params.has('name')) filterName.value = params.get('name');
+  if (params.has('country')) filterCountry.value = params.get('country');
   
   if (params.has('minElev')) filterElevation.value = params.get('minElev');
   if (params.has('type')) filterType.value = params.get('type');
