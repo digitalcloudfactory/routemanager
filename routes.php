@@ -64,6 +64,7 @@ $stmt = $pdo->prepare("
         type,
         estimated_moving_time,
         private,
+        country,
         starred,
         DATE(created_at) AS created_date
     FROM strava_routes
