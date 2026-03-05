@@ -122,8 +122,14 @@ function applyFilters() {
   const minElev = parseFloat(filterElevation.value) || 0;
 
   
+  
   if (!filterNameEl) {
     dbg('applyFilters aborted: filterName not found');
+    return;
+  }
+
+  if (!filterDistanceMin || !filterDistanceMax) {
+    dbg('applyFilters aborted: Sliders not initialized');
     return;
   }
 
