@@ -10,7 +10,7 @@ function dbg(...args) {
 
 let filterName;
 let filterNameNot;
-let filterDistance;
+let filterDistanceMin, filterDistanceMax, distValueDisplay;
 let filterElevation;
 let filterType;
 let filterTags;
@@ -20,10 +20,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // Cache filter elements
   filterName = document.getElementById('filterName');
   filterNameNot = document.getElementById('filterNameNot');
-  filterDistance = document.getElementById('filterDistance');
   filterElevation = document.getElementById('filterElevation');
   filterType = document.getElementById('filterType');
   filterTags = document.getElementById('filterTags');
+
+  filterDistanceMin = document.getElementById('filterDistanceMin');
+  filterDistanceMax = document.getElementById('filterDistanceMax');
+  distValueDisplay = document.getElementById('distValue');
 
   // If filter panel not present (safety)
   if (!filterName) return;
@@ -32,14 +35,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
   dbg('started loading - fired');
 // Define the IDs you want to watch
-const filterIds = [
-    'filterName',
-    'filterNameNot',
-    'filterDistance',
-    'filterElevation',
-    'filterType',
-    'filterTags'
-];
+const filterIds = ['filterName', 'filterNameNot', 'filterElevation', 'filterType', 'filterTags'];
+  
+  const rangeUpdate = (e) => {
+    // Prevent Min from exceeding Max
+    if (parseFloat(filterDistanceMin.value) > parseFloat(filterDistanceMax.value)) {
+      if (e.target.id === 'filterDistanceMin') filterDistanceMin.value = filterDistanceMax.value;
+      else filterDistanceMax.value = filterDistanceMin.value;
+    }
+    
+    distValueDisplay.textContent = `${filterDistanceMin.value} - ${filterDistanceMax.value}`;
+    applyFilters();
+    updateURLFromFilters();
+  };
+
+  filterDistanceMin.addEventListener('input', rangeUpdate);
+  filterDistanceMax.addEventListener('input', rangeUpdate);
 
 filterIds.forEach(id => {
     const el = document.getElementById(id);
@@ -105,6 +116,11 @@ function applyFilters() {
 
   const filterNameEl = document.getElementById('filterName');
   const filterNameNotEl = document.getElementById('filterNameNot');
+
+  const minDist = parseFloat(filterDistanceMin.value) || 0;
+  const maxDist = parseFloat(filterDistanceMax.value) || 9999;
+  const minElev = parseFloat(filterElevation.value) || 0;
+
   
   if (!filterNameEl) {
     dbg('applyFilters aborted: filterName not found');
@@ -115,8 +131,7 @@ function applyFilters() {
   const nameQuery = filterNameEl.value.trim().toLowerCase();
   const isNegated = filterNameNotEl ? filterNameNotEl.checked : false;
   
-  const minDist = parseFloat(filterDistance.value) || 0;
-  const minElev = parseFloat(filterElevation.value) || 0;
+  
   const type = filterType.value;
   const tags = filterTags.value
     .toLowerCase()
@@ -144,7 +159,7 @@ function applyFilters() {
     return (
       nameMatch &&
       tagsMatch &&
-      (!minDist || r.distance_km >= minDist) &&
+      (r.distance_km >= minDist && r.distance_km <= maxDist) && // Range check
       (!minElev || r.elevation >= minElev) &&
       (!type || r.type == type)
     );
@@ -183,7 +198,9 @@ function updateURLFromFilters() {
     }
 
     // 3. Distance, Elevation, Type, Tags
-    if (filterDistance && filterDistance.value) params.set('minDist', filterDistance.value);
+    if (filterDistanceMin.value != 0) params.set('minDist', filterDistanceMin.value);
+    if (filterDistanceMax.value != 400) params.set('maxDist', filterDistanceMax.value);
+  
     if (filterElevation && filterElevation.value) params.set('minElev', filterElevation.value);
     if (filterType && filterType.value) params.set('type', filterType.value);
     
@@ -203,10 +220,13 @@ function clearFilters() {
     // Clear the actual DOM elements
     if (filterName) filterName.value = '';
     if (filterNameNot) filterNameNot.checked = false;
-    if (filterDistance) filterDistance.value = '';
     if (filterElevation) filterElevation.value = '';
     if (filterType) filterType.value = '';
     if (filterTags) filterTags.value = '';
+
+    filterDistanceMin.value = 0;
+    filterDistanceMax.value = 400;
+    distValueDisplay.textContent = "0 - 400";
 
     // Re-run the logic to refresh the list and the URL
     applyFilters();
@@ -218,9 +238,15 @@ function loadFiltersFromURL() {
   
   const params = new URLSearchParams(window.location.search);
 dbg('URL params detected:', params.toString());
+
+
+  filterDistanceMin.value = params.get('minDist') || 0;
+  filterDistanceMax.value = params.get('maxDist') || 400; // Match your clearFilters max
+  distValueDisplay.textContent = `${filterDistanceMin.value} - ${filterDistanceMax.value}`;
+
   
   if (params.has('name')) filterName.value = params.get('name');
-  if (params.has('minDist')) filterDistance.value = params.get('minDist');
+  
   if (params.has('minElev')) filterElevation.value = params.get('minElev');
   if (params.has('type')) filterType.value = params.get('type');
   if (params.has('tags')) filterTags.value = params.get('tags');
