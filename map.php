@@ -138,6 +138,21 @@ main.container {
 .leaflet-control-container {
   z-index: 500;
 }
+    
+/* Code for the filterpanel distance range slider -- Allow the thumbs to be interactive even when overlapping */
+.range-slider input[type="range"]::-webkit-slider-thumb {
+    pointer-events: auto;
+    cursor: pointer;
+}
+.range-slider input[type="range"]::-moz-range-thumb {
+    pointer-events: auto;
+    cursor: pointer;
+}
+/* Ensure the track doesn't block the slider below */
+#filterDistanceMin {
+    background: transparent !important;
+}    
+    
 </style>
 
 <body>
