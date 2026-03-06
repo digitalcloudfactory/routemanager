@@ -186,12 +186,20 @@ echo json_encode([
 ]);
 
 if (!$hasMore) {
+    // 1. Calculate a "Safe Cutoff" (20 minutes ago)
+    $cutoffTime = date('Y-m-d H:i:s', strtotime('-20 minutes'));
+
+    // 2. Delete anything that wasn't touched in this entire sync session
     $deleteStmt = $pdo->prepare("
         DELETE FROM strava_routes 
         WHERE user_id = ? 
         AND (strava_last_seen_at < ? OR strava_last_seen_at IS NULL)
     ");
-    $deleteStmt->execute([$internalUserId, $syncTime]);
+    
+    $deleteStmt->execute([$internalUserId, $cutoffTime]);
+    
+    // Log for your own debugging
+    $deletedCount = $deleteStmt->rowCount();
 }
 
 
