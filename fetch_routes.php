@@ -101,12 +101,12 @@ $hasMore = (is_array($routes) && count($routes) === $perPage);
 $insert = $pdo->prepare("
     INSERT INTO strava_routes (
         user_id, route_id, name, description, distance_km, elevation, type, private, starred, country, 
-        created_at, estimated_moving_time, summary_polyline,strava_last_seen_at,
+        created_at, estimated_moving_time, summary_polyline, strava_last_seen_at,
         start_latlng_lat, start_latlng_lng, end_latlng_lat, end_latlng_lng
     )
     VALUES (
         :user, :rid, :name, :description, :distance, :elevation, :type, :private, :starred, :country, 
-        :created_at, :estimated_moving_time, :polyline, :last_seen_strava,
+        :created_at, :estimated_moving_time, :polyline, :last_seen,
         :s_lat, :s_lng, :e_lat, :e_lng
     )
     ON DUPLICATE KEY UPDATE 
@@ -168,7 +168,7 @@ foreach ($routes as $route) {
         ':created_at' => !empty($route['created_at']) ? date('Y-m-d H:i:s', strtotime($route['created_at'])) : null,
         ':estimated_moving_time' => $route['estimated_moving_time'], 
         ':polyline' => $route['map']['summary_polyline'] ?? null,
-        ':strava_last_seen' => $syncTime,
+        ':last_seen' => $syncTime,
         ':s_lat' => $start_lat, ':s_lng' => $start_lng,
         ':e_lat' => $end_lat, ':e_lng' => $end_lng
     ]);
@@ -186,15 +186,12 @@ echo json_encode([
 ]);
 
 if (!$hasMore) {
-    // Any route that wasn't updated to $syncTime is no longer on Strava
     $deleteStmt = $pdo->prepare("
         DELETE FROM strava_routes 
         WHERE user_id = ? 
-        AND (last_seen_at < ? OR last_seen_at IS NULL)
+        AND (strava_last_seen_at < ? OR strava_last_seen_at IS NULL)
     ");
     $deleteStmt->execute([$internalUserId, $syncTime]);
-    
-    dbg("Cleanup complete. Removed routes not seen since $syncTime");
 }
 
 
