@@ -54,8 +54,8 @@ $stmt = $pdo->prepare("
         private,
         country,
         starred,
-        DATE(created_at) AS created_date
-        summary_polyline,
+        DATE(created_at) AS created_date,
+        summary_polyline
     FROM strava_routes
     WHERE user_id = ?
     ORDER BY updated_at DESC
