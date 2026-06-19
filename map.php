@@ -208,7 +208,7 @@ main.container {
 const routes = <?= json_encode($routes, JSON_UNESCAPED_UNICODE); ?>;
 
 const map = L.map('map').setView([48.8566, 2.3522], 4);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '© OpenStreetMap contributors © CARTO',
   subdomains: 'abcd',
   maxZoom: 20
