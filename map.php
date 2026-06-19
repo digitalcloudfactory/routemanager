@@ -153,7 +153,7 @@ main.container {
 }       
 </style>
 
-<body>
+
 <main class="container">
 
 <header class="grid">
