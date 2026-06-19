@@ -192,7 +192,7 @@ main.container {
 <script>
 const routes = <?= json_encode($routes, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE); ?>;
 
-// Initialize map on container setup
+// Initialize map on container setup globally
 const map = L.map('map', { trackResize: true }).setView([48.8566, 2.3522], 4);
 
 // Load OpenStreetMap Tiles directly
@@ -241,22 +241,22 @@ function drawRoutes(data) {
 
   if (routeLayers.length > 0) {
     const group = L.featureGroup(routeLayers);
-    map.fitBounds(group.getBounds(), { padding: [30, 30] });
+    map.fitBounds(group.getBounds(), { padding: [40, 40] });
   }
 }
 
-// Initial draw execution
-drawRoutes(routes);
-
-// Force layout recalculation once DOM structure settles
-setTimeout(() => {
-    map.invalidateSize(true);
-}, 200);
+// CRITICAL FIX: Do not auto-call drawRoutes(routes) standalone here anymore!
+// Let routes_shared.js handle the drawing pass inside its initialization loop.
 </script>
 
-<script src="routes_shared.js?v=1.1.111" onerror="console.error('❌ CRITICAL: The browser could not physically find or load routes_shared.js! Check your file path.')"></script>
+<script src="routes_shared.js?v=1.1.112" onerror="console.error('❌ CRITICAL: The browser could not physically find or load routes_shared.js! Check your file path.')"></script>
 
 <script>
+  // Final layout recalculation adjustment
+  setTimeout(() => {
+      if (map) map.invalidateSize(true);
+  }, 250);
+
   const mapLink = document.getElementById('mapLink');
 
   function updateMapLinkFromURL() {
