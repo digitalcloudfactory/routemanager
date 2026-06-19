@@ -205,65 +205,74 @@ main.container {
 
 
 <script>
+// 1. Expose the raw PHP database payload
 const routes = <?= json_encode($routes, JSON_UNESCAPED_UNICODE); ?>;
 
-const map = L.map('map').setView([48.8566, 2.3522], 4);
+// 2. Initialize the map instantly on the DOM element
+const map = L.map('map', {
+    trackResize: true
+}).setView([48.8566, 2.3522], 4);
+
+// 3. Attach standard OpenStreetMap tiles
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '© OpenStreetMap contributors © CARTO',
-  subdomains: 'abcd',
-  maxZoom: 20
+    attribution: '© OpenStreetMap contributors'
 }).addTo(map);
 
+// 4. Force Leaflet to wake up and see its actual container size immediately
+map.invalidateSize();
 
 let routeLayers = [];
 
 function clearRoutes() {
-  routeLayers.forEach(l => map.removeLayer(l));
-  routeLayers = [];
+    routeLayers.forEach(l => map.removeLayer(l));
+    routeLayers = [];
 }
 
 function drawRoutes(data) {
-  clearRoutes();
+    clearRoutes();
 
     if (!data || data.length === 0) {
-      // Even if empty, force map wrapper to refresh layout boundaries
-      map.invalidateSize();
-      return; 
-  }
+        return; 
+    }
 
-  data.forEach(route => {
-    if (!route.summary_polyline) return;
+    data.forEach(route => {
+        if (!route.summary_polyline) return;
 
-    const coords = polyline.decode(route.summary_polyline)
-      .map(c => [c[0], c[1]]);
+        try {
+            const coords = polyline.decode(route.summary_polyline).map(c => [c[0], c[1]]);
 
-    const line = L.polyline(coords, {
-      weight: 3,
-      opacity: 0.8
-    }).addTo(map);
+            const line = L.polyline(coords, {
+                weight: 4,
+                opacity: 0.8,
+                color: '#ff5722'
+            }).addTo(map);
 
-    line.bindPopup(`
-      <strong>${route.name}</strong><br>
-      ${Number(route.distance_km).toFixed(1)} km<br>
-      ${route.tags || ''}
-    `);
+            line.bindPopup(`
+                <strong>${route.name}</strong><br>
+                ${Number(route.distance_km).toFixed(1)} km<br>
+                ${route.tags || ''}
+            `);
 
-    routeLayers.push(line);
-  });
+            routeLayers.push(line);
+        } catch (e) {
+            console.error("Failed to decode polyline:", e);
+        }
+    });
 
-  if (routeLayers.length) {
-    const group = L.featureGroup(routeLayers);
-    map.fitBounds(group.getBounds(), { padding: [20, 20] });
-  }
-
-    // CRITICAL FIX: Forces Leaflet to update tiles right after rendering elements
-  setTimeout(() => {
-    map.invalidateSize();
-  }, 100);
+    if (routeLayers.length > 0) {
+        const group = L.featureGroup(routeLayers);
+        map.fitBounds(group.getBounds(), { padding: [30, 30] });
+    }
 }
 
+// 5. Run the initial draw execution
 drawRoutes(routes);
-    
+
+// 6. Final safety net: trigger a layout refresh 200ms later to handle any slow CSS paints
+setTimeout(() => {
+    console.log("Forcing map redraw...");
+    map.invalidateSize(true); // 'true' forces a total redraw animation recalculation
+}, 200);
 </script>
 
 <script src="routes_shared.js?v=1.0.1"></script>
