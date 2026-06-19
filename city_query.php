@@ -61,7 +61,7 @@ $pdo = new PDO(
     }
 
     echo json_encode($suggestions);
-    exit;
+    exit; // <-- CRITICAL! This stops PHP from printing the HTML layout below.
 }
 ?>
 
@@ -161,7 +161,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Wait 250ms after user finishes typing to prevent overloading MySQL
         debounceTimer = setTimeout(() => {
-            fetch(`index.php?action=search&q=${encodeURIComponent(query)}`)
+            fetch(`city_query.php?action=search&q=${encodeURIComponent(query)}`)
                 .then(response => response.json())
                 .then(data => {
                     suggestionsBox.innerHTML = "";
