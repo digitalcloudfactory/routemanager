@@ -108,6 +108,8 @@ unset($route);
   max-width: 100%;
   border-radius: 12px;
   background: #e5e5e5; /* Gives a gray background so you can see if the container is rendering */
+  position: relative !important;
+    z-index: 10 !important; /* Pulls the map visual layer forward */
 }
     
 
