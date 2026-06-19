@@ -173,7 +173,6 @@ main.container {
 <section class="grid">
 <div>
 <a id="mapLink" href="routes.php" role="button" class="secondary">Table view</a>
-</a>
 </div>    
     <div>
     <button id="fetchRoutes" type="button">
@@ -199,7 +198,7 @@ main.container {
 <script>
 const routes = <?= json_encode($routes, JSON_UNESCAPED_UNICODE); ?>;
 
-const map = L.map('map');
+const map = L.map('map').setView([48.8566, 2.3522], 4);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
   attribution: '© OpenStreetMap contributors © CARTO',
   subdomains: 'abcd',
