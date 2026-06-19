@@ -99,12 +99,13 @@ unset($route);
 <style>
 #map {
   display: block !important;
-  height: calc(100vh - 160px) !important; /* Dynamically fills viewport below header */
-  min-height: 500px !important;
+  visibility: visible !important;
+  height: 600px !important; /* Forces a rock-solid height */
   width: 100% !important;
   border-radius: 12px;
   position: relative !important;
   z-index: 10 !important;
+  background: #e5e5e5 !important; /* If you see a gray box, the layout is fixed! */
 }
     
 #filterPanel {
