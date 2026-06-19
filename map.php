@@ -46,7 +46,6 @@ $stmt = $pdo->prepare("
     SELECT
         CAST(route_id AS CHAR) AS route_id,
         name,
-        description,
         distance_km,
         elevation,
         type,
