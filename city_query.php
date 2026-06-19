@@ -85,11 +85,6 @@ $pdo = new PDO(
             display: flex;
             justify-content: center;
         }
-        .search-container {
-            width: 100%;
-            max-width: 400px;
-            position: relative;
-        }
         label {
             display: block;
             margin-bottom: 8px;
@@ -109,21 +104,29 @@ $pdo = new PDO(
         input[type="text"]:focus {
             border-color: #28a745; /* Green focus to differentiate local layout */
         }
-        .suggestions-dropdown {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: #fff;
-            border: 1px solid #ced4da;
-            border-top: none;
-            border-radius: 0 0 6px 6px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            max-height: 250px;
-            overflow-y: auto;
-            z-index: 1000;
-            display: none;
-        }
+
+.search-container {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;       /* Centers the search box horizontally */
+    position: relative;   /* CRITICAL: This anchors the absolute dropdown to this box */
+}
+
+.suggestions-dropdown {
+    position: absolute;
+    top: 100%;           /* Places it immediately below the input field */
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid #ced4da;
+    border-radius: 0 0 6px 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1); /* Slightly smoother shadow */
+    max-height: 250px;
+    overflow-y: auto;
+    z-index: 1000;       /* Ensures it floats on top of any other elements */
+    display: none;
+    box-sizing: border-box; /* Prevents the dropdown from stretching wider than the input */
+}
         .suggestion-item {
             padding: 10px 12px;
             cursor: pointer;
