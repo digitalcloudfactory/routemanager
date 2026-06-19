@@ -134,9 +134,16 @@ function applyFilters() {
 
   dbg(`Filters finished. Showing ${filteredRoutes.length} of ${routes.length} routes.`);
 
+  // --- UPDATED LAYER: Call map renderer if it exists ---
   if (typeof drawRoutes === 'function') {
     drawRoutes(filteredRoutes);
   }
+
+  // --- NEW LAYER: Call table renderer if it exists ---
+  if (typeof renderTable === 'function') {
+    renderTable(filteredRoutes);
+  }
+}
 }
 
 function updateURLFromFilters() {
