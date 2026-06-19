@@ -144,7 +144,6 @@ function applyFilters() {
     renderTable(filteredRoutes);
   }
 }
-}
 
 function updateURLFromFilters() {
     if (!filterName) return;
