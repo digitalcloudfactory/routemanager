@@ -22,7 +22,7 @@ $pdo = new PDO(
 
 
 // Open the txt file
-$handle = fopen("cities1000.txt", "r");
+$handle = fopen("cities5000.txt", "r");
 
 if ($handle) {
     // Prepare a master insert query once (for speed)
