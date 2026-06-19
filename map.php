@@ -100,10 +100,17 @@ unset($route);
 <script src="https://unpkg.com/@mapbox/polyline"></script>
 
 <style>
+    
 #map {
-  height: calc(100vh - 120px);
+  display: block !important;
+  height: 600px !important; /* Temporarily use a fixed size to guarantee visibility */
+  width: 100% !important;
+  max-width: 100%;
   border-radius: 12px;
+  background: #e5e5e5; /* Gives a gray background so you can see if the container is rendering */
 }
+    
+
     
 #filterPanel {
   position: fixed;
@@ -216,6 +223,12 @@ function clearRoutes() {
 function drawRoutes(data) {
   clearRoutes();
 
+    if (!data || data.length === 0) {
+      // Even if empty, force map wrapper to refresh layout boundaries
+      map.invalidateSize();
+      return; 
+  }
+
   data.forEach(route => {
     if (!route.summary_polyline) return;
 
@@ -240,6 +253,11 @@ function drawRoutes(data) {
     const group = L.featureGroup(routeLayers);
     map.fitBounds(group.getBounds(), { padding: [20, 20] });
   }
+
+    // CRITICAL FIX: Forces Leaflet to update tiles right after rendering elements
+  setTimeout(() => {
+    map.invalidateSize();
+  }, 100);
 }
 
 drawRoutes(routes);
