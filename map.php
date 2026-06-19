@@ -96,18 +96,21 @@ unset($route);
 
 <?php include 'header.php'; ?>
 
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/@mapbox/polyline"></script>
+
 
 <style>
 #map {
   display: block !important;
   visibility: visible !important;
-  height: 600px !important; /* Forces a rock-solid height */
+  height: 600px !important;
   width: 100% !important;
   border-radius: 12px;
   position: relative !important;
   z-index: 10 !important;
-  background: #e5e5e5 !important; /* If you see a gray box, the layout is fixed! */
+  overflow: hidden !important; /* Prevents layout map tiles from collapsing */
 }
     
 #filterPanel {
