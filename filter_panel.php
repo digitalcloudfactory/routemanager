@@ -45,9 +45,17 @@
     Country
     <select id="filterCountry">
       <option value="">All Countries</option>
-      <?php foreach ($countries as $country): ?>
-        <option value="<?= htmlspecialchars($country) ?>"><?= htmlspecialchars($country) ?></option>
-      <?php endforeach; ?>
+      <?php 
+      // If the database query failed to set $countries, default to an empty array safely
+      if (!empty($countries) && is_array($countries)): 
+        foreach ($countries as $country): 
+          if (empty($country)) continue;
+      ?>
+          <option value="<?= htmlspecialchars($country) ?>"><?= htmlspecialchars($country) ?></option>
+      <?php 
+        endforeach; 
+      endif; 
+      ?>
     </select>
   </label>
 
