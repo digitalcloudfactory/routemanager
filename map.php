@@ -193,8 +193,11 @@ main.container {
 </main>
 
 <script>
-const routes = <?= json_encode($routes, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE); ?>;
+// Safe fallback: if JSON encoding fails or is empty, default to a clean empty array []
+const routes = <?= json_encode($routes ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?: '[]' ?>;
 
+console.log("📦 Raw data dump from database:", routes);
+    
 // Initialize map on container setup globally
 const map = L.map('map', { trackResize: true }).setView([48.8566, 2.3522], 4);
 
