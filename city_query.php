@@ -33,17 +33,23 @@ $pdo = new PDO(
         exit;
     }
 
-    // Prepare SQL Statement using standard partial matching (LIKE)
-    // We append '%' to the end so it looks for names starting with the query
+
+
+    // 1. Force lowercase for both side of the equation to ensure case insensitivity
+    // 2. We use LOWER(name) LIKE :query
     $stmt = $pdo->prepare("
         SELECT name, admin1_code, country_code 
         FROM cities 
-        WHERE name LIKE :query 
+        WHERE LOWER(name) LIKE :query 
         ORDER BY population DESC 
         LIMIT 8
     ");
     
-    $stmt->execute(['query' => $searchQuery . '%']);
+    // We convert the incoming search to lowercase and wrap it in '%'
+    // Using '%param%' ensures it finds the text anywhere in the city name
+    $cleanQuery = '%' . strtolower($searchQuery) . '%';
+    
+    $stmt->execute(['query' => $cleanQuery]);
     $rows = $stmt->fetchAll();
 
     $suggestions = [];
