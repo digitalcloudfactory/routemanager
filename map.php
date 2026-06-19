@@ -466,13 +466,27 @@ if (toggle) {
 </script>
 
 <script>
-  // Final layout recalculation adjustment
-  setTimeout(() => {
-      if (map) map.invalidateSize(true);
-  }, 250);
+  // Force a hard, repeated container recalculation layout pass
+  function forceMapResize() {
+    if (typeof map !== 'undefined' && map) {
+      console.log("📐 Leaflet container layout recalculated.");
+      map.invalidateSize(true);
+    }
+  }
 
+  // Trigger instantly on document loading states
+  if (document.readyState === 'complete') {
+    forceMapResize();
+  } else {
+    window.addEventListener('load', forceMapResize);
+  }
+
+  // Fallback triggers for slow-rendering layouts
+  setTimeout(forceMapResize, 200);
+  setTimeout(forceMapResize, 1000);
+
+  // Maintain URL states across page links
   const mapLink = document.getElementById('mapLink');
-
   function updateMapLinkFromURL() {
     if (!mapLink) return;
     mapLink.href = 'routes.php' + window.location.search;
