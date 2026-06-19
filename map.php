@@ -337,11 +337,11 @@ function initializeFilters() {
   loadFiltersFromURL();
 }
 
-// Global execution layer trap
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeFilters);
-} else {
+// Global execution layer trap - Wait until everything is completely loaded
+if (document.readyState === 'complete') {
     initializeFilters();
+} else {
+    window.addEventListener('load', initializeFilters);
 }
 
 function applyFilters() {
