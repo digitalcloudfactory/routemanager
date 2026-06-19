@@ -5,7 +5,6 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-
 if (!isset($_SESSION['internal_user_id'])) {
     header("Location: index.php");
     exit;
@@ -13,9 +12,8 @@ if (!isset($_SESSION['internal_user_id'])) {
 $internalUserId = $_SESSION['internal_user_id'];
 
 /* ===============================
-   DATABASE CONFIG
+    DATABASE CONFIG
 ================================ */
-
 $db_host = 'db.fr-pari1.bengt.wasmernet.com';
 $db_port = 10272;
 $db_name = 'dbcmpLT2zrmwmur5UEjZ3Xj8';
@@ -33,11 +31,10 @@ $pdo = new PDO(
 );
 
 /* ===============================
-   LOAD USER PROFILE
+    LOAD USER PROFILE
 ================================ */
-
 $userStmt = $pdo->prepare("
-    SELECT firstname, lastname, avatar,last_routes_sync
+    SELECT firstname, lastname, avatar, last_routes_sync
     FROM users
     WHERE id = ?
 ");
@@ -45,9 +42,8 @@ $userStmt->execute([$internalUserId]);
 $user = $userStmt->fetch(PDO::FETCH_ASSOC);
 
 /* ===============================
-   LOAD ROUTES (PER USER)
+    LOAD ROUTES (PER USER)
 ================================ */
-
 $stmt = $pdo->prepare("
     SELECT
         CAST(route_id AS CHAR) AS route_id,
@@ -69,9 +65,8 @@ $stmt->execute([$internalUserId]);
 $routes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 /* ===============================
-   LOAD TAGS PER ROUTE
+    LOAD TAGS PER ROUTE
 ================================ */
-
 $tagStmt = $pdo->prepare("
     SELECT route_id, GROUP_CONCAT(tag ORDER BY tag SEPARATOR ', ') AS tags
     FROM route_tags
@@ -89,14 +84,12 @@ foreach ($tagsRaw as $row) {
 }
 
 /* ===============================
-   attach tags to routes
+    ATTACH TAGS TO ROUTES
 ================================ */
 foreach ($routes as &$route) {
     $route['tags'] = $tagsByRoute[$route['route_id']] ?? '';
 }
 unset($route);
-
-
 
 ?>
 
@@ -105,7 +98,6 @@ unset($route);
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/@mapbox/polyline"></script>
-
 
 <style>
 #map {
@@ -116,7 +108,7 @@ unset($route);
   border-radius: 12px;
   position: relative !important;
   z-index: 10 !important;
-  overflow: hidden !important; /* Prevents layout map tiles from collapsing */
+  overflow: hidden !important; 
 }
     
 #filterPanel {
@@ -165,18 +157,16 @@ main.container {
 }       
 </style>
 
-
 <main class="container">
-
 <header class="grid">
   <div class="grid" style="align-items:center">
-    <img src="<?= htmlspecialchars($user['avatar']) ?>"
+    <img src="<?= htmlspecialchars($user['avatar'] ?? '') ?>"
          alt="Avatar"
          width="64"
          style="border-radius:50%">
     <div>
-      <strong><?= htmlspecialchars($user['firstname'].' '.$user['lastname']) ?></strong><br>
-      <small>Last Strava Sync: <?= $user['last_routes_sync'] ? htmlspecialchars($user['last_routes_sync']) : '<em>Never synced</em>' ?></small>
+      <strong><?= htmlspecialchars(($user['firstname'] ?? '') . ' ' . ($user['lastname'] ?? '')) ?></strong><br>
+      <small>Last Strava Sync: <?= !empty($user['last_routes_sync']) ? htmlspecialchars($user['last_routes_sync']) : '<em>Never synced</em>' ?></small>
     </div>
   </div>
 
@@ -199,13 +189,13 @@ main.container {
 </main>
 
 <script>
-// Safe fallback: if JSON encoding fails or is empty, default to a clean empty array []
+// Safe fallback data payload injection
 const routes = <?= json_encode($routes ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?: '[]' ?>;
 
 console.log("📦 Raw data dump from database:", routes);
     
-// Initialize map on container setup globally
-const map = L.map('map', { trackResize: true }).setView([48.8566, 2.3522], 4);
+// Initialize global map canvas instance
+const map = L.map('map', { trackResize: true }).setView([50.8503, 4.3517], 8);
 
 // Load OpenStreetMap Tiles directly
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -256,13 +246,10 @@ function drawRoutes(data) {
     map.fitBounds(group.getBounds(), { padding: [40, 40] });
   }
 }
-
-// CRITICAL FIX: Do not auto-call drawRoutes(routes) standalone here anymore!
-// Let routes_shared.js handle the drawing pass inside its initialization loop.
 </script>
 
 <script>
-   console.log('🔥🔥 Inline shared filter logic active');
+console.log('🔥🔥 Inline shared filter logic active');
 
 const DEBUG_FILTERS = true;
 function dbg(...args) {
@@ -273,12 +260,12 @@ let filterName, filterNameNot, filterDistanceMin, filterDistanceMax, distValueDi
 let filterElevation, filterType, filterTags, filterCountry, panel;
 let filteredRoutes = [];
 
-// Define the initialization routine out in the open
 function initializeFilters() {
-  if (panel) return; // Prevent double execution safety
+  if (panel) return; 
   dbg('Initializing elements safely...');
 
   panel = document.getElementById('filterPanel');
+    
   filterName = document.getElementById('filterName');
   filterNameNot = document.getElementById('filterNameNot');
   filterElevation = document.getElementById('filterElevation');
@@ -345,10 +332,11 @@ function initializeFilters() {
     clearFilters();
   });
 
+  // Kicks off data extraction from URL query parameters, automatically plotting maps on load
   loadFiltersFromURL();
 }
 
-// BULLETPROOF TRIGGER LAYER: Run immediately if DOM is ready, otherwise wait.
+// Global execution layer trap
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeFilters);
 } else {
@@ -458,7 +446,7 @@ function loadFiltersFromURL() {
   applyFilters();
 }
 
-// Light/Dark Toggle
+// Light/Dark Theme Controller Engine
 const toggle = document.getElementById("themeToggle");
 const root = document.documentElement;
 if (toggle) {
@@ -478,7 +466,6 @@ if (toggle) {
 </script>
 
 <script>
-  // Force a hard, repeated container recalculation layout pass
   function forceMapResize() {
     if (typeof map !== 'undefined' && map) {
       console.log("📐 Leaflet container layout recalculated.");
@@ -486,14 +473,12 @@ if (toggle) {
     }
   }
 
-  // Trigger instantly on document loading states
   if (document.readyState === 'complete') {
     forceMapResize();
   } else {
     window.addEventListener('load', forceMapResize);
   }
 
-  // Fallback triggers for slow-rendering layouts
   setTimeout(forceMapResize, 200);
   setTimeout(forceMapResize, 1000);
 
