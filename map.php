@@ -94,25 +94,18 @@ unset($route);
 
 <?php include 'header.php'; ?>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://unpkg.com/@mapbox/polyline"></script>
 
 <style>
-    
 #map {
   display: block !important;
-  height: 600px !important; /* Temporarily use a fixed size to guarantee visibility */
+  height: calc(100vh - 160px) !important; /* Dynamically fills viewport below header */
+  min-height: 500px !important;
   width: 100% !important;
-  max-width: 100%;
   border-radius: 12px;
-  background: #e5e5e5; /* Gives a gray background so you can see if the container is rendering */
   position: relative !important;
-    z-index: 10 !important; /* Pulls the map visual layer forward */
+  z-index: 10 !important;
 }
-    
-
     
 #filterPanel {
   position: fixed;
@@ -133,8 +126,8 @@ unset($route);
 }
 
 main.container {
-  max-width: 100%;    /* override container width */
-  padding: 1rem 2rem; /* some horizontal padding */
+  max-width: 100%;    
+  padding: 1rem 2rem; 
   box-sizing: border-box;
 }
 
@@ -143,12 +136,10 @@ main.container {
   --pico-spacing: 0.5rem;
 }
 
-    /* Fix for Leaflet controls showing over the panel */
 .leaflet-control-container {
   z-index: 500;
 }
     
-/* Code for the filterpanel distance range slider -- Allow the thumbs to be interactive even when overlapping */
 .range-slider input[type="range"]::-webkit-slider-thumb {
     pointer-events: auto;
     cursor: pointer;
@@ -157,11 +148,9 @@ main.container {
     pointer-events: auto;
     cursor: pointer;
 }
-/* Ensure the track doesn't block the slider below */
 #filterDistanceMin {
     background: transparent !important;
-}    
-    
+}       
 </style>
 
 <body>
