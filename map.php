@@ -164,25 +164,21 @@ main.container {
          style="border-radius:50%">
     <div>
       <strong><?= htmlspecialchars($user['firstname'].' '.$user['lastname']) ?></strong><br>
-      <small>Last Strava Sync:<?= $user['last_routes_sync']? htmlspecialchars($user['last_routes_sync']): '<em>Never synced</em>' ?></small>
+      <small>Last Strava Sync: <?= $user['last_routes_sync'] ? htmlspecialchars($user['last_routes_sync']) : '<em>Never synced</em>' ?></small>
     </div>
   </div>
 
-<section class="grid">
-<div>
-<a id="mapLink" href="routes.php" role="button" class="secondary">Table view</a>
-</div>    
+  <section class="grid">
     <div>
-    <button id="fetchRoutes" type="button">
-      Fetch new routes from Strava
-    </button>
-  </div>
-  <div style="text-align:right">
-    <button id="openFilters" class="secondary" type="button">
-      Filters
-    </button>
-  </div>
-</section>    
+      <a id="mapLink" href="routes.php" role="button" class="secondary">Table view</a>
+    </div>    
+    <div>
+      <button id="fetchRoutes" type="button">Fetch new routes from Strava</button>
+    </div>
+    <div style="text-align:right">
+      <button id="openFilters" class="secondary" type="button">Filters</button>
+    </div>
+  </section>    
 </header>
 
   <div id="map"></div>
@@ -190,83 +186,74 @@ main.container {
   <?php include 'filter_panel.php'; ?>
 </main>
 
-
-
-
 <script>
-// 1. Expose the raw PHP database payload
 const routes = <?= json_encode($routes, JSON_UNESCAPED_UNICODE); ?>;
 
-// 2. Initialize the map instantly on the DOM element
-const map = L.map('map', {
-    trackResize: true
-}).setView([48.8566, 2.3522], 4);
+// Initialize map on container setup
+const map = L.map('map', { trackResize: true }).setView([48.8566, 2.3522], 4);
 
-// 3. Attach standard OpenStreetMap tiles
+// Load OpenStreetMap Tiles directly
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors'
+  attribution: '© OpenStreetMap contributors'
 }).addTo(map);
-
-// 4. Force Leaflet to wake up and see its actual container size immediately
-map.invalidateSize();
 
 let routeLayers = [];
 
 function clearRoutes() {
-    routeLayers.forEach(l => map.removeLayer(l));
-    routeLayers = [];
+  routeLayers.forEach(l => map.removeLayer(l));
+  routeLayers = [];
 }
 
 function drawRoutes(data) {
-    clearRoutes();
+  clearRoutes();
 
-    if (!data || data.length === 0) {
-        return; 
+  if (!data || data.length === 0) {
+      map.invalidateSize();
+      return; 
+  }
+
+  data.forEach(route => {
+    if (!route.summary_polyline) return;
+
+    try {
+        const coords = polyline.decode(route.summary_polyline).map(c => [c[0], c[1]]);
+
+        const line = L.polyline(coords, {
+          weight: 4,
+          opacity: 0.8,
+          color: '#ff5722'
+        }).addTo(map);
+
+        line.bindPopup(`
+          <strong>${route.name}</strong><br>
+          ${Number(route.distance_km).toFixed(1)} km<br>
+          ${route.tags || ''}
+        `);
+
+        routeLayers.push(line);
+    } catch (e) {
+        console.error("Failed to decode polyline:", e);
     }
+  });
 
-    data.forEach(route => {
-        if (!route.summary_polyline) return;
-
-        try {
-            const coords = polyline.decode(route.summary_polyline).map(c => [c[0], c[1]]);
-
-            const line = L.polyline(coords, {
-                weight: 4,
-                opacity: 0.8,
-                color: '#ff5722'
-            }).addTo(map);
-
-            line.bindPopup(`
-                <strong>${route.name}</strong><br>
-                ${Number(route.distance_km).toFixed(1)} km<br>
-                ${route.tags || ''}
-            `);
-
-            routeLayers.push(line);
-        } catch (e) {
-            console.error("Failed to decode polyline:", e);
-        }
-    });
-
-    if (routeLayers.length > 0) {
-        const group = L.featureGroup(routeLayers);
-        map.fitBounds(group.getBounds(), { padding: [30, 30] });
-    }
+  if (routeLayers.length > 0) {
+    const group = L.featureGroup(routeLayers);
+    map.fitBounds(group.getBounds(), { padding: [30, 30] });
+  }
 }
 
-// 5. Run the initial draw execution
+// Initial draw execution
 drawRoutes(routes);
 
-// 6. Final safety net: trigger a layout refresh 200ms later to handle any slow CSS paints
+// Force layout recalculation once DOM structure settles
 setTimeout(() => {
-    console.log("Forcing map redraw...");
-    map.invalidateSize(true); // 'true' forces a total redraw animation recalculation
+    map.invalidateSize(true);
 }, 200);
 </script>
 
 <script src="routes_shared.js?v=1.0.1"></script>
 
-  <script>
+<script>
   const mapLink = document.getElementById('mapLink');
 
   function updateMapLinkFromURL() {
@@ -274,12 +261,9 @@ setTimeout(() => {
     mapLink.href = 'routes.php' + window.location.search;
   }
 
-  // Update initially and whenever filters change URL
   updateMapLinkFromURL();
-
   window.addEventListener('popstate', updateMapLinkFromURL);
 
-  // Hook into URL updates from filters
   const originalReplace = history.replaceState;
   history.replaceState = function (...args) {
     originalReplace.apply(this, args);
