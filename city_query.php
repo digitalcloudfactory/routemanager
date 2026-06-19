@@ -70,7 +70,7 @@ $pdo = new PDO(
     exit; // <-- CRITICAL! This stops PHP from printing the HTML layout below.
 }
 ?>
-
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
