@@ -196,58 +196,7 @@ const routes = <?= json_encode($routes ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSO
 
 console.log("📦 Raw data dump from database:", routes);
     
-// Initialize global map canvas instance
-const map = L.map('map', { trackResize: true }).setView([50.8503, 4.3517], 8);
 
-// Load OpenStreetMap Tiles directly
-L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '© OpenStreetMap contributors'
-}).addTo(map);
-
-let routeLayers = [];
-
-function clearRoutes() {
-  routeLayers.forEach(l => map.removeLayer(l));
-  routeLayers = [];
-}
-
-function drawRoutes(data) {
-  clearRoutes();
-
-  if (!data || data.length === 0) {
-      map.invalidateSize();
-      return; 
-  }
-
-  data.forEach(route => {
-    if (!route.summary_polyline) return;
-
-    try {
-        const coords = polyline.decode(route.summary_polyline).map(c => [c[0], c[1]]);
-
-        const line = L.polyline(coords, {
-          weight: 4,
-          opacity: 0.8,
-          color: '#ff5722'
-        }).addTo(map);
-
-        line.bindPopup(`
-          <strong>${route.name}</strong><br>
-          ${Number(route.distance_km).toFixed(1)} km<br>
-          ${route.tags || ''}
-        `);
-
-        routeLayers.push(line);
-    } catch (e) {
-        console.error("Failed to decode polyline:", e);
-    }
-  });
-
-  if (routeLayers.length > 0) {
-    const group = L.featureGroup(routeLayers);
-    map.fitBounds(group.getBounds(), { padding: [40, 40] });
-  }
-}
 </script>
 
 
