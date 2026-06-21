@@ -123,6 +123,16 @@ $countryStmt = $pdo->prepare("SELECT DISTINCT country FROM strava_routes WHERE u
 $countryStmt->execute([$internalUserId]);
 $countries = $countryStmt->fetchAll(PDO::FETCH_COLUMN);
 
+
+file_put_contents('php://stderr', "Attempting to JSON encode " . count($routes) . " routes...\n");
+
+$json = json_encode($routes);
+
+if ($json === false) {
+    file_put_contents('php://stderr', "JSON Encode Error: " . json_last_error_msg() . "\n");
+} else {
+    file_put_contents('php://stderr', "JSON Encode Successful! Size: " . strlen($json) . " bytes\n");
+}
 ?>
 
 <?php include 'header.php'; ?>
@@ -227,6 +237,8 @@ const routes = <?= json_encode($routes ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSO
 console.log("📦 Raw data dump from database:", routes);
     
 
+
+    
 </script>
 
 
