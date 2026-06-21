@@ -31,106 +31,10 @@ $pdo = new PDO(
     ]
 );
 
-/* ===============================
-   LOAD USER PROFILE
-================================ */
-
-$userStmt = $pdo->prepare("
-    SELECT firstname, lastname, avatar,last_routes_sync
-    FROM users
-    WHERE id = ?
-");
-$userStmt->execute([$internalUserId]);
-$user = $userStmt->fetch(PDO::FETCH_ASSOC);
-
-/* ===============================
-   LOAD ROUTES (PER USER)
-================================ */
-
-$stmt = $pdo->prepare("
-    SELECT
-        CAST(route_id AS CHAR) AS route_id,
-        name,
-        country,
-        summary_polyline,
-        DATE(created_at) AS created_date
-    FROM strava_routes
-    WHERE user_id = ?
-    ORDER BY updated_at DESC
-");
-$stmt->execute([$internalUserId]);
-
-
-$routes = [];
-$count = 0;
-
-// Fetch row-by-row instead of fetchAll() to see exactly where it dies
-while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-    $count++;
-    // Write directly to Wasmer Edge logs
-    //file_put_contents('php://stderr', "Processing row #{$count} - Route ID: {$row['route_id']}\n");
-    $routes[] = $row;
-}
-
-
-
-
-/* ===============================
-    LOAD TAGS PER ROUTE
-================================ */
-//file_put_contents('php://stderr', "Starting tag loading query...\n");
-
-$tagStmt = $pdo->prepare("
-    SELECT route_id, GROUP_CONCAT(tag ORDER BY tag SEPARATOR ', ') AS tags
-    FROM route_tags
-    WHERE route_id IN (
-        SELECT route_id FROM strava_routes WHERE user_id = ?
-    )
-    GROUP BY route_id
-");
-$tagStmt->execute([$internalUserId]);
-$tagsRaw = $tagStmt->fetchAll(PDO::FETCH_ASSOC);
-
-//file_put_contents('php://stderr', "Successfully loaded tags from DB. Mapping to array...\n");
-
-$tagsByRoute = [];
-foreach ($tagsRaw as $row) {
-    $tagsByRoute[$row['route_id']] = $row['tags'];
-}
-
-/* ===============================
-    ATTACH TAGS TO ROUTES
-================================ */
-//file_put_contents('php://stderr', "Starting to attach tags to routes loop...\n");
-
-$loopCount = 0;
-foreach ($routes as &$route) {
-    $loopCount++;
-    // Log every 50 rows so we don't spam too hard, but can see progress
-    if ($loopCount % 50 === 0 || $loopCount > 450) {
-       // file_put_contents('php://stderr', "Attaching tags to row #{$loopCount} (Route ID: {$route['route_id']})\n");
-    }
-    $route['tags'] = $tagsByRoute[$route['route_id']] ?? '';
-}
-unset($route);
-
-//file_put_contents('php://stderr', "Successfully attached tags to all routes!\n");
-
-
 $countryStmt = $pdo->prepare("SELECT DISTINCT country FROM strava_routes WHERE user_id = ? AND country IS NOT NULL AND country != '' ORDER BY country ASC");
 $countryStmt->execute([$internalUserId]);
 $countries = $countryStmt->fetchAll(PDO::FETCH_COLUMN);
 
-
-file_put_contents('php://stderr', "Attempting to JSON encode " . count($routes) . " routes...\n");
-
-$json = json_encode($routes);
-
-if ($json === false) {
-    file_put_contents('php://stderr', "JSON Encode Error: " . json_last_error_msg() . "\n");
-} else {
-    file_put_contents('php://stderr', "JSON Encode Successful! Size: " . strlen($json) . " bytes\n");
-}
 ?>
 
 <?php include 'header.php'; ?>
@@ -233,26 +137,27 @@ main.container {
   <?php include 'filter_panel.php'; ?>
 </main>
 
-<script>
-// Safe fallback data payload injection
-const routes = <?= json_encode($routes ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?: '[]' ?>;
 
-console.log("📦 Raw data dump from database:", routes);
-    
+
+
+
+
+
+
+<script>
 const chunkSize = 50;
 let currentIndex = 0;
+let routes = []; // Starts empty
 
-// Initialize global map canvas instance
-const map = L.map('map', { trackResize: true }).setView([50.8503, 4.3517], 2); // Start zoomed out
+// Initialize global map canvas instance immediately
+const map = L.map('map', { trackResize: true }).setView([50.8503, 4.3517], 2);
 
-// Load OpenStreetMap Tiles directly
-L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '© OpenStreetMap contributors'
 }).addTo(map);
 
-// Create a feature group to collect all lines for automatic boundary mapping
 const routeBoundsGroup = L.featureGroup().addTo(map);
-    
+
 function renderNextChunk() {
     const end = Math.min(currentIndex + chunkSize, routes.length);
     
@@ -261,16 +166,12 @@ function renderNextChunk() {
         
         if (route.summary_polyline) {
             try {
-                // Decode using the Mapbox global 'polyline' object
                 const decodedPoints = polyline.decode(route.summary_polyline);
-                
-                // Add the polyline directly to our group bounds instead of the bare map
                 L.polyline(decodedPoints, { 
-                    color: '#ff4500', // Strava orange-red looks great on OSM maps
+                    color: '#ff4500', 
                     weight: 3, 
                     opacity: 0.6 
                 }).addTo(routeBoundsGroup);
-                
             } catch (e) {
                 console.error("Failed to parse polyline for route:", route.route_id, e);
             }
@@ -282,23 +183,24 @@ function renderNextChunk() {
     if (currentIndex < routes.length) {
         setTimeout(renderNextChunk, 10);
     } else {
-        // 🏁 Execution complete! Now frame the map around the user's routes automatically
         if (routeBoundsGroup.getLayers().length > 0) {
             map.fitBounds(routeBoundsGroup.getBounds(), { padding: [30, 30] });
         }
-        console.log("🏁 All chunks rendered smoothly!");
+        console.log("🏁 All 600+ routes rendered smoothly via AJAX!");
     }
-}
+} 
 
-// Start progressive rendering
-//renderNextChunk();
+// NEW: Fetch data dynamically via background API request
+console.log("📥 Requesting routes payload from server...");
+fetch('get_map_routes.php')
+    .then(response => response.json())
+    .then(data => {
+        routes = data;
+        console.log(`📦 Loaded ${routes.length} routes. Starting progressive draw...`);
+        renderNextChunk();
+    })
+    .catch(error => console.error('❌ Error fetching route data endpoint:', error));
 
-// Force Leaflet to update its layout metrics after render layout completion
-window.addEventListener('DOMContentLoaded', () => {
-    setTimeout(() => {
-        map.invalidateSize();
-    }, 100);
-});
 </script>
 
 
