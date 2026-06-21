@@ -235,9 +235,59 @@ const routes = <?= json_encode($routes ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSO
 
 console.log("📦 Raw data dump from database:", routes);
     
+const chunkSize = 50;
+let currentIndex = 0;
 
+// Initialize global map canvas instance
+const map = L.map('map', { trackResize: true }).setView([50.8503, 4.3517], 2); // Start zoomed out
 
+// Load OpenStreetMap Tiles directly
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap contributors'
+}).addTo(map);
+
+// Create a feature group to collect all lines for automatic boundary mapping
+const routeBoundsGroup = L.featureGroup().addTo(map);
     
+function renderNextChunk() {
+    const end = Math.min(currentIndex + chunkSize, routes.length);
+    
+    for (let i = currentIndex; i < end; i++) {
+        const route = routes[i];
+        
+        if (route.summary_polyline) {
+            try {
+                // Decode using the Mapbox global 'polyline' object
+                const decodedPoints = polyline.decode(route.summary_polyline);
+                
+                // Add the polyline directly to our group bounds instead of the bare map
+                L.polyline(decodedPoints, { 
+                    color: '#ff4500', // Strava orange-red looks great on OSM maps
+                    weight: 3, 
+                    opacity: 0.6 
+                }).addTo(routeBoundsGroup);
+                
+            } catch (e) {
+                console.error("Failed to parse polyline for route:", route.route_id, e);
+            }
+        }
+    }
+    
+    currentIndex = end;
+    
+    if (currentIndex < routes.length) {
+        setTimeout(renderNextChunk, 10);
+    } else {
+        // 🏁 Execution complete! Now frame the map around the user's routes automatically
+        if (routeBoundsGroup.getLayers().length > 0) {
+            map.fitBounds(routeBoundsGroup.getBounds(), { padding: [30, 30] });
+        }
+        console.log("🏁 All chunks rendered smoothly!");
+    }
+}
+
+// Start progressive rendering
+renderNextChunk();
 </script>
 
 
