@@ -201,41 +201,4 @@ console.log("📦 Raw data dump from database:", routes);
 
 
 
-
-<script>
-  function forceMapResize() {
-    if (typeof map !== 'undefined' && map) {
-      console.log("📐 Leaflet container layout recalculated.");
-      map.invalidateSize(true);
-    }
-  }
-
-  if (document.readyState === 'complete') {
-    forceMapResize();
-  } else {
-    window.addEventListener('load', forceMapResize);
-  }
-
-  setTimeout(forceMapResize, 200);
-  setTimeout(forceMapResize, 1000);
-
-  // Maintain URL states across page links
-  const mapLink = document.getElementById('mapLink');
-  function updateMapLinkFromURL() {
-    if (!mapLink) return;
-    mapLink.href = 'routes.php' + window.location.search;
-  }
-
-  updateMapLinkFromURL();
-  window.addEventListener('popstate', updateMapLinkFromURL);
-
-  const originalReplace = history.replaceState;
-  history.replaceState = function (...args) {
-    originalReplace.apply(this, args);
-    updateMapLinkFromURL();
-  };
-</script>
-
-<script src="routes_shared.js?v=1.0.22"></script>
-
 <?php include 'footer.php'; ?>
