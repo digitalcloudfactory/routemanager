@@ -137,11 +137,13 @@ function applyFilters() {
   // --- UPDATED LAYER: Call map renderer if it exists ---
   if (typeof drawRoutes === 'function') {
     drawRoutes(filteredRoutes);
+    console.log('drawRoutes Called -- Map Function');
   }
 
   // --- NEW LAYER: Call table renderer if it exists ---
   if (typeof renderTable === 'function') {
     renderTable(filteredRoutes);
+    console.log('renderTable Called -- Table Function');
   }
 }
 
