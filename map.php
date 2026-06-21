@@ -60,7 +60,20 @@ $stmt = $pdo->prepare("
     LIMIT 455
 ");
 $stmt->execute([$internalUserId]);
-$routes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+
+$routes = [];
+$count = 0;
+
+// Fetch row-by-row instead of fetchAll() to see exactly where it dies
+while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    $count++;
+    // Write directly to Wasmer Edge logs
+    file_put_contents('php://stderr', "Processing row #{$count} - Route ID: {$row['route_id']}\n");
+    $routes[] = $row;
+}
+
+file_put_contents('php://stderr', "Successfully fetched all 455 rows!\n");
 
 /* ===============================
    LOAD TAGS PER ROUTE
