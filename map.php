@@ -68,18 +68,17 @@ $count = 0;
 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
     $count++;
     // Write directly to Wasmer Edge logs
-    file_put_contents('php://stderr', "Processing row #{$count} - Route ID: {$row['route_id']}\n");
+    //file_put_contents('php://stderr', "Processing row #{$count} - Route ID: {$row['route_id']}\n");
     $routes[] = $row;
 }
 
-file_put_contents('php://stderr', "Successfully fetched all 455 rows!\n");
 
 
 
 /* ===============================
     LOAD TAGS PER ROUTE
 ================================ */
-file_put_contents('php://stderr', "Starting tag loading query...\n");
+//file_put_contents('php://stderr', "Starting tag loading query...\n");
 
 $tagStmt = $pdo->prepare("
     SELECT route_id, GROUP_CONCAT(tag ORDER BY tag SEPARATOR ', ') AS tags
@@ -92,7 +91,7 @@ $tagStmt = $pdo->prepare("
 $tagStmt->execute([$internalUserId]);
 $tagsRaw = $tagStmt->fetchAll(PDO::FETCH_ASSOC);
 
-file_put_contents('php://stderr', "Successfully loaded tags from DB. Mapping to array...\n");
+//file_put_contents('php://stderr', "Successfully loaded tags from DB. Mapping to array...\n");
 
 $tagsByRoute = [];
 foreach ($tagsRaw as $row) {
@@ -102,20 +101,20 @@ foreach ($tagsRaw as $row) {
 /* ===============================
     ATTACH TAGS TO ROUTES
 ================================ */
-file_put_contents('php://stderr', "Starting to attach tags to routes loop...\n");
+//file_put_contents('php://stderr', "Starting to attach tags to routes loop...\n");
 
 $loopCount = 0;
 foreach ($routes as &$route) {
     $loopCount++;
     // Log every 50 rows so we don't spam too hard, but can see progress
     if ($loopCount % 50 === 0 || $loopCount > 450) {
-        file_put_contents('php://stderr', "Attaching tags to row #{$loopCount} (Route ID: {$route['route_id']})\n");
+       // file_put_contents('php://stderr', "Attaching tags to row #{$loopCount} (Route ID: {$route['route_id']})\n");
     }
     $route['tags'] = $tagsByRoute[$route['route_id']] ?? '';
 }
 unset($route);
 
-file_put_contents('php://stderr', "Successfully attached tags to all routes!\n");
+//file_put_contents('php://stderr', "Successfully attached tags to all routes!\n");
 
 
 $countryStmt = $pdo->prepare("SELECT DISTINCT country FROM strava_routes WHERE user_id = ? AND country IS NOT NULL AND country != '' ORDER BY country ASC");
