@@ -31,6 +31,18 @@ $pdo = new PDO(
     ]
 );
 
+/* ===============================
+   LOAD USER PROFILE
+================================ */
+
+$userStmt = $pdo->prepare("
+    SELECT firstname, lastname, avatar,last_routes_sync
+    FROM users
+    WHERE id = ?
+");
+$userStmt->execute([$internalUserId]);
+$user = $userStmt->fetch(PDO::FETCH_ASSOC);
+
 $countryStmt = $pdo->prepare("SELECT DISTINCT country FROM strava_routes WHERE user_id = ? AND country IS NOT NULL AND country != '' ORDER BY country ASC");
 $countryStmt->execute([$internalUserId]);
 $countries = $countryStmt->fetchAll(PDO::FETCH_COLUMN);
