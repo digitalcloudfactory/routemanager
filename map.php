@@ -145,10 +145,8 @@ if ($json === false) {
   visibility: visible !important;
   height: 600px !important;
   width: 100% !important;
-  border-radius: 12px;
   position: relative !important;
   z-index: 10 !important;
-  overflow: hidden !important; 
 }
     
 #filterPanel {
@@ -287,6 +285,13 @@ function renderNextChunk() {
 
 // Start progressive rendering
 renderNextChunk();
+
+// Force Leaflet to update its layout metrics after render layout completion
+window.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        map.invalidateSize();
+    }, 100);
+});
 </script>
 
 
