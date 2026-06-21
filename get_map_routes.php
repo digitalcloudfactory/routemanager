@@ -21,7 +21,20 @@ $pdo = new PDO(
 );
 
 // 1. Fetch Routes
-$stmt = $pdo->prepare("SELECT CAST(route_id AS CHAR) AS route_id, name, country, summary_polyline, DATE(created_at) AS created_date FROM strava_routes WHERE user_id = ? ORDER BY updated_at DESC");
+$stmt = $pdo->prepare("SELECT CAST(route_id AS CHAR) AS route_id, 
+                        name, 
+                        country, 
+                        distance_km,
+                        elevation,
+                        type,
+                        estimated_moving_time,
+                        private,
+                        starred,
+                        summary_polyline, 
+                        DATE(created_at) 
+                        AS created_date FROM strava_routes 
+                        WHERE user_id = ? 
+                        ORDER BY updated_at DESC");
 $stmt->execute([$_SESSION['internal_user_id']]);
 $routes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
