@@ -136,7 +136,7 @@ function applyFilters() {
 
   // --- UPDATED LAYER: Call map renderer if it exists ---
   if (typeof drawRoutes === 'function') {
-  //  drawRoutes(filteredRoutes);
+    drawRoutes(filteredRoutes);
     console.log('drawRoutes Called -- Map Function');
   }
 
