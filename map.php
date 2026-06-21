@@ -293,3 +293,4 @@ renderNextChunk();
 
 
 <?php include 'footer.php'; ?>
+<?php exit(0); // Forces a clean exit status code to the Wasmer runtime ?>
