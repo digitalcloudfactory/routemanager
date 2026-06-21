@@ -221,7 +221,9 @@ main.container {
   </section>    
 </header>
 
-  <div id="map"></div>
+<section style="margin-top: 2rem; display: block; clear: both; width: 100%;">
+    <div id="map"></div>
+</section>
 
   <?php include 'filter_panel.php'; ?>
 </main>
