@@ -55,6 +55,9 @@ $countries = $countryStmt->fetchAll(PDO::FETCH_COLUMN);
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/@mapbox/polyline"></script>
 
+<script src="routes_shared.js"></script>
+
+
 <style>
 #map {
   display: block !important;
@@ -150,16 +153,11 @@ main.container {
 </main>
 
 
-
-
-
-
-
-
 <script>
 const chunkSize = 50;
 let currentIndex = 0;
-let routes = []; // Starts empty
+let currentRenderSet = []; 
+let routes = []; // Starts empty, populated by fetch
 
 // Initialize global map canvas instance immediately
 const map = L.map('map', { trackResize: true }).setView([50.8503, 4.3517], 2);
@@ -170,11 +168,27 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 const routeBoundsGroup = L.featureGroup().addTo(map);
 
+/**
+ * --- THE BRIDGE FUNCTION ---
+ * This is the exact function name routes_shared.js looks for and calls!
+ */
+function drawRoutes(targetArray) {
+    // 1. Wipe any current paths off the map canvas
+    routeBoundsGroup.clearLayers();
+    
+    // 2. Point our progressive drawing loops to the newly filtered dataset
+    currentRenderSet = targetArray;
+    currentIndex = 0;
+    
+    // 3. Start drawing the first chunk
+    renderNextChunk();
+}
+
 function renderNextChunk() {
-    const end = Math.min(currentIndex + chunkSize, routes.length);
+    const end = Math.min(currentIndex + chunkSize, currentRenderSet.length);
     
     for (let i = currentIndex; i < end; i++) {
-        const route = routes[i];
+        const route = currentRenderSet[i];
         
         if (route.summary_polyline) {
             try {
@@ -185,31 +199,38 @@ function renderNextChunk() {
                     opacity: 0.6 
                 }).addTo(routeBoundsGroup);
             } catch (e) {
-                console.error("Failed to parse polyline for route:", route.route_id, e);
+                console.error("Failed to parse polyline for route ID:", route.route_id, e);
             }
         }
     }
     
     currentIndex = end;
     
-    if (currentIndex < routes.length) {
+    if (currentIndex < currentRenderSet.length) {
         setTimeout(renderNextChunk, 10);
     } else {
+        // Auto-zoom map bounds around whatever matched the current filter criteria
         if (routeBoundsGroup.getLayers().length > 0) {
             map.fitBounds(routeBoundsGroup.getBounds(), { padding: [30, 30] });
         }
-        console.log("🏁 All 600+ routes rendered smoothly via AJAX!");
     }
-} 
+}
 
-// NEW: Fetch data dynamically via background API request
+// Fetch data dynamically via background API request
 console.log("📥 Requesting routes payload from server...");
-fetch('get_map_routes.php')
+fetch('get_routes.php')
     .then(response => response.json())
     .then(data => {
+        // 1. Store the loaded dataset into the global 'routes' array variable
         routes = data;
-        console.log(`📦 Loaded ${routes.length} routes. Starting progressive draw...`);
-        renderNextChunk();
+        console.log(`📦 Loaded ${routes.length} routes into memory.`);
+        
+        // 2. UNCOMMENT the hook inside your routes_shared.js or trigger an explicit initial apply pass
+        if (typeof applyFilters === 'function') {
+            applyFilters(); 
+        } else {
+            drawRoutes(routes); // Fallback if filters haven't completely mounted yet
+        }
     })
     .catch(error => console.error('❌ Error fetching route data endpoint:', error));
 
