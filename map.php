@@ -49,19 +49,11 @@ $stmt = $pdo->prepare("
     SELECT
         CAST(route_id AS CHAR) AS route_id,
         name,
-        distance_km,
-        elevation,
-        type,
-        estimated_moving_time,
-        private,
-        country,
-        starred,
-        DATE(created_at) AS created_date,
         summary_polyline
     FROM strava_routes
     WHERE user_id = ?
     ORDER BY updated_at DESC
-    LIMIT 450
+    LIMIT 200
 ");
 $stmt->execute([$internalUserId]);
 $routes = $stmt->fetchAll(PDO::FETCH_ASSOC);
