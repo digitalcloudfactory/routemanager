@@ -32,10 +32,11 @@ $pdo = new PDO(
 );
 
 /* ===============================
-    LOAD USER PROFILE
+   LOAD USER PROFILE
 ================================ */
+
 $userStmt = $pdo->prepare("
-    SELECT firstname, lastname, avatar, last_routes_sync
+    SELECT firstname, lastname, avatar,last_routes_sync
     FROM users
     WHERE id = ?
 ");
@@ -43,24 +44,27 @@ $userStmt->execute([$internalUserId]);
 $user = $userStmt->fetch(PDO::FETCH_ASSOC);
 
 /* ===============================
-    LOAD ROUTES (PER USER)
+   LOAD ROUTES (PER USER)
 ================================ */
+
 $stmt = $pdo->prepare("
     SELECT
         CAST(route_id AS CHAR) AS route_id,
         name,
+        country,
         summary_polyline
+        DATE(created_at) AS created_date
     FROM strava_routes
     WHERE user_id = ?
     ORDER BY updated_at DESC
-    LIMIT 200
 ");
 $stmt->execute([$internalUserId]);
 $routes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 /* ===============================
-    LOAD TAGS PER ROUTE
+   LOAD TAGS PER ROUTE
 ================================ */
+
 $tagStmt = $pdo->prepare("
     SELECT route_id, GROUP_CONCAT(tag ORDER BY tag SEPARATOR ', ') AS tags
     FROM route_tags
@@ -78,7 +82,7 @@ foreach ($tagsRaw as $row) {
 }
 
 /* ===============================
-    ATTACH TAGS TO ROUTES
+   attach tags to routes
 ================================ */
 foreach ($routes as &$route) {
     $route['tags'] = $tagsByRoute[$route['route_id']] ?? '';
@@ -88,6 +92,7 @@ unset($route);
 $countryStmt = $pdo->prepare("SELECT DISTINCT country FROM strava_routes WHERE user_id = ? AND country IS NOT NULL AND country != '' ORDER BY country ASC");
 $countryStmt->execute([$internalUserId]);
 $countries = $countryStmt->fetchAll(PDO::FETCH_COLUMN);
+
 ?>
 
 <?php include 'header.php'; ?>
