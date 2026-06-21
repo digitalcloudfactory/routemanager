@@ -148,6 +148,11 @@ if ($json === false) {
   position: relative !important;
   z-index: 10 !important;
 }
+
+/* If you need to make sure the controls stack nicely, target the container wrapper instead */
+.leaflet-control-container {
+  z-index: 500 !important;
+}
     
 #filterPanel {
   position: fixed;
@@ -286,7 +291,7 @@ function renderNextChunk() {
 }
 
 // Start progressive rendering
-renderNextChunk();
+//renderNextChunk();
 
 // Force Leaflet to update its layout metrics after render layout completion
 window.addEventListener('DOMContentLoaded', () => {
