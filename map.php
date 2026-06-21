@@ -218,7 +218,7 @@ function renderNextChunk() {
 
 // Fetch data dynamically via background API request
 console.log("📥 Requesting routes payload from server...");
-fetch('get_routes.php')
+fetch('get_map_routes.php')
     .then(response => response.json())
     .then(data => {
         // 1. Store the loaded dataset into the global 'routes' array variable
