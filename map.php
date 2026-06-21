@@ -57,7 +57,7 @@ $stmt = $pdo->prepare("
     FROM strava_routes
     WHERE user_id = ?
     ORDER BY updated_at DESC
-    LIMIT 466
+    LIMIT 400
 ");
 $stmt->execute([$internalUserId]);
 $routes = $stmt->fetchAll(PDO::FETCH_ASSOC);
