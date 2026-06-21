@@ -52,7 +52,7 @@ $stmt = $pdo->prepare("
         CAST(route_id AS CHAR) AS route_id,
         name,
         country,
-        summary_polyline
+        summary_polyline,
         DATE(created_at) AS created_date
     FROM strava_routes
     WHERE user_id = ?
