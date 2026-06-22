@@ -185,7 +185,7 @@ function drawRoutes(targetArray) {
 }
 
 function renderNextChunk() {
-    const end = Math.min(currentIndex + chunkSize, currentRenderSet.length);
+const end = Math.min(currentIndex + chunkSize, currentRenderSet.length);
     
     for (let i = currentIndex; i < end; i++) {
         const route = currentRenderSet[i];
@@ -193,13 +193,41 @@ function renderNextChunk() {
         if (route.summary_polyline) {
             try {
                 const decodedPoints = polyline.decode(route.summary_polyline);
-                L.polyline(decodedPoints, { 
+                
+                // 1. Create the polyline instance
+                const line = L.polyline(decodedPoints, { 
                     color: '#ff4500', 
                     weight: 3, 
                     opacity: 0.6 
-                }).addTo(routeBoundsGroup);
+                });
+
+                // 2. Safely parse numbers to prevent JavaScript toFixed() runtime crashes if values are missing
+                const distance = route.distance_km ? Number(route.distance_km).toFixed(1) : '0.0';
+                const elevation = route.elevation ? Math.round(Number(route.elevation)) : '0';
+                const dateCreated = route.created_date || 'Unknown date';
+                
+                // 3. Format tags string layout cleanly
+                const tagsHTML = route.tags 
+                    ? `<div style="margin-top: 5px;"><small style="background: #f0f0f0; padding: 2px 6px; border-radius: 4px; color: #555;">🏷️ ${route.tags}</small></div>` 
+                    : '';
+
+                // 4. Bind the interactive popup HTML payload directly to the polyline element
+                line.bindPopup(`
+                    <div style="font-family: sans-serif; font-size: 13px; line-height: 1.4;">
+                        <strong style="font-size: 14px; color: #333;">${route.name}</strong><br>
+                        <span style="color: #666;">📅 ${dateCreated}</span><br>
+                        <hr style="margin: 6px 0; border: 0; border-top: 1px solid #eee;">
+                        <strong>📏 Distance:</strong> ${distance} km<br>
+                        <strong>⛰️ Elevation:</strong> ${elevation} m<br>
+                        ${tagsHTML}
+                    </div>
+                `);
+
+                // 5. Add the line to your bounded tracking layer group
+                line.addTo(routeBoundsGroup);
+                
             } catch (e) {
-                console.error("Failed to parse polyline for route ID:", route.route_id, e);
+                console.error("Failed to parse polyline or popups for route ID:", route.route_id, e);
             }
         }
     }
