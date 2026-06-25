@@ -288,7 +288,7 @@ figure {
 
 <section class="grid">
 <div>
-    <a id="mapLink" href="map.php">Map view</a>
+            <a id="mapLink" href="map.php" role="button">Map view</a>
 </div>    
     <div>
     <button id="fetchRoutes" type="button">
