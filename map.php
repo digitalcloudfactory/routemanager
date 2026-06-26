@@ -62,10 +62,15 @@ $countries = $countryStmt->fetchAll(PDO::FETCH_COLUMN);
 #map {
   display: block !important;
   visibility: visible !important;
-  height: 600px !important;
-  width: 100% !important;
-  position: relative !important;
-  z-index: 10 !important;
+  position: fixed !important; /* Fixed positions it relative to the viewport window */
+  top: 0;
+  left: 0;
+  width: 100vw !important;    /* 100% of the viewport width */
+  height: 100vh !important;  /* 100% of the viewport height */
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 0 !important; /* Remove border-radius for full-bleed edge look */
+  z-index: 1 !important;      /* Sit right above background, beneath header buttons */
 }
 
 /* If you need to make sure the controls stack nicely, target the container wrapper instead */
