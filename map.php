@@ -97,9 +97,23 @@ $countries = $countryStmt->fetchAll(PDO::FETCH_COLUMN);
 }
 
 main.container {
-  max-width: 100%;    
-  padding: 1rem 2rem; 
-  box-sizing: border-box;
+  max-width: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Float your headers and controls cleanly OVER the top of the map layer */
+header.grid {
+  position: absolute !important;
+  top: 20px;
+  left: 20px;
+  right: 20px;
+  z-index: 1000 !important;  /* Must sit higher than the map layer (z-index 1) */
+  background: rgba(255, 255, 255, 0.9); /* Translucent background frosting */
+  padding: 15px 25px !important;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  pointer-events: auto; /* Ensure buttons remain clickable over map graphics */
 }
 
 :root {
