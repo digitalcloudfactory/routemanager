@@ -20,7 +20,7 @@ $internalUserId = $_SESSION['internal_user_id'];
 /* ===============================
     DATABASE CONFIG
 ================================ */
-$db_host = 'db.fr-pari1.bengt.wasmernet.com';\
+$db_host = 'db.fr-pari1.bengt.wasmernet.com';
 $db_port = 10272;
 $db_name = 'dbcmpLT2zrmwmur5UEjZ3Xj8';
 $db_user = 'de142c5d7a0180009884f0319fb7';
