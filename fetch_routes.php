@@ -1,11 +1,12 @@
 <?php
 session_start();
 
-ini_set('display_errors', 1);
+ini_set('display_errors', 0); // Turned off on-screen errors so they don't corrupt JSON strings
 error_reporting(E_ALL);
 
 // Session lock prevention: read what we need, then close.
 if (!isset($_SESSION['internal_user_id'])) {
+    header('Content-Type: application/json');
     echo json_encode(['success' => false, 'error' => 'Not logged in']);
     exit;
 }
@@ -25,7 +26,7 @@ $strava_client_secret = '1a1057defe991fd6c2711f1199a3563cb3d5395f';
 
 // Get current page from request, default to 1
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$perPage = 50; // Smaller batches are safer
+$perPage = 50; 
 
 // --- CONNECT DB ---
 try {
@@ -35,7 +36,6 @@ try {
     echo json_encode(['success' => false, 'error' => 'DB Connection failed']);
     exit;
 }
-
 
 // --- FETCH USER TOKENS ---
 $stmt = $pdo->prepare("SELECT access_token, refresh_token, token_expires_at FROM users WHERE id = :id");
@@ -48,11 +48,9 @@ if (!$user) {
 }
 
 $accessToken = $user['access_token'];
-
-// --- 1. SET THE SYNC SESSION START TIME ---
 $syncTime = date('Y-m-d H:i:s');
 
-// (Token refresh logic remains the same as your original...)
+// Token refresh logic
 if ($user['token_expires_at'] < time()) {
     $ch = curl_init("https://www.strava.com/oauth/token");
     curl_setopt($ch, CURLOPT_POST, true);
@@ -73,13 +71,11 @@ if ($user['token_expires_at'] < time()) {
     }
 }
 
-// 1. Fetch all existing route IDs for this user into an associative array (O(1) lookup)
+// Fetch all existing route IDs for this user to avoid duplicating logic overloads
 $existingStmt = $pdo->prepare("SELECT route_id FROM strava_routes WHERE user_id = ?");
 $existingStmt->execute([$internalUserId]);
 $existingIds = $existingStmt->fetchAll(PDO::FETCH_COLUMN);
-$existingIdsMap = array_flip($existingIds); // Flips [ID] to [ID => index] for faster lookup
-
-
+$existingIdsMap = array_flip($existingIds); 
 
 // --- FETCH ONE PAGE FROM STRAVA ---
 $ch = curl_init("https://www.strava.com/api/v3/athlete/routes?page=$page&per_page=$perPage");
@@ -129,16 +125,13 @@ $insert = $pdo->prepare("
 
 $processed = 0;
 $geocodesInThisBatch = 0;
-$maxGeocodesPerBatch = 5; // Low limit to keep request fast
+$maxGeocodesPerBatch = 5; 
 
 foreach ($routes as $route) {
     $rid = (string)$route['id_str'];
-    
-    if (isset($existingIdsMap[$rid])) {  }
-        // New route found!
+    $isNewRoute = !isset($existingIdsMap[$rid]);
     $country = null;
-        
-    // Geocode only if it's a new route and we have a polyline
+    
     $start_lat = null; $start_lng = null;
     $end_lat = null; $end_lng = null;
 
@@ -150,16 +143,16 @@ foreach ($routes as $route) {
             $end_lat   = end($decoded)[0];
             $end_lng   = end($decoded)[1];
             
-            // Now, instead of re-decoding inside getCountryFromPolyline, 
-            // you could technically optimize further, but for now:
-            if ($geocodesInThisBatch < $maxGeocodesPerBatch) {
+            // Geocode only if it's a completely new route
+            if ($isNewRoute && ($geocodesInThisBatch < $maxGeocodesPerBatch)) {
                 $country = getCountryFromPolyline($route['map']['summary_polyline']);
                 $geocodesInThisBatch++;
-                if ($country) usleep(1200000); 
+                if ($country) usleep(1200000); // 1.2s sleep for Nominatim policy requirements
             }
         }
     }   
-        $insert->execute([
+
+    $insert->execute([
         ':user' => $internalUserId, ':rid' => $rid, ':name' => $route['name'],
         ':description' => $route['description'] ?? null, ':distance' => $route['distance'] / 1000,
         ':elevation' => $route['elevation_gain'], ':type' => $route['type'] ?? null,
@@ -172,38 +165,38 @@ foreach ($routes as $route) {
         ':s_lat' => $start_lat, ':s_lng' => $start_lng,
         ':e_lat' => $end_lat, ':e_lng' => $end_lng
     ]);
-            $processed++;
+    $processed++;
 }
 
-// Update sync timestamp
+// Update overall sync timestamp for profile dashboard indicator
 $pdo->prepare("UPDATE users SET last_routes_sync = NOW() WHERE id = ?")->execute([$internalUserId]);
 
+// Run deletion maintenance only on the final page pass
+if (!$hasMore) {
+    $cutoffTime = date('Y-m-d H:i:s', strtotime('-20 minutes'));
+    $deleteStmt = $pdo->prepare("
+        DELETE FROM strava_routes 
+        WHERE user_id = ? 
+        AND (strava_last_seen_at < ? OR strava_last_seen_at IS NULL)
+    ");
+    $deleteStmt->execute([$internalUserId, $cutoffTime]);
+}
+
+// Clean connection references explicitly
+$insert = null;
+$existingStmt = null;
+$pdo = null;
+
+// Return JSON payload safely at the very end
 echo json_encode([
     'success' => true,
     'page_processed' => $page,
     'routes_in_batch' => $processed,
     'has_more' => $hasMore
 ]);
+exit(0);
 
-if (!$hasMore) {
-    // 1. Calculate a "Safe Cutoff" (20 minutes ago)
-    $cutoffTime = date('Y-m-d H:i:s', strtotime('-20 minutes'));
-
-    // 2. Delete anything that wasn't touched in this entire sync session
-    $deleteStmt = $pdo->prepare("
-        DELETE FROM strava_routes 
-        WHERE user_id = ? 
-        AND (strava_last_seen_at < ? OR strava_last_seen_at IS NULL)
-    ");
-    
-    $deleteStmt->execute([$internalUserId, $cutoffTime]);
-    
-    // Log for your own debugging
-    $deletedCount = $deleteStmt->rowCount();
-}
-
-
-// --- HELPERS (Keep your existing functions below) ---
+// --- HELPERS ---
 function getCountryFromPolyline(string $summaryPolyline): ?string {
     if (!$summaryPolyline) return null;
     $coords = decodePolyline($summaryPolyline);
@@ -211,12 +204,11 @@ function getCountryFromPolyline(string $summaryPolyline): ?string {
     $lat = $coords[0][0];
     $lon = $coords[0][1];
     
-    // Added &accept-language=nl to the URL
     $url = "https://nominatim.openstreetmap.org/reverse"
          . "?lat=" . urlencode($lat)
          . "&lon=" . urlencode($lon)
          . "&format=json"
-         . "&accept-language=nl"; // Forces Dutch naming
+         . "&accept-language=nl"; 
     
     $ch = curl_init($url);
     curl_setopt_array($ch, [
@@ -244,8 +236,3 @@ function decodePolyline(string $encoded): array {
     }
     return $points;
 }
-
-// ... at the very bottom of the script ...
-$insert = null;
-$existingStmt = null;
-$pdo = null; // This closes the connection
