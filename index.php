@@ -182,7 +182,7 @@ if ($needsAuth) {
         "&response_type=code" .
         "&redirect_uri=" . urlencode($redirect_uri) .
         "&approval_prompt=auto" .
-        "&scope=activity:read_all";
+        "&scope=read_all";
 }
 ?>
 
