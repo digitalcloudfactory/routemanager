@@ -294,6 +294,17 @@ body {
     background: #0f172a !important; color: #ffffff !important; border: none !important;
     font-family: 'JetBrains Mono', monospace; font-size: 9px !important; padding: 2px 4px !important;
 }
+
+/* Fix Leaflet Zoom Control button centering misalignment */
+.leaflet-control-zoom a {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    line-height: 1 !important;
+    padding: 0 !important;
+    text-decoration: none !important;
+    font-size: 18px !important;
+}
 </style>
 
 <div class="app-workspace-frame" id="workspaceMainShell">
