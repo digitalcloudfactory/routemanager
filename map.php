@@ -2,8 +2,7 @@
 session_start();
 
 ini_set('memory_limit', '512M'); 
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
+ini_set('display_errors', 0);
 error_reporting(E_ALL);
 
 if (!isset($_SESSION['internal_user_id'])) {
@@ -32,7 +31,7 @@ $pdo = new PDO(
 );
 
 /* ===============================
-   LOAD USER PROFILE
+    LOAD USER PROFILE
 ================================ */
 $userStmt = $pdo->prepare("
     SELECT firstname, lastname, avatar, last_routes_sync
@@ -54,137 +53,152 @@ $countries = $countryStmt->fetchAll(PDO::FETCH_COLUMN);
 <script src="https://unpkg.com/@mapbox/polyline"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 
-<script src="routes_shared.js"></script>
+<script src="routes_shared.js?v=1.0.1"></script>
 
 <style>
 body {
-  font-family: 'Inter', sans-serif;
-  background-color: #f4f6f9;
-  color: #1e293b;
+    font-family: 'Inter', sans-serif;
+    background-color: #f4f6f9;
+    color: #1e293b;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
 }
 
 #map {
-  display: block !important;
-  visibility: visible !important;
-  position: fixed !important;
-  top: 0;
-  left: 0;
-  width: 100vw !important;
-  height: 100vh !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  border-radius: 0 !important;
-  z-index: 1 !important;
+    display: block !important;
+    visibility: visible !important;
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    width: 100vw !important;
+    height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    z-index: 1 !important;
 }
 
 .leaflet-control-container {
-  z-index: 500 !important;
+    z-index: 500 !important;
+}
+
+/* Fix Leaflet Zoom Control button centering misalignment */
+.leaflet-control-zoom a {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    line-height: 1 !important;
+    padding: 0 !important;
+    text-decoration: none !important;
+    font-size: 18px !important;
 }
     
 #filterPanel {
-  position: fixed;
-  top: 0;
-  right: 0;
-  width: 360px;
-  height: 100%;
-  background: #ffffff;
-  box-shadow: -4px 0 24px rgba(148, 163, 184, 0.15);
-  border-left: 1px solid #e2e8f0;
-  padding: 2rem 1.5rem;
-  transform: translateX(100%);
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  z-index: 1050;
-  overflow-y: auto;
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 360px;
+    height: 100%;
+    background: #ffffff;
+    box-shadow: -4px 0 24px rgba(148, 163, 184, 0.15);
+    border-left: 1px solid #e2e8f0;
+    padding: 2rem 1.5rem;
+    transform: translateX(100%);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 1050;
+    overflow-y: auto;
 }
 
 #filterPanel.open {
-  transform: translateX(0);
+    transform: translateX(0);
 }
 
 main.container {
-  max-width: 100% !important;
-  padding: 0 !important;
-  margin: 0 !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
 }
 
-/* Float header dashboard cleanly over Light Map Layer Canvas */
+/* Floating Clean Dashboard Panel over Canvas Layers */
 header.grid {
-  position: absolute !important;
-  top: 20px;
-  left: 20px;
-  right: 20px;
-  z-index: 1000 !important;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(8px);
-  padding: 1rem 1.5rem !important;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 4px 20px rgba(148, 163, 184, 0.12);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+    position: absolute !important;
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    z-index: 1000 !important;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    padding: 0.6rem 1rem !important;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 12px 40px rgba(15, 23, 42, 0.04);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
-.user-profile-block {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.user-meta-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 0.15rem;
 }
 
-.user-profile-block img {
-  border: 2px solid #0284c7;
-  padding: 2px;
-  background: #ffffff;
+.profile-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #f8fafc;
+    padding: 0.15rem 0.5rem 0.15rem 0.15rem;
+    border-radius: 50px;
+    border: 1px solid #e2e8f0;
 }
-
-.user-profile-block strong {
-  color: #0f172a;
-  font-size: 0.95rem;
-}
-
-.user-profile-block small {
-  color: #64748b;
-  font-size: 0.8rem;
+.profile-badge img {
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid #0284c7;
 }
 
 .actions-block {
-  display: flex;
-  gap: 8px;
-  align-items: center;
+    display: flex;
+    gap: 6px;
+    align-items: center;
 }
 
-/* Custom Uniform Control Button Framework Elements */
-.btn-custom {
-  font-family: 'Inter', sans-serif;
-  font-size: 0.85rem;
-  font-weight: 600;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  border: 1px solid #cbd5e1;
-  background: #ffffff;
-  color: #475569;
-  cursor: pointer;
-  transition: all 0.2s;
+/* Custom Component Elements Framework Layout */
+.btn-action-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.35rem 0.6rem;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #1e293b;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.1s ease;
 }
-
-.btn-custom:hover {
-  background: #f8fafc;
-  color: #0f172a;
-  border-color: #94a3b8;
+.btn-action-pill:hover {
+    border-color: #0284c7;
+    background: #f0f9ff;
+    color: #0284c7;
 }
-
-.btn-custom.primary {
-  background: #0284c7;
-  color: #ffffff;
-  border: none;
+.btn-action-pill.btn-sync {
+    background-color: #00E676;
+    border: none;
+    color: #0f172a;
+    font-weight: 700;
+    text-transform: uppercase;
 }
-
-.btn-custom.primary:hover {
-  background: #0369a1;
-  color: #ffffff;
-}
+.btn-action-pill.btn-sync:hover { background-color: #00c853; }
 
 .range-slider input[type="range"]::-webkit-slider-thumb { pointer-events: auto; cursor: pointer; }
 .range-slider input[type="range"]::-moz-range-thumb { pointer-events: auto; cursor: pointer; }
@@ -193,19 +207,24 @@ header.grid {
 
 <main class="container">
 <header class="grid">
-  <div class="user-profile-block">
-    <img src="<?= htmlspecialchars($user['avatar'] ?? '') ?>" alt="Avatar" width="48" height="48" style="border-radius:50%">
     <div>
-      <strong><?= htmlspecialchars(($user['firstname'] ?? '') . ' ' . ($user['lastname'] ?? '')) ?></strong><br>
-      <small>Last Sync: <?= !empty($user['last_routes_sync']) ? htmlspecialchars($user['last_routes_sync']) : 'Never' ?></small>
+        <h2 style="margin:0 0 0.15rem 0; font-size:1.05rem; font-weight:800; color:#0f172a;">Track Database Canvas</h2>
+        <div class="user-meta-bar">
+            <div class="profile-badge">
+                <img src="<?= htmlspecialchars($user['avatar'] ?? '') ?>" alt="Avatar" width="16" height="16">
+                <span style="font-size: 0.7rem; font-weight: 600; color: #334155;"><?= htmlspecialchars($user['firstname'] ?? '') ?></span>
+            </div>
+            <div style="font-size: 0.68rem; color: #64748b;">
+                Sync: <span style="font-weight:600; color:#1e293b;"><?= !empty($user['last_routes_sync']) ? date('d M', strtotime($user['last_routes_sync'])) : 'Never' ?></span>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <div class="actions-block">
-    <a id="mapLink" href="routes.php" class="btn-custom" style="text-decoration: none;">Table view</a>
-    <button id="fetchRoutes" class="btn-custom primary" type="button">Sync Strava</button>
-    <button id="openFilters" class="btn-custom" type="button">Filters ⚙️</button>
-  </div>    
+    <div class="actions-block">
+        <a id="mapLink" href="routes.php" class="btn-action-pill">📊 Table View</a>
+        <button id="openFilters" class="btn-action-pill" type="button">⚙️ Filters</button>
+        <button id="fetchRoutes" class="btn-action-pill btn-sync" type="button">🚀 Sync Tracks</button>
+    </div>    
 </header>
 
 <section style="margin: 0; padding: 0;">
@@ -221,9 +240,9 @@ let currentIndex = 0;
 let currentRenderSet = []; 
 let routes = []; 
 
-const map = L.map('map', { trackResize: true }).setView([50.8503, 4.3517], 2);
+const map = L.map('map', { trackResize: true, zoomControl: false }).setView([50.8503, 4.3517], 9);
+L.control.zoom({ position: 'topright' }).addTo(map);
 
-// Swapped out to unified Light Mode Variant Positron Style Map Layer Trace
 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
     attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
 }).addTo(map);
@@ -238,7 +257,7 @@ function drawRoutes(targetArray) {
 }
 
 function renderNextChunk() {
-const end = Math.min(currentIndex + chunkSize, currentRenderSet.length);
+    const end = Math.min(currentIndex + chunkSize, currentRenderSet.length);
     
     for (let i = currentIndex; i < end; i++) {
         const route = currentRenderSet[i];
@@ -247,7 +266,6 @@ const end = Math.min(currentIndex + chunkSize, currentRenderSet.length);
             try {
                 const decodedPoints = polyline.decode(route.summary_polyline);
                 
-                // Traces applied in crisp thematic Canyon Blue
                 const line = L.polyline(decodedPoints, { 
                     color: '#0284c7', 
                     weight: 3, 
@@ -262,16 +280,16 @@ const end = Math.min(currentIndex + chunkSize, currentRenderSet.length);
                     ? `<div style="margin-top: 6px;"><small style="background: #f1f5f9; padding: 3px 8px; border-radius: 4px; color: #475569; font-weight:500;">🏷️ ${route.tags}</small></div>` 
                     : '';
 
-                line.bindPopup(`
-                    <div style="font-family: 'Inter', sans-serif; font-size: 13px; line-height: 1.5; color: #1e293b; padding: 2px;">
-                        <strong style="font-size: 14px; color: #0f172a; display: block; margin-bottom: 2px;">${route.name}</strong>
-                        <span style="color: #94a3b8; font-size: 11px;">📅 ${dateCreated}</span>
-                        <hr style="margin: 8px 0; border: 0; border-top: 1px solid #e2e8f0;">
-                        <strong>📏 Distance:</strong> ${distance} km<br>
-                        <strong>⛰️ Elevation:</strong> ${elevation} m<br>
-                        ${tagsHTML}
-                    </div>
-                `);
+                line.bindPopup([
+                    `<div style="font-family: 'Inter', sans-serif; font-size: 13px; line-height: 1.5; color: #1e293b; padding: 2px;">`,
+                        `<strong style="font-size: 14px; color: #0f172a; display: block; margin-bottom: 2px;">${route.name}</strong>`,
+                        `<span style="color: #94a3b8; font-size: 11px;">📅 ${dateCreated}</span>`,
+                        `<hr style="margin: 8px 0; border: 0; border-top: 1px solid #e2e8f0;">`,
+                        `<strong>📏 Distance:</strong> ${distance} km<br>`,
+                        `<strong>⛰️ Elevation:</strong> ${elevation} m<br>`,
+                        tagsHTML,
+                    `</div>`
+                ].join(''));
 
                 line.addTo(routeBoundsGroup);
                 
@@ -303,6 +321,28 @@ fetch('get_map_routes.php')
         }
     })
     .catch(error => console.error('Error loading API tracks route payload:', error));
+
+document.getElementById('fetchRoutes').addEventListener('click', async () => {
+    const btn = document.getElementById('fetchRoutes');
+    btn.disabled = true;
+    let page = 1, keepGoing = true, totalSynced = 0;
+    try {
+        while (keepGoing) {
+            btn.innerText = `⏳ Page ${page}...`;
+            const res = await fetch(`fetch_routes.php?page=${page}`);
+            const data = await res.json();
+            if (!data.success) throw new Error(data.error);
+            totalSynced += data.routes_in_batch;
+            if (data.has_more) { page++; await new Promise(r => setTimeout(r, 1000)); } else { keepGoing = false; }
+        }
+        btn.innerText = "Success! Reloading...";
+        setTimeout(() => location.reload(), 1000);
+    } catch (e) {
+        alert('Sync faulted: ' + e.message);
+        btn.disabled = false;
+        btn.innerText = "🚀 Sync Tracks";
+    }
+});
 </script>
 
 <?php include 'footer.php'; ?>
