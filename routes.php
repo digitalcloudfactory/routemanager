@@ -8,8 +8,7 @@ Session auth check         internal_user_id
 ================================ */
 session_start();
 
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
+ini_set('display_errors', 0); // Turned off on production screens to protect dynamic JSON injection pipelines
 error_reporting(E_ALL);
 
 if (!isset($_SESSION['internal_user_id'])) {
@@ -108,305 +107,297 @@ $countries = $countryStmt->fetchAll(PDO::FETCH_COLUMN);
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <style>
 body {
-  font-family: 'Inter', sans-serif;
-  background-color: #f4f6f9;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: #f8fafc;
   color: #1e293b;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
 }
 
-main.container {
-  max-width: 100%;
-  padding: 1.5rem 2.5rem;
-  box-sizing: border-box;
+.container-premium {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem;
 }
 
-/* Modern App Header Profile Dashboard Section Control Bar Look */
-header.grid {
-  background: #ffffff;
-  padding: 1rem 1.5rem !important;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 4px 20px rgba(148, 163, 184, 0.08);
+/* --- UPPER ACTION HEADER DASHBOARD --- */
+.dashboard-header-block {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  margin-bottom: 2rem;
+  align-items: center;
+  margin-bottom: 2.5rem;
 }
 
-.user-profile-block {
+.title-area h1 {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.03em;
+  margin: 0 0 0.4rem 0;
+}
+
+.title-area p {
+  color: #64748b;
+  font-size: 0.95rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+.profile-summary-tag {
   display: flex;
   align-items: center;
   gap: 12px;
-}
-
-.user-profile-block img {
-  border: 2px solid #0284c7;
-  padding: 2px;
   background: #ffffff;
+  padding: 0.5rem 1rem 0.5rem 0.5rem;
+  border-radius: 30px;
+  border: 1px solid #e2e8f0;
+}
+.profile-summary-tag img {
+  border-radius: 50%;
+  object-fit: cover;
 }
 
-.user-profile-block strong {
-  color: #0f172a;
-  font-size: 0.95rem;
-}
-
-.user-profile-block small {
-  color: #64748b;
-  font-size: 0.8rem;
-}
-
-.actions-block {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-/* Base Form Buttons Elements definitions */
-.btn-custom {
-  font-family: 'Inter', sans-serif;
-  font-size: 0.85rem;
-  font-weight: 600;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  border: 1px solid #cbd5e1;
-  background: #ffffff;
-  color: #475569;
-  cursor: pointer;
-  text-decoration: none !important;
+/* Premium Button Architecture */
+.btn-premium-action {
   display: inline-flex;
   align-items: center;
-  transition: all 0.2s;
-}
-
-.btn-custom:hover {
-  background: #f8fafc;
-  color: #0f172a;
-  border-color: #94a3b8;
-}
-
-.btn-custom.primary {
-  background: #0284c7;
+  gap: 8px;
+  background-color: #0f172a;
   color: #ffffff;
-  border: none;
-}
-
-.btn-custom.primary:hover {
-  background: #0369a1;
-}
-
-/* Table Design Modernization */
-tr.route-row { 
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 0.65rem 1.1rem;
+  border-radius: 8px;
+  border: 1px solid #0f172a;
   cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-tr.route-row:hover {
-  background-color: #f8fafc !important;
+  text-decoration: none;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+  transition: all 0.15s ease;
 }
 
-.routesTable {
-  font-size: 0.85rem;
-  width: 100%;
-  table-layout: auto;
+.btn-premium-action:hover {
+  background-color: #1e293b;
+  border-color: #1e293b;
+  transform: translateY(-1px);
+}
+
+.btn-premium-secondary {
+  background-color: #ffffff;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+}
+
+.btn-premium-secondary:hover {
+  background-color: #f8fafc;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+/* --- THE DATA CARRIAGE SHEET MODULE --- */
+.premium-data-card {
   background: #ffffff;
-  border-collapse: separate;
-  border-spacing: 0;
-  border-radius: 12px;
   border: 1px solid #e2e8f0;
-  box-shadow: 0 4px 15px rgba(148, 163, 184, 0.05);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.02), 0 2px 4px -2px rgba(15, 23, 42, 0.02);
   overflow: hidden;
+  margin-bottom: 3rem;
 }
 
-.routesTable th,
-.routesTable td {
-  padding: 0.85rem 1rem;
-  border-bottom: 1px solid #e2e8f0;
+/* --- REFINED STABLE GRID LAYOUT --- */
+.routesTable {
+  width: 100%;
+  border-collapse: collapse;
   text-align: left;
+  font-size: 0.92rem;
 }
 
 .routesTable th {
   background-color: #f8fafc;
-  font-weight: 600;
   color: #475569;
-  border-bottom: 2px solid #e2e8f0;
+  font-weight: 600;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #e2e8f0;
+  user-select: none;
 }
 
 .routesTable th[data-sort] {
   cursor: pointer;
-  user-select: none;
+}
+.routesTable th[data-sort]:hover {
+  color: #0f172a;
+  background-color: #f1f5f9;
 }
 
-.routesTable th[data-sort]:after {
-  content: ' ↕';
-  opacity: 0.3;
-  font-size: 0.75rem;
-  margin-left: 4px;
+.routesTable td {
+  padding: 1.1rem 1.25rem;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  font-weight: 500;
+  vertical-align: middle;
 }
 
-.routesTable th.sort-asc:after { content: ' ↑'; opacity: 1; color: #0284c7; }
-.routesTable th.sort-desc:after { content: ' ↓'; opacity: 1; color: #0284c7; }
-
-/* Inline Table Dropdown Preview Styling */
-.route-details-box {
+.routesTable tbody tr.route-row {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.routesTable tbody tr.route-row:hover {
   background-color: #f8fafc;
-  padding: 1.5rem !important;
-  border-bottom: 1px solid #e2e8f0;
 }
 
+/* Inline Collapsible Preview Canvas Container Module */
+.details-row {
+  background-color: #fafafa;
+}
+.details-row td {
+  padding: 0 !important;
+}
+.route-details-box {
+  padding: 1.75rem 2rem !important;
+  border-bottom: 1px solid #cbd5e1;
+}
+
+/* Leaflet Layout Structuring Elements inside Row Details */
 .route-layout {
   display: flex;
-  gap: 1.5rem;
+  gap: 24px;
 }
-
 .route-map-wrap {
-  flex: 3;
-  min-width: 0;
-}
-
-.route-map {
-  height: 400px;
-  border-radius: 8px;
-  border: 1px solid #cbd5e1;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-}
-
-.route-info {
   flex: 1;
-  font-size: 0.8rem;
-  line-height: 1.5;
+  min-width: 0;
+  height: 320px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #cbd5e1;
+}
+.route-map {
+  width: 100%;
+  height: 100%;
+}
+.route-info {
+  width: 380px;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
 }
-
 .route-info h4 {
-  margin: 0;
-  font-size: 1rem;
+  margin: 0 0 1rem 0;
+  font-size: 1.2rem;
   font-weight: 700;
 }
-
 .route-info h4 a {
-  color: #0284c7;
+  color: #0f172a;
   text-decoration: none;
 }
-.route-info h4 a:hover { text-decoration: underline; }
-
+.route-info h4 a:hover {
+  color: #0284c7;
+}
 .route-meta {
   list-style: none;
   padding: 0;
-  margin: 0;
+  margin: 0 0 1.5rem 0;
 }
-
 .route-meta li {
-  margin-bottom: 0.4rem;
-  color: #475569;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 0.88rem;
 }
-
-.route-meta strong { color: #0f172a; }
-
-.route-tags strong {
+.route-tags label {
   display: block;
-  margin-bottom: 0.25rem;
-  color: #0f172a;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 0.4rem;
 }
-
 .route-tags input {
   width: 100%;
-  padding: 0.4rem 0.6rem;
+  padding: 0.5rem 0.75rem;
   border-radius: 6px;
   border: 1px solid #cbd5e1;
-  font-size: 0.8rem;
-  background-color: #ffffff;
-}
-.route-tags input:focus {
-  outline: none;
-  border-color: #0284c7;
+  font-family: inherit;
+  font-size: 0.88rem;
 }
 
-#filterPanel {
-  position: fixed;
-  top: 0;
-  right: 0;
-  width: 360px;
-  height: 100%;
-  background: #ffffff;
-  box-shadow: -4px 0 24px rgba(148, 163, 184, 0.15);
-  border-left: 1px solid #e2e8f0;
-  padding: 2rem 1.5rem;
-  transform: translateX(100%);
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  z-index: 1050;
-  overflow-y: auto;
-}
-
-#filterPanel.open {
-  transform: translateX(0);
-}
-
-.distance-label {
-  background-color: #ffffff;
-  color: #1e293b;
-  font-size: 0.6rem;
+/* --- PREMIUM GRAPHIC MICRO BADGES --- */
+.route-discipline-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.76rem;
   font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 10px;
-  border: 1px solid #cbd5e1;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
+.badge-discipline-1 { background-color: #eff6ff; color: #1d4ed8; }
+.badge-discipline-6 { background-color: #fef3c7; color: #b45309; }
+.badge-discipline-2 { background-color: #ecfdf5; color: #047857; }
+.badge-discipline-3 { background-color: #f5f5f4; color: #44403c; }
 
-figure {
-  width: 100%;
-  overflow-x: auto;
-  margin: 0;
+.stat-numeric-bold {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: #0f172a;
 }
-
-.range-slider input[type="range"]::-webkit-slider-thumb { pointer-events: auto; cursor: pointer; }
-.range-slider input[type="range"]::-moz-range-thumb { pointer-events: auto; cursor: pointer; }
-#filterDistanceMin { background: transparent !important; }        
+.stat-unit-label {
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 500;
+  margin-left: 2px;
+}
 </style>
 
-<body>
+<div class="container-premium">
 
-<main class="container">
-
-<header class="grid">
-  <div class="user-profile-block">
-    <img src="<?= htmlspecialchars($user['avatar']) ?>" alt="Avatar" width="48" height="48" style="border-radius:50%">
-    <div>
-      <strong><?= htmlspecialchars($user['firstname'].' '.$user['lastname']) ?></strong><br>
-      <small>Last Strava Sync: <?= $user['last_routes_sync'] ? htmlspecialchars($user['last_routes_sync']) : 'Never synced' ?></small>
+  <div class="dashboard-header-block">
+    <div class="title-area">
+      <h1>My Saved Routes</h1>
+      <div style="display:flex; align-items:center; gap:12px; margin-top:0.4rem;">
+        <div class="profile-summary-tag">
+          <img src="<?= htmlspecialchars($user['avatar']) ?>" alt="Avatar" width="32" height="32">
+          <span style="font-size:0.88rem; font-weight:600; color:#334155;">
+            <?= htmlspecialchars($user['firstname'].' '.$user['lastname']) ?>
+          </span>
+        </div>
+        <p style="font-size:0.85rem; color:#64748b;">
+          Last Strava Sync: <span style="font-weight:600; color:#475569;"><?= $user['last_routes_sync'] ? htmlspecialchars($user['last_routes_sync']) : 'Never' ?></span>
+        </p>
+      </div>
     </div>
+
+    <div style="display: flex; gap: 10px; align-items: center;">
+      <a id="mapLink" href="map.php" class="btn-premium-action btn-premium-secondary">Map View Map 🗺️</a>
+      <button id="openFilters" class="btn-premium-action btn-premium-secondary" type="button">Filters Panel ⚙️</button>
+      <button id="fetchRoutes" class="btn-premium-action" type="button">Sync Strava Tracks</button>
+    </div>  
   </div>
 
-  <div class="actions-block">
-    <a id="mapLink" href="map.php" class="btn-custom">Map view</a>
-    <button id="fetchRoutes" class="btn-custom primary" type="button">Fetch new routes from Strava</button>
-    <button id="openFilters" class="btn-custom" type="button">Filters ⚙️</button>
-  </div>    
-</header>
+  <div class="premium-data-card">
+    <table class="routesTable">
+      <thead>
+        <tr>
+          <th data-sort="name" style="width: 35%;">Name</th>
+          <th data-sort="type" style="width: 12%;">Type</th>
+          <th data-sort="distance_km" style="width: 13%;">Distance</th>
+          <th data-sort="elevation" style="width: 13%;">Elevation Change</th>
+          <th data-sort="estimated_moving_time" style="width: 12%;">Moving Time</th>
+          <th data-sort="created_date" style="width: 15%;">Creation Date</th>
+          <th style="width: 5%; text-align: center;">Status</th>
+        </tr>
+      </thead>
+      <tbody id="routesBody"></tbody>
+    </table>
+  </div>
 
-<section>
-<figure>
-<table class="routesTable text-center">
-<thead>
-<tr>
-    <th data-sort="name">Name</th>
-    <th data-sort="distance_km">Distance (km)</th>
-    <th data-sort="elevation">Elevation (m)</th>
-    <th data-sort="estimated_moving_time">Moving Time</th>
-    <th data-sort="created_date">Creation Date</th>
-    <th data-sort="starred">Starred</th>
-    <th data-sort="private">Private</th>
-  </tr>
-</thead>
-<tbody id="routesBody"></tbody>
-</table>
-</figure>
-</section>
   <?php include 'filter_panel.php'; ?>   
-</main>
+</div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/@mapbox/polyline"></script>
@@ -414,7 +405,6 @@ figure {
     
 <script>
 var routes = <?= json_encode($routes, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?: '[]'; ?>;
-const tbody = document.getElementById('routesBody');
     
 function formatDuration(seconds) {
     if (!seconds) return "0:00:00";
@@ -430,27 +420,38 @@ async function renderTable(data) {
     tbody.innerHTML = '';
 
     if (!data || data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 2rem; color: #64748b;">No routes found matching filter criteria.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 3rem; color: #64748b; font-weight:500;">No routes found matching your active filter configuration.</td></tr>`;
         return;
     }
 
     data.forEach(route => {
         const row = document.createElement('tr');
         row.className = 'route-row';
+        
+        // Status indicator parsing matching style context configurations
+        let statusString = '';
+        if (route.starred == 1) statusString += '<span style="color:#f59e0b; margin-right:4px;">★</span>';
+        if (route.private == 1) statusString += '<span style="color:#64748b;">🔒</span>';
+        if (!statusString) statusString = '<span style="color:#cbd5e1;">—</span>';
+
         row.innerHTML = `
-            <td style="font-weight: 500; color: #0f172a;">${route.name || 'Untitled'}</td>
-            <td>${route.distance_km ? Number(route.distance_km).toFixed(2) : '0.00'} km</td>
-            <td>${route.elevation || 0} m</td>
-            <td>${formatDuration(route.estimated_moving_time)}</td>
-            <td>${route.created_date}</td>
-            <td style="color: #f59e0b; font-size: 1.1rem; text-align: center;">${route.starred == 1 ? '★' : ''}</td>
-            <td style="text-align: center;">${route.private == 1 ? '🔒' : ''}</td>
+            <td style="font-weight: 600; color: #0f172a;">${route.name || 'Untitled Track'}</td>
+            <td>
+                <span class="route-discipline-badge badge-discipline-${route.type || 1}">
+                    ${routeTypeLabel(route.type)}
+                </span>
+            </td>
+            <td><span class="stat-numeric-bold">${route.distance_km ? Number(route.distance_km).toFixed(1) : '0.0'}</span><span class="stat-unit-label">km</span></td>
+            <td><span class="stat-numeric-bold">${Math.round(route.elevation) || 0}</span><span class="stat-unit-label">m</span></td>
+            <td style="font-variant-numeric: tabular-nums; font-weight:500;">${formatDuration(route.estimated_moving_time)}</td>
+            <td style="color: #64748b; font-size: 0.88rem;">${route.created_date || '—'}</td>
+            <td style="text-align: center; font-size: 1rem;">${statusString}</td>
         `;
 
         const details = document.createElement('tr');
         details.hidden = true;
         details.className = 'details-row';
-        details.innerHTML = `<td colspan="7" class="route-details-box"><div id="details-content-${route.route_id}">Loading Preview Canvas...</div></td>`;
+        details.innerHTML = `<td colspan="7" class="route-details-box"><div id="details-content-${route.route_id}">Loading Canvas Frame Preview Layer...</div></td>`;
 
         row.onclick = async () => {
             details.hidden = !details.hidden;
@@ -463,13 +464,14 @@ async function renderTable(data) {
                         <div class="route-info">
                             <h4><a href="https://www.strava.com/routes/${route.route_id}" target="_blank">${route.name}</a></h4>
                             <ul class="route-meta">
-                                <li><strong>Distance:</strong> ${Number(route.distance_km).toFixed(2)} km</li>
-                                <li><strong>Elevation:</strong> ${route.elevation} m</li>
-                                <li><strong>Type:</strong> ${routeTypeLabel(route.type)}</li>
+                                <li><strong>Distance Boundary:</strong> ${Number(route.distance_km).toFixed(2)} km</li>
+                                <li><strong>Net Elevation:</strong> ${Math.round(route.elevation)} meters</li>
+                                <li><strong>Activity Profile:</strong> ${routeTypeLabel(route.type)}</li>
+                                <li><strong>Regional Origin:</strong> ${route.country || 'Undefined Region'}</li>
                             </ul>
                             <div class="route-tags">
-                                <strong>Tags</strong>
-                                <input type="text" value="${route.tags || ''}" placeholder="Add comma-separated tags..." onblur="saveTags('${route.route_id}', this.value)">
+                                <label>Track Classification Tags</label>
+                                <input type="text" value="${route.tags || ''}" placeholder="e.g. weekend, gravel, climbing..." onblur="saveTags('${route.route_id}', this.value)">
                             </div>
                         </div>
                     </div>`;
@@ -528,7 +530,6 @@ function initMap(route) {
         const coords = polyline.decode(route.summary_polyline).map(c => [c[0], c[1]]);
         const map = L.map(mapId);
         
-        // Match Positron Light Mode Style
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
             attribution: '&copy; OpenStreetMap &copy; CARTO'
         }).addTo(map);
@@ -547,7 +548,6 @@ document.getElementById('fetchRoutes').addEventListener('click', async () => {
     const btn = document.getElementById('fetchRoutes');
     const originalText = btn.innerText;
     
-    btn.setAttribute('aria-busy', 'true');
     btn.disabled = true;
 
     let page = 1;
@@ -556,7 +556,7 @@ document.getElementById('fetchRoutes').addEventListener('click', async () => {
 
     try {
         while (keepGoing) {
-            btn.innerText = `Syncing page ${page}... (${totalSynced} routes)`;
+            btn.innerText = `Syncing page ${page}... (${totalSynced} tracks)`;
 
             const res = await fetch(`fetch_routes.php?page=${page}`);
             const text = await res.text();
@@ -566,7 +566,7 @@ document.getElementById('fetchRoutes').addEventListener('click', async () => {
                 data = JSON.parse(text);
             } catch (jsonErr) {
                 console.error('Invalid JSON response:', text);
-                throw new Error('Server returned an invalid response.');
+                throw new Error('Server returned an invalid response syntax layer.');
             }
 
             if (!data.success) {
@@ -583,7 +583,7 @@ document.getElementById('fetchRoutes').addEventListener('click', async () => {
             }
         }
 
-        btn.innerText = "Sync complete! Filling in country data...";
+        btn.innerText = "Sync complete! Resolving geography tags...";
         
         let geocodingDone = false;
         let totalFixed = 0;
@@ -595,28 +595,27 @@ document.getElementById('fetchRoutes').addEventListener('click', async () => {
 
                 if (geoData.updated_count > 0) {
                     totalFixed += geoData.updated_count;
-                    btn.innerText = `Geocoding... (${totalFixed} countries fixed)`;
+                    btn.innerText = `Geocoding... (${totalFixed} paths localized)`;
                     await new Promise(r => setTimeout(r, 500));
                 } else {
                     geocodingDone = true;
                 }
             } catch (err) {
-                console.warn("Geocoding batch failed.", err);
+                console.warn("Geocoding batch skipped or hit maximum capacity boundaries.", err);
                 geocodingDone = true; 
             }
         }
 
-        btn.innerText = `All Done! ${totalSynced} synced, ${totalFixed} geocoded.`;
+        btn.innerText = `Success! ${totalSynced} structural updates completed.`;
         setTimeout(() => {
             location.reload(); 
-        }, 1500);
+        }, 1200);
 
     } catch (e) {
-        console.error('Fetch error:', e);
+        console.error('Fetch operation abort error:', e);
         alert('Error: ' + e.message);
         btn.innerText = originalText;
     } finally {
-        btn.removeAttribute('aria-busy');
         btn.disabled = false;
     }
 });
@@ -652,10 +651,10 @@ async function saveTags(routeId, value) {
 
     const data = await res.json();
     if (!data.success) {
-      alert(data.error || 'Failed to save tags');
+      alert(data.error || 'Failed to preserve active track classification strings.');
     }
   } catch (e) {
-    alert('Error saving tags');
+    alert('Error archiving tag array structure modification adjustments.');
   }
 }
 </script>
@@ -714,7 +713,11 @@ document.querySelectorAll('.routesTable th[data-sort]').forEach(th => {
             return 0;
         });
 
-        applyFilters();
+        if (typeof applyFilters === 'function') {
+            applyFilters();
+        } else {
+            renderTable(routes);
+        }
     });
 });
 </style>
