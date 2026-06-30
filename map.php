@@ -208,7 +208,6 @@ header.grid {
 <main class="container">
 <header class="grid">
     <div>
-        <h2 style="margin:0 0 0.15rem 0; font-size:1.05rem; font-weight:800; color:#0f172a;">Track Database Canvas</h2>
         <div class="user-meta-bar">
             <div class="profile-badge">
                 <img src="<?= htmlspecialchars($user['avatar'] ?? '') ?>" alt="Avatar" width="16" height="16">
