@@ -101,7 +101,6 @@ $countries = $countryStmt->fetchAll(PDO::FETCH_COLUMN);
 
 <?php include 'header.php'; ?>
 
-<!-- External Resource Engine Layer -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -114,47 +113,52 @@ body {
     color: #1e293b;
     margin: 0;
     padding: 0;
-    overflow: hidden; /* Prevents whole-page scrolling for true app workspace design */
+    overflow: hidden; /* App view shell standard */
     -webkit-font-smoothing: antialiased;
 }
 
-/* Master App Layout Canvas Container */
+/* Master Grid Workspace Frame */
 .app-workspace-frame {
     display: flex;
     width: 100vw;
     height: 100vh;
     box-sizing: border-box;
+    position: relative;
 }
 
-/* --- LEFT TELEMETRY HUB PANEL --- */
+/* --- TELEMETRY SIDEBAR HUB --- */
 .telemetry-sidebar {
-    width: 440px;
-    min-width: 440px;
+    width: 420px;
+    min-width: 420px;
     background: #ffffff;
     border-right: 1px solid #e2e8f0;
     display: flex;
     flex-direction: column;
-    z-index: 10;
-    box-shadow: 4px 0 32px rgba(15, 23, 42, 0.04);
+    z-index: 20;
+    box-shadow: 4px 0 32px rgba(15, 23, 42, 0.03);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Sidebar Hiding mechanics for full spreadsheet display states */
+.app-workspace-frame.fullscreen-table-mode .telemetry-sidebar {
+    margin-left: -420px;
+    opacity: 0;
+    pointer-events: none;
 }
 
 .sidebar-header {
-    padding: 1.75rem 1.5rem;
+    padding: 1.5rem;
     border-bottom: 1px solid #e2e8f0;
-    background: #ffffff;
 }
 
 .brand-wrapper h1 {
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     font-weight: 800;
     color: #0f172a;
     letter-spacing: -0.75px;
     margin: 0 0 0.5rem 0;
 }
-.brand-wrapper h1 span {
-    color: #0284c7;
-    position: relative;
-}
+.brand-wrapper h1 span { color: #0284c7; }
 
 .profile-badge {
     display: inline-flex;
@@ -171,24 +175,44 @@ body {
     border: 1.5px solid #0284c7;
 }
 
-/* Scrollable Track Feed Container */
-.track-feed-container {
+/* System Workspace Mode Controller Switch */
+.view-mode-selector-bar {
+    display: flex;
+    background: #f1f5f9;
+    padding: 4px;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    border: 1px solid #e2e8f0;
+}
+.mode-toggle-btn {
     flex: 1;
-    overflow-y: auto;
-    padding: 1.25rem 1rem;
-    background: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.5rem;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.mode-toggle-btn.active-mode {
+    background: #ffffff;
+    color: #0f172a;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
 }
 
-/* Refined Athletic Control Buttons */
 .action-grid-layout {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 8px;
-    padding: 1rem 1.5rem;
+    padding: 0 1.5rem 1.25rem 1.5rem;
     border-bottom: 1px solid #e2e8f0;
-    background: #ffffff;
 }
-
 .btn-action-pill {
     display: inline-flex;
     align-items: center;
@@ -196,14 +220,14 @@ body {
     gap: 6px;
     font-size: 0.8rem;
     font-weight: 600;
-    padding: 0.6rem 0.85rem;
+    padding: 0.55rem 0.75rem;
     border-radius: 8px;
     border: 1px solid #cbd5e1;
     background: #ffffff;
     color: #1e293b;
     cursor: pointer;
     text-decoration: none;
-    transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: all 0.1s ease;
 }
 .btn-action-pill:hover {
     border-color: #0284c7;
@@ -217,16 +241,18 @@ body {
     color: #0f172a;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    box-shadow: 0 4px 12px rgba(0, 230, 118, 0.2);
 }
-.btn-action-pill.btn-sync:hover {
-    background-color: #00c853;
-    transform: translateY(-1px);
-    color: #0f172a;
+.btn-action-pill.btn-sync:hover { background-color: #00c853; }
+
+/* Dynamic Layout Containers */
+.track-feed-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    background: #f8fafc;
 }
 
-/* Hyper-styled Performance Metric Cards */
+/* Hyper-Styled Cards view option layout */
 .track-card {
     background: #ffffff;
     border: 1px solid #e2e8f0;
@@ -234,114 +260,107 @@ body {
     padding: 1rem;
     margin-bottom: 0.75rem;
     cursor: pointer;
-    position: relative;
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
 }
 .track-card:hover {
     border-color: #0284c7;
     transform: translateX(2px);
-    box-shadow: 0 4px 20px rgba(2, 132, 199, 0.05);
 }
 .track-card.active-track {
     border-color: #0284c7;
     background: #f0f9ff;
-    box-shadow: 0 0 0 1px #0284c7, 0 8px 24px rgba(2, 132, 199, 0.06);
+    box-shadow: 0 0 0 1px #0284c7;
 }
-
 .track-card-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     gap: 12px;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.6rem;
 }
 .track-card-title {
-    font-size: 0.95rem;
+    font-size: 0.92rem;
     font-weight: 700;
     color: #0f172a;
-    line-height: 1.35;
     margin: 0;
+    line-height: 1.3;
 }
-
 .telemetry-row {
     display: flex;
-    gap: 12px;
+    gap: 8px;
     background: #f8fafc;
-    border-radius: 8px;
-    padding: 0.6rem;
+    border-radius: 6px;
+    padding: 0.5rem;
     border: 1px solid #e2e8f0;
 }
-.track-card.active-track .telemetry-row {
+.track-card.active-track .telemetry-row { background: #ffffff; }
+.telemetry-item { flex: 1; text-align: center; }
+.telemetry-label { font-size: 0.6rem; text-transform: uppercase; font-weight: 600; color: #64748b; }
+.telemetry-value { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 600; color: #0f172a; }
+
+/* --- CENTER DATA PLATFORM PANEL (THE PURE TABLE VIEW) --- */
+.center-data-platform {
+    display: none; /* Controlled dynamically by JS Workspace switcher */
+    flex: 1.2;
     background: #ffffff;
-    border-color: rgba(2, 132, 199, 0.15);
+    border-right: 1px solid #e2e8f0;
+    flex-direction: column;
+    z-index: 15;
+    box-shadow: 6px 0 24px rgba(15, 23, 42, 0.02);
+}
+.app-workspace-frame.fullscreen-table-mode .center-data-platform {
+    display: flex;
 }
 
-.telemetry-item {
+.platform-table-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.table-wrapper-scroller {
     flex: 1;
-    text-align: center;
-}
-.telemetry-label {
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    font-weight: 600;
-    color: #64748b;
-    letter-spacing: 0.5px;
-    margin-bottom: 1px;
-}
-.telemetry-value {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.88rem;
-    font-weight: 600;
-    color: #0f172a;
-}
-.telemetry-value span {
-    font-size: 0.7rem;
-    color: #64748b;
-    margin-left: 1px;
-    font-family: 'Inter', sans-serif;
+    overflow-auto: auto;
 }
 
-/* Expanded Metadata Field Wrapper inside Sidebar Card */
-.track-extended-panel {
-    margin-top: 0.75rem;
-    padding-top: 0.75rem;
-    border-top: 1px dashed #e2e8f0;
-    display: none;
-}
-.track-card.active-track .track-extended-panel {
-    display: block;
-}
-
-.tag-input-style {
+/* Premium High Density Structured Spreadsheet Layout */
+.dense-matrix-table {
     width: 100%;
-    padding: 0.45rem 0.65rem;
-    border-radius: 6px;
-    border: 1px solid #cbd5e1;
-    font-size: 0.8rem;
-    color: #1e293b;
-    box-sizing: border-box;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    text-align: left;
 }
-.tag-input-style:focus {
-    outline: none;
-    border-color: #0284c7;
-    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12);
-}
-
-/* Custom Sport Badges */
-.discipline-pill {
-    font-size: 0.65rem;
-    font-weight: 700;
+.dense-matrix-table th {
+    background: #f8fafc;
+    color: #64748b;
+    font-weight: 600;
     text-transform: uppercase;
+    font-size: 0.72rem;
     letter-spacing: 0.5px;
-    padding: 2px 6px;
-    border-radius: 4px;
-    background: #e2e8f0;
-    color: #475569;
-    white-space: nowrap;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e2e8f0;
+    position: sticky;
+    top: 0;
+    user-select: none;
+    cursor: pointer;
 }
-.discipline-1 { background-color: rgba(2, 132, 199, 0.08); color: #0284c7; }
-.discipline-6 { background-color: #fef3c7; color: #d97706; }
-.discipline-2 { background-color: rgba(0, 230, 118, 0.1); color: #1b5e20; }
+.dense-matrix-table th:hover { color: #0f172a; background: #f1f5f9; }
+.dense-matrix-table td {
+    padding: 0.65rem 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    color: #1e293b;
+    vertical-align: middle;
+}
+.dense-matrix-table tbody tr {
+    cursor: pointer;
+    transition: background-color 0.1s ease;
+}
+.dense-matrix-table tbody tr:hover { background-color: #f0f9ff; }
+.dense-matrix-table tbody tr.row-selected {
+    background-color: #e0f2fe !important;
+    font-weight: 500;
+}
 
 /* --- RIGHT VIEWPORT CANVAS MAP --- */
 .map-canvas-frame {
@@ -349,12 +368,9 @@ body {
     position: relative;
     background: #cbd5e1;
 }
-#primary-workspace-map {
-    width: 100%;
-    height: 100%;
-}
+#primary-workspace-map { width: 100%; height: 100%; }
 
-/* Interactive Map Splash HUD Overlay */
+/* HUD Displays */
 .map-splash-hud {
     position: absolute;
     top: 50%;
@@ -369,68 +385,93 @@ body {
     text-align: center;
     box-shadow: 0 12px 40px rgba(15, 23, 42, 0.08);
     pointer-events: none;
-    transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: opacity 0.2s ease;
 }
 
-/* Custom Leaflet Map Tooltip adjustments */
+/* Custom Component Elements */
+.discipline-pill {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+.discipline-1 { background: rgba(2, 132, 199, 0.08); color: #0284c7; }
+.discipline-6 { background: #fef3c7; color: #d97706; }
+.discipline-2 { background: rgba(0, 230, 118, 0.1); color: #1b5e20; }
+
 .distance-label {
-    background: #0f172a !important;
-    color: #ffffff !important;
-    border: none !important;
-    border-radius: 4px !important;
-    font-weight: 700 !important;
-    font-family: 'JetBrains Mono', monospace !important;
-    font-size: 10px !important;
-    padding: 2px 5px !important;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    background: #0f172a !important; color: #ffffff !important; border: none !important;
+    font-family: 'JetBrains Mono', monospace; font-size: 9px !important; padding: 2px 4px !important;
 }
 </style>
 
-<div class="app-workspace-frame">
+<div class="app-workspace-frame" id="workspaceMainShell">
     
-    <!-- LEFT PANEL: Dynamic List & Feed Engine -->
     <aside class="telemetry-sidebar">
-        
         <div class="sidebar-header">
             <div class="brand-wrapper">
                 <h1>Strava <span>Workspace</span></h1>
             </div>
             
+            <div class="view-mode-selector-bar">
+                <button class="mode-toggle-btn active-mode" onclick="switchWorkspaceLayout('cards')">📁 Feed Cards</button>
+                <button class="mode-toggle-btn" onclick="switchWorkspaceLayout('table')">📊 Data Matrix Table</button>
+            </div>
+
             <div class="d-flex justify-content-between align-items-center mt-2">
                 <div class="profile-badge">
-                    <img src="<?= htmlspecialchars($user['avatar']) ?>" alt="User Avatar" width="24" height="24">
-                    <span style="font-size: 0.8rem; font-weight: 600; color: #334155;">
-                        <?= htmlspecialchars($user['firstname'] . ' ' . $user['lastname']) ?>
-                    </span>
+                    <img src="<?= htmlspecialchars($user['avatar']) ?>" alt="User Avatar" width="22" height="22">
+                    <span style="font-size: 0.78rem; font-weight: 600; color: #334155;"><?= htmlspecialchars($user['firstname']) ?></span>
                 </div>
-                <div style="font-size: 0.75rem; color: #64748b; text-align: right;">
-                    Sync: <span style="font-weight:600; color:#1e293b;"><?= $user['last_routes_sync'] ? date('d M H:i', strtotime($user['last_routes_sync'])) : 'Never' ?></span>
+                <div style="font-size: 0.72rem; color: #64748b;">
+                    Sync: <span style="font-weight:600; color:#1e293b;"><?= $user['last_routes_sync'] ? date('d M', strtotime($user['last_routes_sync'])) : 'Never' ?></span>
                 </div>
             </div>
         </div>
 
         <div class="action-grid-layout">
-            <a id="mapLink" href="map.php" class="btn-action-pill">🗺️ Full Map</a>
-            <a id="dubLink" href="duplicate_finder.php" class="btn-action-pill">Duplicate Tool</a>
-            <button id="openFilters" class="btn-action-pill" type="button">⚙️ Track Filters</button>
+            <a id="mapLink" href="map.php" class="btn-action-pill">🗺️ Full View</a>
+            <button id="openFilters" class="btn-action-pill" type="button">⚙️ Filters</button>
             <button id="fetchRoutes" class="btn-action-pill btn-sync" type="button">🚀 Sync Strava Tracks</button>
         </div>
 
-        <!-- Scrollable Track Units Feed -->
-        <div class="track-feed-container" id="trackFeedContainer">
-            <!-- Programmatic feed updates render inside this canvas zone -->
-        </div>
-
+        <div class="track-feed-container" id="trackFeedContainer"></div>
     </aside>
 
-    <!-- RIGHT PANEL: Full Horizon Map Engine Frame -->
+    <section class="center-data-platform">
+        <div class="platform-table-header">
+            <div>
+                <h2 style="margin:0; font-size:1.25rem; font-weight:800; color:#0f172a;">Track Database Matrix</h2>
+                <p style="margin:0; font-size:0.78rem; color:#64748b;">Click any row index line track segment parameters to project maps instantly.</p>
+            </div>
+            <button class="btn-action-pill" onclick="switchWorkspaceLayout('cards')" style="border-color:#0284c7; color:#0284c7; background:#f0f9ff;">✕ Close Table View</button>
+        </div>
+        
+        <div class="table-wrapper-scroller">
+            <table class="dense-matrix-table">
+                <thead>
+                    <tr>
+                        <th onclick="executeMatrixSort('name')">Route Name</th>
+                        <th onclick="executeMatrixSort('type')" style="width: 100px;">Discipline</th>
+                        <th onclick="executeMatrixSort('distance_km')" style="width: 110px;">Distance</th>
+                        <th onclick="executeMatrixSort('elevation')" style="width: 110px;">Elevation</th>
+                        <th onclick="executeMatrixSort('estimated_moving_time')" style="width: 110px;">Time Est</th>
+                        <th onclick="executeMatrixSort('created_date')" style="width: 120px;">Created</th>
+                        <th style="width: 60px; text-align:center;">Status</th>
+                    </tr>
+                </thead>
+                <tbody id="denseMatrixTableBody"></tbody>
+            </table>
+        </div>
+    </section>
+
     <main class="map-canvas-frame">
         <div id="primary-workspace-map"></div>
-        
         <div class="map-splash-hud" id="mapSplashHud">
-            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🚴‍♂️</div>
-            <h3 style="margin:0 0 0.25rem 0; font-weight:700; color:#0f172a;">Performance Analytics Frame</h3>
-            <p style="margin:0; font-size:0.85rem; color:#64748b;">Select an active telemetry track route profile trace to render map spatial layers.</p>
+            <div style="font-size: 2rem; margin-bottom: 0.5rem;">🚴‍♂️</div>
+            <h3 style="margin:0 0 0.25rem 0; font-weight:700; color:#0f172a;">Performance Canvas Engine</h3>
+            <p style="margin:0; font-size:0.8rem; color:#64748b;">Select an active route timeline index coordinate to build spatial tracking visualizations.</p>
         </div>
     </main>
 
@@ -443,11 +484,12 @@ body {
 <script src="routes_shared.js?v=1.0.1"></script>
     
 <script>
-// Master Reactive Data Variables Storage
 var routes = <?= json_encode($routes, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?: '[]'; ?>;
 let globalWorkspaceMap = null;
 let currentActivePolyline = null;
 let currentDistanceMarkers = [];
+let workspaceViewMode = 'cards'; 
+let matrixSortState = { column: null, direction: 'asc' };
 
 function formatDuration(seconds) {
     if (!seconds) return "00:00";
@@ -460,90 +502,113 @@ function routeTypeLabel(type) {
     return { 1: 'Ride', 2: 'Run', 3: 'Walk', 6: 'Gravel' }[type] || 'Track';
 }
 
-// Initialize Leaflet Workspace Engine Layer
 function initWorkspaceMap() {
-    globalWorkspaceMap = L.map('primary-workspace-map', {
-        zoomControl: false 
-    }).setView([50.8503, 4.3517], 9); // Defaults spatial center metrics
-
+    globalWorkspaceMap = L.map('primary-workspace-map', { zoomControl: false }).setView([50.8503, 4.3517], 9);
     L.control.zoom({ position: 'topright' }).addTo(globalWorkspaceMap);
-
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap Contributors &copy; CARTO'
+        attribution: '&copy; OpenStreetMap Contribs &copy; CARTO'
     }).addTo(globalWorkspaceMap);
 }
 
-// Master Render System replacing outdated flat text table grids
+// Global Workspace Master Route Layout Swapper Controller
+function switchWorkspaceLayout(targetMode) {
+    workspaceViewMode = targetMode;
+    const shell = document.getElementById('workspaceMainShell');
+    const toggles = document.querySelectorAll('.mode-toggle-btn');
+    
+    toggles.forEach(b => b.classList.remove('active-mode'));
+
+    if (targetMode === 'table') {
+        shell.classList.add('fullscreen-table-mode');
+        toggles[1].classList.add('active-mode');
+    } else {
+        shell.classList.remove('fullscreen-table-mode');
+        toggles[0].classList.add('active-mode');
+    }
+    
+    // Auto recalculate map view borders safely during layout reflows
+    setTimeout(() => { if(globalWorkspaceMap) globalWorkspaceMap.invalidateSize(); }, 310);
+}
+
+// Combined dual UI renderer
 async function renderTable(data) {
+    renderCardFeedLayout(data);
+    renderDenseSpreadsheetMatrix(data);
+}
+
+// 1. Sidebar Cards Render System Loop
+function renderCardFeedLayout(data) {
     const feedContainer = document.getElementById('trackFeedContainer');
     if (!feedContainer) return;
     feedContainer.innerHTML = '';
-
-    if (!data || data.length === 0) {
-        feedContainer.innerHTML = `<div style="text-align:center; padding: 3rem 1rem; color: #64748b; font-size:0.88rem;">No active routes matched your filtered tracking profile parameters.</div>`;
-        return;
-    }
 
     data.forEach(route => {
         const card = document.createElement('div');
         card.className = 'track-card';
         card.id = `card-id-${route.route_id}`;
         
-        let statusString = '';
-        if (route.starred == 1) statusString += '<span style="color:#f59e0b;">★</span>';
-        if (route.private == 1) statusString += '<span style="color:#64748b; margin-left:4px;">🔒</span>';
+        let status = (route.starred == 1 ? '★' : '') + (route.private == 1 ? ' 🔒' : '');
 
         card.innerHTML = `
             <div class="track-card-header">
                 <h4 class="track-card-title">${route.name || 'Untitled Track'}</h4>
-                <div style="display:flex; align-items:center; gap:6px;">
-                    ${statusString}
-                    <span class="discipline-pill discipline-${route.type || 1}">${routeTypeLabel(route.type)}</span>
-                </div>
+                <span class="discipline-pill discipline-${route.type || 1}">${routeTypeLabel(route.type)}</span>
             </div>
-            
             <div class="telemetry-row">
-                <div class="telemetry-item">
-                    <div class="telemetry-label">Distance</div>
-                    <div class="telemetry-value">${route.distance_km ? Number(route.distance_km).toFixed(1) : '0.0'}<span>km</span></div>
-                </div>
-                <div class="telemetry-item">
-                    <div class="telemetry-label">Elevation</div>
-                    <div class="telemetry-value">${Math.round(route.elevation) || 0}<span>m</span></div>
-                </div>
-                <div class="telemetry-item">
-                    <div class="telemetry-label">Time Est</div>
-                    <div class="telemetry-value" style="font-size:0.8rem;">${formatDuration(route.estimated_moving_time)}</div>
-                </div>
-            </div>
-
-            <div class="track-extended-panel" onclick="event.stopPropagation();">
-                <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:#64748b; margin-bottom:8px;">
-                    <span>Created: <strong>${route.created_date || '—'}</strong></span>
-                    <span>Region: <strong>${route.country || 'Global'}</strong></span>
-                </div>
-                <div style="margin-bottom: 4px; font-size:0.72rem; text-transform:uppercase; font-weight:600; color:#64748b; letter-spacing:0.5px;">Workspace Classification Tags</div>
-                <input type="text" class="tag-input-style" value="${route.tags || ''}" placeholder="Gravel, low-traffic, flat weekend..." onblur="saveTags('${route.route_id}', this.value)">
-                <a href="https://www.strava.com/routes/${route.route_id}" target="_blank" style="display:block; margin-top:8px; font-size:0.75rem; text-align:right; color:#0284c7; text-decoration:none; font-weight:600;">View Profile Data on Strava ↗</a>
+                <div class="telemetry-item"><div class="telemetry-label">Dist</div><div class="telemetry-value">${Number(route.distance_km).toFixed(1)}<span>km</span></div></div>
+                <div class="telemetry-item"><div class="telemetry-label">Elev</div><div class="telemetry-value">${Math.round(route.elevation)}<span>m</span></div></div>
+                <div class="telemetry-item"><div class="telemetry-label">Est</div><div class="telemetry-value" style="font-size:0.75rem;">${formatDuration(route.estimated_moving_time)}</div></div>
             </div>
         `;
-
-        card.onclick = () => handleTrackSelection(route, card);
+        card.onclick = () => handleTrackSelection(route, `card-id-${route.route_id}`);
         feedContainer.appendChild(card);
     });
 }
 
-// Focus track selection controller
-async function handleTrackSelection(route, cardElement) {
-    document.querySelectorAll('.track-card').forEach(c => c.classList.remove('active-track'));
-    cardElement.classList.add('active-track');
+// 2. Center Panel Spreadsheet Data Matrix Grid Render System Loop
+function renderDenseSpreadsheetMatrix(data) {
+    const tableBody = document.getElementById('denseMatrixTableBody');
+    if (!tableBody) return;
+    tableBody.innerHTML = '';
 
-    // Remove old trace lines & points boundaries safely
+    data.forEach(route => {
+        const row = document.createElement('tr');
+        row.id = `row-id-${route.route_id}`;
+        
+        let status = '';
+        if(route.starred == 1) status += '<span style="color:#f59e0b;">★</span>';
+        if(route.private == 1) status += ' 🔒';
+
+        row.innerHTML = `
+            <td style="color:#0f172a; font-weight:600;">${route.name || 'Untitled Track'}</td>
+            <td><span class="discipline-pill discipline-${route.type || 1}">${routeTypeLabel(route.type)}</span></td>
+            <td style="font-family:'JetBrains Mono'; font-weight:600;">${Number(route.distance_km).toFixed(1)} km</td>
+            <td style="font-family:'JetBrains Mono'; color:#475569;">${Math.round(route.elevation)} m</td>
+            <td style="color:#475569;">${formatDuration(route.estimated_moving_time)}</td>
+            <td style="color:#64748b; font-size:0.8rem;">${route.created_date || '—'}</td>
+            <td style="text-align:center;">${status || '—'}</td>
+        `;
+        row.onclick = () => handleTrackSelection(route, `row-id-${route.route_id}`);
+        tableBody.appendChild(row);
+    });
+}
+
+// Shared central targeting engine
+async function handleTrackSelection(route, UIComponentElementId) {
+    // Clear selections safely across elements
+    document.querySelectorAll('.track-card').forEach(c => c.classList.remove('active-track'));
+    document.querySelectorAll('.dense-matrix-table tbody tr').forEach(r => r.classList.remove('row-selected'));
+
+    const correspondingCard = document.getElementById(`card-id-${route.route_id}`);
+    const correspondingRow = document.getElementById(`row-id-${route.route_id}`);
+    
+    if(correspondingCard) correspondingCard.classList.add('active-track');
+    if(correspondingRow) correspondingRow.classList.add('row-selected');
+
     if (currentActivePolyline) globalWorkspaceMap.removeLayer(currentActivePolyline);
     currentDistanceMarkers.forEach(m => globalWorkspaceMap.removeLayer(m));
     currentDistanceMarkers = [];
 
-    // Erase splash layout overlay configuration viewports
     document.getElementById('mapSplashHud').style.opacity = '0';
 
     if (!route.summary_polyline) {
@@ -551,53 +616,27 @@ async function handleTrackSelection(route, cardElement) {
             const res = await fetch(`get_polyline.php?route_id=${route.route_id}`);
             const polyData = await res.json();
             route.summary_polyline = polyData.polyline;
-        } catch (e) { console.error("Dynamic track segment query runtime fault lines:", e); }
+        } catch (e) { console.error("Trace buffer line tracking fetch error:", e); }
     }
 
     if (route.summary_polyline) {
         try {
             const coords = polyline.decode(route.summary_polyline).map(c => [c[0], c[1]]);
-            currentActivePolyline = L.polyline(coords, { 
-                color: '#ef4444', 
-                weight: 4.5,
-                opacity: 0.9,
-                lineJoin: 'round'
-            }).addTo(globalWorkspaceMap);
-            
-            globalWorkspaceMap.fitBounds(currentActivePolyline.getBounds(), {
-                padding: [40, 40]
-            });
-
+            currentActivePolyline = L.polyline(coords, { color: '#ef4444', weight: 4.5, opacity: 0.9, lineJoin: 'round' }).addTo(globalWorkspaceMap);
+            globalWorkspaceMap.fitBounds(currentActivePolyline.getBounds(), { padding: [40, 40] });
             addDistanceMarkers(coords, 10);
-        } catch (err) {
-            console.error("Polyline canvas tracing calculations error boundary exception:", err);
-        }
+        } catch (err) { console.error("Leaflet drawing exception parameters:", err); }
     }
 }
 
 function addDistanceMarkers(latlngs, stepKm = 10) {
     let distance = 0;
     let nextMarker = stepKm;
-
     for (let i = 1; i < latlngs.length; i++) {
         distance += haversineDistance(latlngs[i - 1], latlngs[i]);
-
         if (distance >= nextMarker) {
-            const marker = L.circleMarker(latlngs[i], {
-                radius: 4,
-                color: '#0f172a',
-                fillColor: '#ffffff',
-                fillOpacity: 1,
-                weight: 2
-            }).addTo(globalWorkspaceMap);
-
-            marker.bindTooltip(`${nextMarker} km`, {
-                permanent: true,
-                direction: 'top',
-                className: 'distance-label',
-                offset: [0, -5]
-            });
-
+            const marker = L.circleMarker(latlngs[i], { radius: 3.5, color: '#0f172a', fillColor: '#ffffff', fillOpacity: 1, weight: 2 }).addTo(globalWorkspaceMap);
+            marker.bindTooltip(`${nextMarker} k`, { permanent: true, direction: 'top', className: 'distance-label', offset: [0, -4] });
             currentDistanceMarkers.push(marker);
             nextMarker += stepKm;
         }
@@ -614,71 +653,49 @@ function haversineDistance(a, b) {
     return 2 * R * Math.asin(Math.sqrt(h));
 }
 
-// Post metadata parameters to operational state modifications adjustments array targets safely
-async function saveTags(routeId, value) {
-    const tags = value.split(',').map(t => t.trim()).filter(Boolean);
-    try {
-        const res = await fetch('save_route_tags.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ route_id: routeId, tags })
-        });
-        const data = await res.json();
-        if (!data.success) alert(data.error || 'Failed to preserve workspace data tags modifications.');
-    } catch (e) {
-        alert('Server validation query tracking failure.');
+// Structural Matrix database table sorter block
+function executeMatrixSort(column) {
+    if (matrixSortState.column === column) {
+        matrixSortState.direction = matrixSortState.direction === 'asc' ? 'desc' : 'asc';
+    } else {
+        matrixSortState.column = column;
+        matrixSortState.direction = 'asc';
     }
+
+    routes.sort((a, b) => {
+        let valA = a[column];
+        let valB = b[column];
+        if (!isNaN(parseFloat(valA)) && isFinite(valA)) {
+            return matrixSortState.direction === 'asc' ? parseFloat(valA) - parseFloat(valB) : parseFloat(valB) - parseFloat(valA);
+        }
+        return matrixSortState.direction === 'asc' ? String(valA).localeCompare(String(valB)) : String(valB).localeCompare(String(valA));
+    });
+
+    if (typeof applyFilters === 'function') { applyFilters(); } else { renderTable(routes); }
 }
 
-// Strava Synchronization Action Worker Loop
+// Sync execution runtime setup
 document.getElementById('fetchRoutes').addEventListener('click', async () => {
     const btn = document.getElementById('fetchRoutes');
-    const originalText = btn.innerText;
     btn.disabled = true;
-
     let page = 1, keepGoing = true, totalSynced = 0;
-
     try {
         while (keepGoing) {
-            btn.innerText = `Syncing P.${page} (${totalSynced} Tracks)`;
+            btn.innerText = `⏳ Page ${page}...`;
             const res = await fetch(`fetch_routes.php?page=${page}`);
             const data = await res.json();
-
-            if (!data.success) throw new Error(data.error || 'Batch fetch execution parameters broke execution layers.');
+            if (!data.success) throw new Error(data.error);
             totalSynced += data.routes_in_batch;
-            
-            if (data.has_more) {
-                page++;
-                await new Promise(r => setTimeout(r, 1000));
-            } else {
-                keepGoing = false;
-            }
+            if (data.has_more) { page++; await new Promise(r => setTimeout(r, 1000)); } else { keepGoing = false; }
         }
-
-        btn.innerText = "Localizing Geography Elements...";
-        let geocodingDone = false;
-        while (!geocodingDone) {
-            try {
-                const geoRes = await fetch('sync_countries.php'); 
-                const geoData = await geoRes.json();
-                if (geoData.updated_count > 0) {
-                    await new Promise(r => setTimeout(r, 400));
-                } else {
-                    geocodingDone = true;
-                }
-            } catch { geocodingDone = true; }
-        }
-
-        btn.innerText = "Success! Reloading Engine Context Grid...";
+        btn.innerText = "Success! Updating workspace UI...";
         setTimeout(() => location.reload(), 1000);
     } catch (e) {
-        alert('Operational sync sequence failure exception logged: ' + e.message);
-        btn.innerText = originalText;
+        alert('Sync faulted: ' + e.message);
         btn.disabled = false;
     }
 });
 
-// App Initialization Router Listener Loops
 document.addEventListener('DOMContentLoaded', () => {
     initWorkspaceMap();
     renderTable(routes);
