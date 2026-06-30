@@ -342,6 +342,53 @@ document.getElementById('fetchRoutes').addEventListener('click', async () => {
         btn.innerText = "🚀 Sync Tracks";
     }
 });
+
+document.addEventListener('DOMContentLoaded', () => {
+    const viewToggleLink = document.getElementById('mapLink');
+    if (!viewToggleLink) return;
+
+    // Intercept when the user attempts to click or navigate views
+    viewToggleLink.addEventListener('click', (e) => {
+        // Prevent immediate raw fallback link navigation
+        e.preventDefault();
+
+        // 1. Snatch up the window's original base navigation target URL (e.g., 'map.php' or 'routes.php')
+        const targetUrl = new URL(viewToggleLink.getAttribute('href'), window.location.origin);
+
+        // 2. Dynamically gather the live filtering variables directly out of your shared state or DOM inputs
+        const currentParams = new URLSearchParams();
+
+        // Fetch inputs from your filter_panel components if they exist
+        const countryEl = document.getElementById('filterCountry');
+        const searchEl  = document.getElementById('filterSearch');
+        const distMinEl = document.getElementById('filterDistanceMin');
+        const distMaxEl = document.getElementById('filterDistanceMax');
+
+        if (countryEl && countryEl.value) currentParams.set('country', countryEl.value);
+        if (searchEl  && searchEl.value)  currentParams.set('search', searchEl.value);
+        if (distMinEl && distMinEl.value) currentParams.set('dist_min', distMinEl.value);
+        if (distMaxEl && distMaxEl.value) currentParams.set('dist_max', distMaxEl.value);
+
+        // 3. Forward the updated parameters and swap view execution
+        window.location.href = `${targetUrl.pathname}?${currentParams.toString()}`;
+    });
+
+    // --- DEEP-LINKING SYNCHRONIZER ---
+    // Run this sequence immediately on page load to pre-populate UI controls from deep-link URLs
+    const initialParams = new URLSearchParams(window.location.search);
+    
+    if (initialParams.has('country') && document.getElementById('filterCountry')) {
+        document.getElementById('filterCountry').value = initialParams.get('country');
+    }
+    if (initialParams.has('search') && document.getElementById('filterSearch')) {
+        document.getElementById('filterSearch').value = initialParams.get('search');
+    }
+    
+    // Automatically execute the filtering logic after assigning variables if the method is loaded
+    if (typeof applyFilters === 'function') {
+        applyFilters();
+    }
+});
 </script>
 
 <?php include 'footer.php'; ?>
