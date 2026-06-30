@@ -135,7 +135,7 @@ if (isset($_SESSION['internal_user_id'])) {
                 $updateStmt->execute([
                     $data['access_token'],
                     $data['refresh_token'],
-                    $data['token_expires_at'],
+                    $data['expires_at'],
                     $_SESSION['internal_user_id']
                 ]);
                 
