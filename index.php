@@ -1,4 +1,3 @@
-/* Updated the website with new Look&feel */
 <?php include 'header.php'; ?>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
