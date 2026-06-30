@@ -207,13 +207,17 @@ header.grid {
 
 <main class="container">
 <header class="grid">
-    <div class="user-profile-block">
-        <img src="<?= htmlspecialchars($user['avatar'] ?? '') ?>" alt="Avatar" width="40" height="40">
-        <div>
-            <strong><?= htmlspecialchars(($user['firstname'] ?? '') . ' ' . ($user['lastname'] ?? '')) ?></strong><br>
-            <small>Last Sync: <?= !empty($user['last_routes_sync']) ? htmlspecialchars($user['last_routes_sync']) : 'Never' ?></small>
+    <div>
+            <div class="user-meta-bar">
+                <div class="profile-badge">
+                    <img src="<?= htmlspecialchars($user['avatar'] ?? '') ?>" alt="Avatar" width="16" height="16">
+                    <span style="font-size: 0.7rem; font-weight: 600; color: #334155;"><?= htmlspecialchars(($user['firstname'] ?? '') . ' ' . ($user['lastname'] ?? '')) ?></span>
+                </div>
+                <div style="font-size: 0.68rem; color: #64748b;">
+                    Last Sync: <span style="font-weight:600; color:#1e293b;"><?= !empty($user['last_routes_sync']) ? htmlspecialchars($user['last_routes_sync']) : 'Never' ?></span>
+                </div>
+            </div>
         </div>
-    </div>
 
     <div class="actions-block">
         <a id="mapLink" href="routes.php" class="btn-action-pill">📊 Table View</a>
