@@ -220,17 +220,28 @@ body {
   font-size: 0.92rem;
 }
 
+
 .routesTable th {
   background-color: #f8fafc;
   color: #475569;
   font-weight: 600;
-  font-size: 0.78rem;
+  font-size: 0.74rem; /* Micro-typography looks crisper when compressed */
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 1rem 1.25rem;
+  letter-spacing: 0.06em;
+  padding: 0.6rem 1rem; /* Dropped from 1rem to 0.6rem vertical padding */
   border-bottom: 1px solid #e2e8f0;
   user-select: none;
 }
+
+.routesTable td {
+  padding: 0.55rem 1rem; /* Dropped from 1.1rem to 0.55rem vertical padding */
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  font-weight: 500;
+  vertical-align: middle;
+}
+
+    
 
 .routesTable th[data-sort] {
   cursor: pointer;
@@ -238,14 +249,6 @@ body {
 .routesTable th[data-sort]:hover {
   color: #0f172a;
   background-color: #f1f5f9;
-}
-
-.routesTable td {
-  padding: 1.1rem 1.25rem;
-  border-bottom: 1px solid #f1f5f9;
-  color: #334155;
-  font-weight: 500;
-  vertical-align: middle;
 }
 
 .routesTable tbody tr.route-row {
@@ -333,9 +336,9 @@ body {
 .route-discipline-badge {
   display: inline-flex;
   align-items: center;
-  padding: 3px 8px;
-  border-radius: 6px;
-  font-size: 0.76rem;
+  padding: 2px 6px; /* Tighter padding boundaries */
+  border-radius: 4px;
+  font-size: 0.72rem; /* Slightly smaller font balance */
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.02em;
