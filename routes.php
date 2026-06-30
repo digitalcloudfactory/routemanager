@@ -65,7 +65,7 @@ $stmt = $pdo->prepare("
         DATE(created_at) AS created_date
     FROM strava_routes
     WHERE user_id = ?
-    ORDER BY updated_at DESC
+    ORDER BY created_at DESC
 ");
 $stmt->execute([$internalUserId]);
 $routes = $stmt->fetchAll(PDO::FETCH_ASSOC);
