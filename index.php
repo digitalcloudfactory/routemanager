@@ -1,78 +1,101 @@
+/* Updated the website with new Look&feel */
 <?php include 'header.php'; ?>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
 <style>
- html, body {
+    html, body {
       height: 100%;
       margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      font-family: 'Inter', sans-serif;
     }
 
     body {
       display: flex;
       align-items: center;
       justify-content: center;
-      background: url('https://www.dropbox.com/scl/fi/ai25ww1xq1jnmazi4yr0e/beautiful-66018_1280.jpg?rlkey=44y4nxpmu79ccg8m3a5r9ddvl&dl=1') no-repeat center center fixed;
-      background-size: cover;
+      background-color: #f4f6f9; /* Matches the slate grey planner layout */
       position: relative;
     }
 
-    /* semi-transparent overlay */
-    body::before {
-      content: "";
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background-color: rgba(255, 255, 255, 0.4); /* adjust opacity to lighten image */
-      z-index: 0;
+    /* Subtle backdrop graphics structure variant pattern loop wrapper */
+    .login-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      min-height: 100vh;
+      padding: 1.5rem;
     }
 
     .login-container {
-      position: relative;  /* so it sits above the overlay */
-      z-index: 1;
+      background: #ffffff; /* White profile dashboard base */
+      padding: 3rem 2.5rem;
+      border-radius: 16px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 10px 30px rgba(148, 163, 184, 0.12); /* Clean light drop shadow */
+      max-width: 420px;
+      width: 100%;
       text-align: center;
-      padding: 2rem;
-      background: rgba(255, 255, 255, 0.85); /* optional card background for readability */
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      max-width: 360px;
-      width: 90%;
+      transition: y-axis 0.3s ease;
     }
 
     .login-container h1 {
-      font-size: 1.8rem;
-      margin-bottom: 1rem;
-      color: #333;
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 0.75rem;
+      letter-spacing: -0.5px;
+    }
+    
+    .login-container h1 span {
+      color: #0284c7; /* Canyon Blue accent indicator match */
     }
 
     .login-container p {
-      font-size: 0.9rem;
-      color: #555;
-      margin-bottom: 1.5rem;
+      font-size: 0.95rem;
+      color: #64748b; /* Slate secondary metadata text */
+      margin-bottom: 2.25rem;
+      line-height: 1.5;
     }
 
-    .strava-button img {
-      max-width: 100%;
+    .strava-button-wrapper {
+      display: inline-block;
+      text-decoration: none !important;
+      width: 100%;
+    }
+
+    .strava-button-wrapper img {
+      max-width: 240px;
+      width: 100%;
       height: auto;
-      border-radius: 8px;
-      transition: transform 0.2s;
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(252, 76, 2, 0.15); /* Styled drop shadow matching Strava Orange */
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    .strava-button img:hover {
-      transform: scale(1.02);
+    .strava-button-wrapper img:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(252, 76, 2, 0.25);
     }
-  </style>
+    
+    .strava-button-wrapper img:active {
+      transform: translateY(0);
+    }
+</style>
 
 <body>
-<div class="container">
-
+<div class="login-wrapper">
 
 <?php
-
 session_set_cookie_params([
     'lifetime' => 1209600,
     'path' => '/',
-    'domain' => '', // Automatically uses current domain
-    'secure' => false, // Set to true if your site uses https://
-    'httponly' => true, // Security best practice: protects cookie from JS injection
+    'domain' => '', 
+    'secure' => false, 
+    'httponly' => true, 
     'samesite' => 'Lax'
 ]);
 
@@ -82,8 +105,7 @@ error_log('Session contents: ' . print_r($_SESSION, true));
 
 // Strava API credentials
 $client_id = '6839';
-$redirect_uri = 'http://map-routes.wasmer.app/callback.php'; // Must match callback.php
-
+$redirect_uri = 'http://map-routes.wasmer.app/callback.php'; 
 
 $db_host = 'db.fr-pari1.bengt.wasmernet.com';
 $db_port = 10272;
@@ -104,7 +126,6 @@ $pdo = new PDO(
 $needsAuth = true;
 
 if (isset($_SESSION['internal_user_id'])) {
-    // 1. Fetch access token, refresh token, and expiration timestamp
     $stmt = $pdo->prepare("
         SELECT access_token, refresh_token, token_expires_at 
         FROM users 
@@ -114,17 +135,13 @@ if (isset($_SESSION['internal_user_id'])) {
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($row && $row['access_token']) {
-        
-        // 2. Check if the token has expired (or is within 5 minutes of expiring)
         if (time() >= ($row['token_expires_at'] - 300)) {
-            
-            // 3. Token is expired! Refresh it seamlessly.
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, "https://www.strava.com/oauth/token");
             curl_setopt($ch, CURLOPT_POST, true);
             curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
                 'client_id'     => $client_id,
-                'client_secret' => '1a1057defe991fd6c2711f1199a3563cb3d5395f', // Add your client secret here
+                'client_secret' => '1a1057defe991fd6c2711f1199a3563cb3d5395f', 
                 'grant_type'    => 'refresh_token',
                 'refresh_token' => $row['refresh_token']
             ]));
@@ -136,7 +153,6 @@ if (isset($_SESSION['internal_user_id'])) {
             $data = json_decode($response, true);
             
             if (isset($data['access_token'])) {
-                // 4. Update the DB with the shiny new tokens
                 $updateStmt = $pdo->prepare("
                     UPDATE users 
                     SET access_token = ?, refresh_token = ?, token_expires_at = ? 
@@ -149,22 +165,19 @@ if (isset($_SESSION['internal_user_id'])) {
                     $_SESSION['internal_user_id']
                 ]);
                 
-                // Proceed to routes with the newly updated token
                 header("Location: routes.php");
                 exit;
             } else {
-                // Refresh failed (e.g., app access revoked), force re-auth
                 $needsAuth = true;
             }
         } else {
-            // Token is still valid! Proceed smoothly.
             header("Location: routes.php");
             exit;
         }
     }
 }
 
- if ($needsAuth) {
+if ($needsAuth) {
     $auth_url = "https://www.strava.com/oauth/authorize" .
         "?client_id={$client_id}" .
         "&response_type=code" .
@@ -174,18 +187,17 @@ if (isset($_SESSION['internal_user_id'])) {
 }
 ?>
 
-
   <section class="login-container">
-    <h1>Welcome to Strava Routes</h1>
-    <p>Connect your Strava account to view and manage your routes.</p>
-
+    <h1>Strava <span>Routes</span></h1>
+    <p>Connect your athlete profile parameters seamlessly to analyze your track routes and schedule strategic refueling stops.</p>
 
    <?php if ($needsAuth): ?>
-     <a class="strava-button" href="<?= htmlspecialchars($auth_url) ?>"><img src="https://www.dropbox.com/scl/fi/rzrnbkndn8y2u8if4hezd/btn_strava_connect_with_orange.png?rlkey=s0w9ewb5o9fimgsh33ekqt9lz&dl=1" 
-           alt="Connect with Strava">Connect with Strava</a>
-  <?php endif; ?>
-
+     <a class="strava-button-wrapper" href="<?= htmlspecialchars($auth_url) ?>">
+        <img src="https://www.dropbox.com/scl/fi/rzrnbkndn8y2u8if4hezd/btn_strava_connect_with_orange.png?rlkey=s0w9ewb5o9fimgsh33ekqt9lz&dl=1" alt="Connect with Strava">
+     </a>
+   <?php endif; ?>
   </section>
+
 </div>
 
 <?php include 'footer.php'; ?>
