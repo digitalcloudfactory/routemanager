@@ -113,7 +113,7 @@ body {
     color: #1e293b;
     margin: 0;
     padding: 0;
-    overflow: hidden; /* App view shell standard */
+    overflow: hidden; 
     -webkit-font-smoothing: antialiased;
 }
 
@@ -126,39 +126,30 @@ body {
     position: relative;
 }
 
-/* --- TELEMETRY SIDEBAR HUB --- */
-.telemetry-sidebar {
-    width: 420px;
-    min-width: 420px;
+/* --- CENTER DATA PLATFORM PANEL (THE PURE TABLE VIEW) --- */
+.center-data-platform {
+    display: flex;
+    flex: 1.3;
     background: #ffffff;
     border-right: 1px solid #e2e8f0;
-    display: flex;
     flex-direction: column;
-    z-index: 20;
-    box-shadow: 4px 0 32px rgba(15, 23, 42, 0.03);
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 15;
+    box-shadow: 6px 0 24px rgba(15, 23, 42, 0.02);
 }
 
-/* Sidebar Hiding mechanics for full spreadsheet display states */
-.app-workspace-frame.fullscreen-table-mode .telemetry-sidebar {
-    margin-left: -420px;
-    opacity: 0;
-    pointer-events: none;
-}
-
-.sidebar-header {
+.platform-table-header {
     padding: 1.5rem;
     border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
-.brand-wrapper h1 {
-    font-size: 1.4rem;
-    font-weight: 800;
-    color: #0f172a;
-    letter-spacing: -0.75px;
-    margin: 0 0 0.5rem 0;
+.user-meta-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
-.brand-wrapper h1 span { color: #0284c7; }
 
 .profile-badge {
     display: inline-flex;
@@ -175,44 +166,17 @@ body {
     border: 1.5px solid #0284c7;
 }
 
-/* System Workspace Mode Controller Switch */
-.view-mode-selector-bar {
-    display: flex;
-    background: #f1f5f9;
-    padding: 4px;
-    border-radius: 8px;
-    margin-bottom: 1rem;
-    border: 1px solid #e2e8f0;
-}
-.mode-toggle-btn {
+.table-wrapper-scroller {
     flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    padding: 0.5rem;
-    border: none;
-    border-radius: 6px;
-    background: transparent;
-    color: #64748b;
-    cursor: pointer;
-    transition: all 0.15s ease;
-}
-.mode-toggle-btn.active-mode {
-    background: #ffffff;
-    color: #0f172a;
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+    overflow: auto;
 }
 
-.action-grid-layout {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
+/* Actions Header Panel */
+.table-action-row {
+    display: flex;
     gap: 8px;
-    padding: 0 1.5rem 1.25rem 1.5rem;
-    border-bottom: 1px solid #e2e8f0;
 }
+
 .btn-action-pill {
     display: inline-flex;
     align-items: center;
@@ -235,7 +199,6 @@ body {
     color: #0284c7;
 }
 .btn-action-pill.btn-sync {
-    grid-column: span 2;
     background-color: #00E676;
     border: none;
     color: #0f172a;
@@ -243,86 +206,6 @@ body {
     text-transform: uppercase;
 }
 .btn-action-pill.btn-sync:hover { background-color: #00c853; }
-
-/* Dynamic Layout Containers */
-.track-feed-container {
-    flex: 1;
-    overflow-y: auto;
-    padding: 1rem;
-    background: #f8fafc;
-}
-
-/* Hyper-Styled Cards view option layout */
-.track-card {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 1rem;
-    margin-bottom: 0.75rem;
-    cursor: pointer;
-    transition: all 0.15s ease;
-}
-.track-card:hover {
-    border-color: #0284c7;
-    transform: translateX(2px);
-}
-.track-card.active-track {
-    border-color: #0284c7;
-    background: #f0f9ff;
-    box-shadow: 0 0 0 1px #0284c7;
-}
-.track-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 12px;
-    margin-bottom: 0.6rem;
-}
-.track-card-title {
-    font-size: 0.92rem;
-    font-weight: 700;
-    color: #0f172a;
-    margin: 0;
-    line-height: 1.3;
-}
-.telemetry-row {
-    display: flex;
-    gap: 8px;
-    background: #f8fafc;
-    border-radius: 6px;
-    padding: 0.5rem;
-    border: 1px solid #e2e8f0;
-}
-.track-card.active-track .telemetry-row { background: #ffffff; }
-.telemetry-item { flex: 1; text-align: center; }
-.telemetry-label { font-size: 0.6rem; text-transform: uppercase; font-weight: 600; color: #64748b; }
-.telemetry-value { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 600; color: #0f172a; }
-
-/* --- CENTER DATA PLATFORM PANEL (THE PURE TABLE VIEW) --- */
-.center-data-platform {
-    display: none; /* Controlled dynamically by JS Workspace switcher */
-    flex: 1.2;
-    background: #ffffff;
-    border-right: 1px solid #e2e8f0;
-    flex-direction: column;
-    z-index: 15;
-    box-shadow: 6px 0 24px rgba(15, 23, 42, 0.02);
-}
-.app-workspace-frame.fullscreen-table-mode .center-data-platform {
-    display: flex;
-}
-
-.platform-table-header {
-    padding: 1.5rem;
-    border-bottom: 1px solid #e2e8f0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.table-wrapper-scroller {
-    flex: 1;
-    overflow-auto: auto;
-}
 
 /* Premium High Density Structured Spreadsheet Layout */
 .dense-matrix-table {
@@ -408,44 +291,26 @@ body {
 
 <div class="app-workspace-frame" id="workspaceMainShell">
     
-    <aside class="telemetry-sidebar">
-        <div class="sidebar-header">
-            <div class="brand-wrapper">
-                <h1>Strava <span>Workspace</span></h1>
-            </div>
-            
-            <div class="view-mode-selector-bar">
-                <button class="mode-toggle-btn active-mode" onclick="switchWorkspaceLayout('cards')">📁 Feed Cards</button>
-                <button class="mode-toggle-btn" onclick="switchWorkspaceLayout('table')">📊 Data Matrix Table</button>
-            </div>
-
-            <div class="d-flex justify-content-between align-items-center mt-2">
-                <div class="profile-badge">
-                    <img src="<?= htmlspecialchars($user['avatar']) ?>" alt="User Avatar" width="22" height="22">
-                    <span style="font-size: 0.78rem; font-weight: 600; color: #334155;"><?= htmlspecialchars($user['firstname']) ?></span>
-                </div>
-                <div style="font-size: 0.72rem; color: #64748b;">
-                    Sync: <span style="font-weight:600; color:#1e293b;"><?= $user['last_routes_sync'] ? date('d M', strtotime($user['last_routes_sync'])) : 'Never' ?></span>
-                </div>
-            </div>
-        </div>
-
-        <div class="action-grid-layout">
-            <a id="mapLink" href="map.php" class="btn-action-pill">🗺️ Full View</a>
-            <button id="openFilters" class="btn-action-pill" type="button">⚙️ Filters</button>
-            <button id="fetchRoutes" class="btn-action-pill btn-sync" type="button">🚀 Sync Strava Tracks</button>
-        </div>
-
-        <div class="track-feed-container" id="trackFeedContainer"></div>
-    </aside>
-
     <section class="center-data-platform">
         <div class="platform-table-header">
             <div>
-                <h2 style="margin:0; font-size:1.25rem; font-weight:800; color:#0f172a;">Track Database Matrix</h2>
-                <p style="margin:0; font-size:0.78rem; color:#64748b;">Click any row index line track segment parameters to project maps instantly.</p>
+                <h2 style="margin:0 0 0.25rem 0; font-size:1.25rem; font-weight:800; color:#0f172a;">Track Database Matrix</h2>
+                <div class="user-meta-bar">
+                    <div class="profile-badge">
+                        <img src="<?= htmlspecialchars($user['avatar']) ?>" alt="User Avatar" width="22" height="22">
+                        <span style="font-size: 0.78rem; font-weight: 600; color: #334155;"><?= htmlspecialchars($user['firstname']) ?></span>
+                    </div>
+                    <div style="font-size: 0.72rem; color: #64748b;">
+                        Sync: <span style="font-weight:600; color:#1e293b;"><?= $user['last_routes_sync'] ? date('d M', strtotime($user['last_routes_sync'])) : 'Never' ?></span>
+                    </div>
+                </div>
             </div>
-            <button class="btn-action-pill" onclick="switchWorkspaceLayout('cards')" style="border-color:#0284c7; color:#0284c7; background:#f0f9ff;">✕ Close Table View</button>
+            
+            <div class="table-action-row">
+                <a id="mapLink" href="map.php" class="btn-action-pill">🗺️ Full View</a>
+                <button id="openFilters" class="btn-action-pill" type="button">⚙️ Filters</button>
+                <button id="fetchRoutes" class="btn-action-pill btn-sync" type="button">🚀 Sync Tracks</button>
+            </div>
         </div>
         
         <div class="table-wrapper-scroller">
@@ -477,7 +342,7 @@ body {
 
 </div>
 
-<?php include 'filter_panel.php'; ?>   
+<?php include 'filter_panel.php'; ?>    
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/@mapbox/polyline"></script>
@@ -488,7 +353,6 @@ var routes = <?= json_encode($routes, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JS
 let globalWorkspaceMap = null;
 let currentActivePolyline = null;
 let currentDistanceMarkers = [];
-let workspaceViewMode = 'cards'; 
 let matrixSortState = { column: null, direction: 'asc' };
 
 function formatDuration(seconds) {
@@ -510,62 +374,12 @@ function initWorkspaceMap() {
     }).addTo(globalWorkspaceMap);
 }
 
-// Global Workspace Master Route Layout Swapper Controller
-function switchWorkspaceLayout(targetMode) {
-    workspaceViewMode = targetMode;
-    const shell = document.getElementById('workspaceMainShell');
-    const toggles = document.querySelectorAll('.mode-toggle-btn');
-    
-    toggles.forEach(b => b.classList.remove('active-mode'));
-
-    if (targetMode === 'table') {
-        shell.classList.add('fullscreen-table-mode');
-        toggles[1].classList.add('active-mode');
-    } else {
-        shell.classList.remove('fullscreen-table-mode');
-        toggles[0].classList.add('active-mode');
-    }
-    
-    // Auto recalculate map view borders safely during layout reflows
-    setTimeout(() => { if(globalWorkspaceMap) globalWorkspaceMap.invalidateSize(); }, 310);
-}
-
-// Combined dual UI renderer
+// Master execution renderer
 async function renderTable(data) {
-    renderCardFeedLayout(data);
     renderDenseSpreadsheetMatrix(data);
 }
 
-// 1. Sidebar Cards Render System Loop
-function renderCardFeedLayout(data) {
-    const feedContainer = document.getElementById('trackFeedContainer');
-    if (!feedContainer) return;
-    feedContainer.innerHTML = '';
-
-    data.forEach(route => {
-        const card = document.createElement('div');
-        card.className = 'track-card';
-        card.id = `card-id-${route.route_id}`;
-        
-        let status = (route.starred == 1 ? '★' : '') + (route.private == 1 ? ' 🔒' : '');
-
-        card.innerHTML = `
-            <div class="track-card-header">
-                <h4 class="track-card-title">${route.name || 'Untitled Track'}</h4>
-                <span class="discipline-pill discipline-${route.type || 1}">${routeTypeLabel(route.type)}</span>
-            </div>
-            <div class="telemetry-row">
-                <div class="telemetry-item"><div class="telemetry-label">Dist</div><div class="telemetry-value">${Number(route.distance_km).toFixed(1)}<span>km</span></div></div>
-                <div class="telemetry-item"><div class="telemetry-label">Elev</div><div class="telemetry-value">${Math.round(route.elevation)}<span>m</span></div></div>
-                <div class="telemetry-item"><div class="telemetry-label">Est</div><div class="telemetry-value" style="font-size:0.75rem;">${formatDuration(route.estimated_moving_time)}</div></div>
-            </div>
-        `;
-        card.onclick = () => handleTrackSelection(route, `card-id-${route.route_id}`);
-        feedContainer.appendChild(card);
-    });
-}
-
-// 2. Center Panel Spreadsheet Data Matrix Grid Render System Loop
+// Center Panel Spreadsheet Data Matrix Grid Render System Loop
 function renderDenseSpreadsheetMatrix(data) {
     const tableBody = document.getElementById('denseMatrixTableBody');
     if (!tableBody) return;
@@ -595,14 +409,9 @@ function renderDenseSpreadsheetMatrix(data) {
 
 // Shared central targeting engine
 async function handleTrackSelection(route, UIComponentElementId) {
-    // Clear selections safely across elements
-    document.querySelectorAll('.track-card').forEach(c => c.classList.remove('active-track'));
     document.querySelectorAll('.dense-matrix-table tbody tr').forEach(r => r.classList.remove('row-selected'));
 
-    const correspondingCard = document.getElementById(`card-id-${route.route_id}`);
     const correspondingRow = document.getElementById(`row-id-${route.route_id}`);
-    
-    if(correspondingCard) correspondingCard.classList.add('active-track');
     if(correspondingRow) correspondingRow.classList.add('row-selected');
 
     if (currentActivePolyline) globalWorkspaceMap.removeLayer(currentActivePolyline);
