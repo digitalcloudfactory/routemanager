@@ -119,10 +119,12 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+
 .container-premium {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 2.5rem 1.5rem;
+  width: 100%;
+  max-width: 100%; /* Removes the viewport walls */
+  padding: 1.5rem 2rem; /* Tighter top/bottom gap, clean side breathing room */
+  box-sizing: border-box;
 }
 
 /* --- UPPER ACTION HEADER DASHBOARD --- */
@@ -199,13 +201,15 @@ body {
 }
 
 /* --- THE DATA CARRIAGE SHEET MODULE --- */
+/* Ensure the wrapper card goes corner-to-corner seamlessly */
 .premium-data-card {
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.02), 0 2px 4px -2px rgba(15, 23, 42, 0.02);
+  border-radius: 8px; /* Slightly tighter corner radius for wide views */
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
   overflow: hidden;
-  margin-bottom: 3rem;
+  margin-bottom: 2rem;
+  width: 100%;
 }
 
 /* --- REFINED STABLE GRID LAYOUT --- */
