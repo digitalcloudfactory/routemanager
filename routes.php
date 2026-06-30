@@ -330,7 +330,8 @@ body {
                         <th onclick="executeMatrixSort('elevation')" style="width: 110px;">Elevation</th>
                         <th onclick="executeMatrixSort('estimated_moving_time')" style="width: 110px;">Time Est</th>
                         <th onclick="executeMatrixSort('created_date')" style="width: 120px;">Created</th>
-                        <th style="width: 60px; text-align:center;">Status</th>
+                        <th onclick="executeMatrixSort('starred')" style="width: 45px; text-align:center;">Star</th>
+                        <th onclick="executeMatrixSort('private')" style="width: 50px; text-align:center;">Type</th>
                     </tr>
                 </thead>
                 <tbody id="denseMatrixTableBody"></tbody>
@@ -407,7 +408,8 @@ function renderDenseSpreadsheetMatrix(data) {
             <td style="font-family:'JetBrains Mono'; color:#475569;">${Math.round(route.elevation)} m</td>
             <td style="color:#475569;">${formatDuration(route.estimated_moving_time)}</td>
             <td style="font-family:'JetBrains Mono'; color:#64748b;">${route.created_date || '—'}</td>
-            <td style="text-align:center;">${status || '—'}</td>
+            <td style="text-align:center; font-size: 0.85rem;">${starIcon}</td>
+            <td style="text-align:center; font-size: 0.8rem;">${privacyIcon}</td>
         `;
         row.onclick = () => handleTrackSelection(route, `row-id-${route.route_id}`);
         tableBody.appendChild(row);
