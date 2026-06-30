@@ -211,7 +211,7 @@ body {
 .dense-matrix-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.85rem;
+    font-size: 0.80rem;
     text-align: left;
 }
 .dense-matrix-table th {
@@ -230,7 +230,7 @@ body {
 }
 .dense-matrix-table th:hover { color: #0f172a; background: #f1f5f9; }
 .dense-matrix-table td {
-    padding: 0.65rem 1rem;
+    padding: 0.25rem 0.75rem;
     border-bottom: 1px solid #f1f5f9;
     color: #1e293b;
     vertical-align: middle;
