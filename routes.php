@@ -219,21 +219,26 @@ body {
     color: #64748b;
     font-weight: 600;
     text-transform: uppercase;
-    font-size: 0.72rem;
+    font-size: 0.65rem;
     letter-spacing: 0.5px;
-    padding: 0.75rem 1rem;
+    padding: 0.4rem 0.5rem;
     border-bottom: 1px solid #e2e8f0;
     position: sticky;
     top: 0;
     user-select: none;
     cursor: pointer;
+    line-height: 1;
 }
 .dense-matrix-table th:hover { color: #0f172a; background: #f1f5f9; }
 .dense-matrix-table td {
-    padding: 0.20rem 0.70rem;
+    padding: 0.2rem 0.5rem;
     border-bottom: 1px solid #f1f5f9;
     color: #1e293b;
     vertical-align: middle;
+    line-height: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .dense-matrix-table tbody tr {
     cursor: pointer;
@@ -271,18 +276,20 @@ body {
     transition: opacity 0.2s ease;
 }
 
+
 /* Custom Component Elements */
 .discipline-pill {
-    font-size: 0.65rem;
+    font-size: 0.6rem;
     font-weight: 700;
     text-transform: uppercase;
-    padding: 2px 6px;
-    border-radius: 4px;
+    padding: 1px 4px;
+    border-radius: 3px;
+    line-height: 1;
+    display: inline-block;
 }
 .discipline-1 { background: rgba(2, 132, 199, 0.08); color: #0284c7; }
 .discipline-6 { background: #fef3c7; color: #d97706; }
 .discipline-2 { background: rgba(0, 230, 118, 0.1); color: #1b5e20; }
-
 .distance-label {
     background: #0f172a !important; color: #ffffff !important; border: none !important;
     font-family: 'JetBrains Mono', monospace; font-size: 9px !important; padding: 2px 4px !important;
