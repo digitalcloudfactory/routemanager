@@ -401,6 +401,9 @@ function renderDenseSpreadsheetMatrix(data) {
         if(route.starred == 1) status += '<span style="color:#f59e0b;">★</span>';
         if(route.private == 1) status += ' 🔒';
 
+        const starIcon = (route.starred == 1) ? '<span style="color:#f59e0b;">★</span>' : '<span style="color:#cbd5e1;">☆</span>';
+        const privacyIcon = (route.private == 1) ? '<span style="color:#64748b;" title="Private">🔒</span>' : '<span style="color:#cbd5e1;" title="Public">🌐</span>';
+        
         row.innerHTML = `
             <td style="color:#0f172a; font-weight:600;">${route.name || 'Untitled Track'}</td>
             <td><span class="discipline-pill discipline-${route.type || 1}">${routeTypeLabel(route.type)}</span></td>
