@@ -527,9 +527,48 @@ document.getElementById('fetchRoutes').addEventListener('click', async () => {
     }
 });
 
+// Master Application Synchronization Bootstrapper 
 document.addEventListener('DOMContentLoaded', () => {
     initWorkspaceMap();
-    renderTable(routes);
+
+    // --- DEEP-LINKING SYNCHRONIZER ---
+    const initialParams = new URLSearchParams(window.location.search);
+    
+    if (initialParams.has('country') && document.getElementById('filterCountry')) {
+        document.getElementById('filterCountry').value = initialParams.get('country');
+    }
+    if (initialParams.has('search') && document.getElementById('filterSearch')) {
+        document.getElementById('filterSearch').value = initialParams.get('search');
+    }
+
+    // Render original or initial deeply-linked filters
+    if (typeof applyFilters === 'function') { 
+        applyFilters(); 
+    } else { 
+        renderTable(routes); 
+    }
+
+    // --- LIVE TOGGLE PARAMETER INTERCEPTOR ---
+    const viewToggleLink = document.getElementById('mapLink');
+    if (viewToggleLink) {
+        viewToggleLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetUrl = new URL(viewToggleLink.getAttribute('href'), window.location.origin);
+            const currentParams = new URLSearchParams();
+
+            const countryEl = document.getElementById('filterCountry');
+            const searchEl  = document.getElementById('filterSearch');
+            const distMinEl = document.getElementById('filterDistanceMin');
+            const distMaxEl = document.getElementById('filterDistanceMax');
+
+            if (countryEl && countryEl.value) currentParams.set('country', countryEl.value);
+            if (searchEl  && searchEl.value)  currentParams.set('search', searchEl.value);
+            if (distMinEl && distMinEl.value) currentParams.set('dist_min', distMinEl.value);
+            if (distMaxEl && distMaxEl.value) currentParams.set('dist_max', distMaxEl.value);
+
+            window.location.href = `${targetUrl.pathname}?${currentParams.toString()}`;
+        });
+    }
 });
 </script>
 <?php include 'footer.php'; ?>
