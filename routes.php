@@ -406,7 +406,7 @@ function renderDenseSpreadsheetMatrix(data) {
             <td style="font-family:'JetBrains Mono'; font-weight:600;">${Number(route.distance_km).toFixed(1)} km</td>
             <td style="font-family:'JetBrains Mono'; color:#475569;">${Math.round(route.elevation)} m</td>
             <td style="color:#475569;">${formatDuration(route.estimated_moving_time)}</td>
-            <td style="color:#64748b; font-size:0.8rem;">${route.created_date || '—'}</td>
+            <td style="font-family:'JetBrains Mono'; color:#64748b;">${route.created_date || '—'}</td>
             <td style="text-align:center;">${status || '—'}</td>
         `;
         row.onclick = () => handleTrackSelection(route, `row-id-${route.route_id}`);
