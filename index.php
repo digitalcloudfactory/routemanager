@@ -66,6 +66,16 @@
 
 
 <?php
+
+session_set_cookie_params([
+    'lifetime' => 1209600,
+    'path' => '/',
+    'domain' => '', // Automatically uses current domain
+    'secure' => false, // Set to true if your site uses https://
+    'httponly' => true, // Security best practice: protects cookie from JS injection
+    'samesite' => 'Lax'
+]);
+
 session_start();
 error_log('Session ID: ' . session_id());
 error_log('Session contents: ' . print_r($_SESSION, true));
