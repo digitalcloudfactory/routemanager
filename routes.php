@@ -1,10 +1,10 @@
 <?php
 /* ===============================
 ----Important rule going forward----
--Use case-	            -ID to use-
-DB queries	            internal_user_id ✅
-Strava API calls	    strava_id
-Session auth check	    internal_user_id
+-Use case-                 -ID to use-
+DB queries                 internal_user_id ✅
+Strava API calls           strava_id
+Session auth check         internal_user_id
 ================================ */
 session_start();
 
@@ -19,9 +19,8 @@ if (!isset($_SESSION['internal_user_id'])) {
 $internalUserId = $_SESSION['internal_user_id'];
 
 /* ===============================
-   DATABASE CONFIG
+    DATABASE CONFIG
 ================================ */
-
 $db_host = 'db.fr-pari1.bengt.wasmernet.com';
 $db_port = 10272;
 $db_name = 'dbcmpLT2zrmwmur5UEjZ3Xj8';
@@ -39,11 +38,10 @@ $pdo = new PDO(
 );
 
 /* ===============================
-   LOAD USER PROFILE
+    LOAD USER PROFILE
 ================================ */
-
 $userStmt = $pdo->prepare("
-    SELECT firstname, lastname, avatar,last_routes_sync
+    SELECT firstname, lastname, avatar, last_routes_sync
     FROM users
     WHERE id = ?
 ");
@@ -51,9 +49,8 @@ $userStmt->execute([$internalUserId]);
 $user = $userStmt->fetch(PDO::FETCH_ASSOC);
 
 /* ===============================
-   LOAD ROUTES (PER USER)
+    LOAD ROUTES (PER USER)
 ================================ */
-
 $stmt = $pdo->prepare("
     SELECT
         CAST(route_id AS CHAR) AS route_id,
@@ -75,9 +72,8 @@ $stmt->execute([$internalUserId]);
 $routes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 /* ===============================
-   LOAD TAGS PER ROUTE
+    LOAD TAGS PER ROUTE
 ================================ */
-
 $tagStmt = $pdo->prepare("
     SELECT route_id, GROUP_CONCAT(tag ORDER BY tag SEPARATOR ', ') AS tags
     FROM route_tags
@@ -95,7 +91,7 @@ foreach ($tagsRaw as $row) {
 }
 
 /* ===============================
-   attach tags to routes
+   Attach tags to routes
 ================================ */
 foreach ($routes as &$route) {
     $route['tags'] = $tagsByRoute[$route['route_id']] ?? '';
@@ -105,112 +101,197 @@ unset($route);
 $countryStmt = $pdo->prepare("SELECT DISTINCT country FROM strava_routes WHERE user_id = ? AND country IS NOT NULL AND country != '' ORDER BY country ASC");
 $countryStmt->execute([$internalUserId]);
 $countries = $countryStmt->fetchAll(PDO::FETCH_COLUMN);
-
 ?>
 
 <?php include 'header.php'; ?>
 
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
-tr.route-row { cursor: pointer;}
-.route-details article { margin-top: 1rem; }
-.route-map { height: 300px; border-radius: 12px; }
-
-#filterPanel {
-  position: fixed;
-  top: 0;
-  right: 0;
-  width: 320px;
-  height: 100%;
-  background: var(--background-color);
-  box-shadow: -4px 0 12px rgba(0,0,0,0.1);
-  padding: 1rem;
-  transform: translateX(100%);
-  transition: transform 0.25s ease;
-  z-index: 1000;
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #f4f6f9;
+  color: #1e293b;
 }
 
-#filterPanel.open {
-  transform: translateX(0);
+main.container {
+  max-width: 100%;
+  padding: 1.5rem 2.5rem;
+  box-sizing: border-box;
 }
 
-.distance-label {
-  background-color: #fff;       /* White background for visibility */
-  color: #333;                  /* Dark text */
-  font-size: 0.55rem;           /* Smaller font */
+/* Modern App Header Profile Dashboard Section Control Bar Look */
+header.grid {
+  background: #ffffff;
+  padding: 1rem 1.5rem !important;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 20px rgba(148, 163, 184, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+}
+
+.user-profile-block {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-profile-block img {
+  border: 2px solid #0284c7;
+  padding: 2px;
+  background: #ffffff;
+}
+
+.user-profile-block strong {
+  color: #0f172a;
+  font-size: 0.95rem;
+}
+
+.user-profile-block small {
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+.actions-block {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Base Form Buttons Elements definitions */
+.btn-custom {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
   font-weight: 600;
-  padding: 2px 4px;             /* Small padding */
-  border-radius: 50%;           /* Round pill */
-  border: 1px solid #ccc;       /* Optional subtle border */
-  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #475569;
+  cursor: pointer;
+  text-decoration: none !important;
+  display: inline-flex;
+  align-items: center;
+  transition: all 0.2s;
+}
+
+.btn-custom:hover {
+  background: #f8fafc;
+  color: #0f172a;
+  border-color: #94a3b8;
+}
+
+.btn-custom.primary {
+  background: #0284c7;
+  color: #ffffff;
+  border: none;
+}
+
+.btn-custom.primary:hover {
+  background: #0369a1;
+}
+
+/* Table Design Modernization */
+tr.route-row { 
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+tr.route-row:hover {
+  background-color: #f8fafc !important;
 }
 
 .routesTable {
-  font-size: 0.8rem;
-  width: 100%;        /* take full available width */
-  table-layout: auto; /* let columns size naturally */
+  font-size: 0.85rem;
+  width: 100%;
+  table-layout: auto;
+  background: #ffffff;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 15px rgba(148, 163, 184, 0.05);
+  overflow: hidden;
 }
 
 .routesTable th,
 .routesTable td {
-  padding: 0.3rem 0.5rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
 }
 
 .routesTable th {
+  background-color: #f8fafc;
   font-weight: 600;
+  color: #475569;
+  border-bottom: 2px solid #e2e8f0;
 }
 
 .routesTable th[data-sort] {
   cursor: pointer;
-  position: relative;
   user-select: none;
 }
 
 .routesTable th[data-sort]:after {
   content: ' ↕';
   opacity: 0.3;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
+  margin-left: 4px;
 }
 
-.routesTable th.sort-asc:after { content: ' ↑'; opacity: 1; color: var(--pico-primary); }
-.routesTable th.sort-desc:after { content: ' ↓'; opacity: 1; color: var(--pico-primary); }
+.routesTable th.sort-asc:after { content: ' ↑'; opacity: 1; color: #0284c7; }
+.routesTable th.sort-desc:after { content: ' ↓'; opacity: 1; color: #0284c7; }
 
-    .route-details {
-  margin-top: 0.5rem;
+/* Inline Table Dropdown Preview Styling */
+.route-details-box {
+  background-color: #f8fafc;
+  padding: 1.5rem !important;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .route-layout {
   display: flex;
-  gap: 1rem;
-  align-items: stretch;
+  gap: 1.5rem;
 }
 
-/* LEFT: MAP */
 .route-map-wrap {
-  flex: 3;               /* ≈ 75% */
+  flex: 3;
   min-width: 0;
 }
 
 .route-map {
-  height: 420px;
-  border-radius: 12px;
-  border: 1px solid #ddd;
+  height: 400px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 
-/* RIGHT: INFO */
 .route-info {
-  flex: 1;               /* ≈ 25% */
-  font-size: 0.75rem;
-  line-height: 1.4;
+  flex: 1;
+  font-size: 0.8rem;
+  line-height: 1.5;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.75rem;
 }
 
 .route-info h4 {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: 1rem;
+  font-weight: 700;
 }
+
+.route-info h4 a {
+  color: #0284c7;
+  text-decoration: none;
+}
+.route-info h4 a:hover { text-decoration: underline; }
 
 .route-meta {
   list-style: none;
@@ -219,95 +300,96 @@ tr.route-row { cursor: pointer;}
 }
 
 .route-meta li {
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.4rem;
+  color: #475569;
 }
 
-.route-description,
-.route-tags {
-  font-size: 0.7rem;
+.route-meta strong { color: #0f172a; }
+
+.route-tags strong {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: #0f172a;
 }
 
 .route-tags input {
   width: 100%;
-  font-size: 0.7rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  font-size: 0.8rem;
+  background-color: #ffffff;
+}
+.route-tags input:focus {
+  outline: none;
+  border-color: #0284c7;
 }
 
-main.container {
-  max-width: 100%;    /* override container width */
-  padding: 1rem 2rem; /* some horizontal padding */
-  box-sizing: border-box;
+#filterPanel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 360px;
+  height: 100%;
+  background: #ffffff;
+  box-shadow: -4px 0 24px rgba(148, 163, 184, 0.15);
+  border-left: 1px solid #e2e8f0;
+  padding: 2rem 1.5rem;
+  transform: translateX(100%);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 1050;
+  overflow-y: auto;
 }
 
+#filterPanel.open {
+  transform: translateX(0);
+}
 
-/* Optional: ensure figure scrolls if table is wider than screen */
+.distance-label {
+  background-color: #ffffff;
+  color: #1e293b;
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
 figure {
   width: 100%;
   overflow-x: auto;
-  margin: 0;          /* remove default margins */
+  margin: 0;
 }
 
-:root {
-  --pico-font-size: 0.85rem;
-  --pico-spacing: 0.5rem;
-}
-
-/* Code for the filterpanel distance range slider -- Allow the thumbs to be interactive even when overlapping */
-.range-slider input[type="range"]::-webkit-slider-thumb {
-    pointer-events: auto;
-    cursor: pointer;
-}
-.range-slider input[type="range"]::-moz-range-thumb {
-    pointer-events: auto;
-    cursor: pointer;
-}
-/* Ensure the track doesn't block the slider below */
-#filterDistanceMin {
-    background: transparent !important;
-}    
+.range-slider input[type="range"]::-webkit-slider-thumb { pointer-events: auto; cursor: pointer; }
+.range-slider input[type="range"]::-moz-range-thumb { pointer-events: auto; cursor: pointer; }
+#filterDistanceMin { background: transparent !important; }        
 </style>
 
-
-
 <body>
-
 
 <main class="container">
 
 <header class="grid">
-  <div class="grid" style="align-items:center">
-    <img src="<?= htmlspecialchars($user['avatar']) ?>"
-         alt="Avatar"
-         width="64"
-         style="border-radius:50%">
+  <div class="user-profile-block">
+    <img src="<?= htmlspecialchars($user['avatar']) ?>" alt="Avatar" width="48" height="48" style="border-radius:50%">
     <div>
       <strong><?= htmlspecialchars($user['firstname'].' '.$user['lastname']) ?></strong><br>
-      <small>Last Strava Sync:<?= $user['last_routes_sync']? htmlspecialchars($user['last_routes_sync']): '<em>Never synced</em>' ?></small>
-
+      <small>Last Strava Sync: <?= $user['last_routes_sync'] ? htmlspecialchars($user['last_routes_sync']) : 'Never synced' ?></small>
     </div>
   </div>
 
-<section class="grid">
-<div>
-            <a id="mapLink" href="map.php" role="button">Map view</a>
-</div>    
-    <div>
-    <button id="fetchRoutes" type="button">
-      Fetch new routes from Strava
-    </button>
-  </div>
-  <div style="text-align:right">
-    <button id="openFilters" class="secondary" type="button">
-      Filters
-    </button>
-  </div>
-</section>    
+  <div class="actions-block">
+    <a id="mapLink" href="map.php" class="btn-custom">Map view</a>
+    <button id="fetchRoutes" class="btn-custom primary" type="button">Fetch new routes from Strava</button>
+    <button id="openFilters" class="btn-custom" type="button">Filters ⚙️</button>
+  </div>    
 </header>
-
-
 
 <section>
 <figure>
-<table class="routesTable striped hover">
+<table class="routesTable text-center">
 <thead>
 <tr>
     <th data-sort="name">Name</th>
@@ -323,22 +405,16 @@ figure {
 </table>
 </figure>
 </section>
-  <?php include 'filter_panel.php'; ?>  
+  <?php include 'filter_panel.php'; ?>   
 </main>
 
-
-
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/@mapbox/polyline"></script>
 
 <script>
 var routes = <?= json_encode($routes, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?: '[]'; ?>;
 const tbody = document.getElementById('routesBody');
     
-/* ===============================
-   RENDER Seconds to Exact Moving time
-================================ */
-
 function formatDuration(seconds) {
     if (!seconds) return "0:00:00";
     const h = Math.floor(seconds / 3600);
@@ -347,19 +423,13 @@ function formatDuration(seconds) {
     return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-    /* ===============================
-   RENDER TABLE + INLINE DETAILS
-================================ */ 
-
-
-// 3. RENDER TABLE (Fixed with 'async')
 async function renderTable(data) {
     const tbody = document.getElementById('routesBody');
     if (!tbody) return;
     tbody.innerHTML = '';
 
     if (!data || data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center">No routes found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 2rem; color: #64748b;">No routes found matching filter criteria.</td></tr>`;
         return;
     }
 
@@ -367,51 +437,48 @@ async function renderTable(data) {
         const row = document.createElement('tr');
         row.className = 'route-row';
         row.innerHTML = `
-            <td>${route.name || 'Untitled'}</td>
-            <td>${route.distance_km ? Number(route.distance_km).toFixed(2) : '0.00'}</td>
-            <td>${route.elevation || 0}</td>
+            <td style="font-weight: 500; color: #0f172a;">${route.name || 'Untitled'}</td>
+            <td>${route.distance_km ? Number(route.distance_km).toFixed(2) : '0.00'} km</td>
+            <td>${route.elevation || 0} m</td>
             <td>${formatDuration(route.estimated_moving_time)}</td>
             <td>${route.created_date}</td>
-            <td style="color: #ff6600;">${route.starred == 1 ? '&#9733;' : ''}</td>
-            <td>${route.private == 1 ? '&#x1F512;' : ''}</td>
+            <td style="color: #f59e0b; font-size: 1.1rem; text-align: center;">${route.starred == 1 ? '★' : ''}</td>
+            <td style="text-align: center;">${route.private == 1 ? '🔒' : ''}</td>
         `;
 
         const details = document.createElement('tr');
         details.hidden = true;
-        details.innerHTML = `<td colspan="6"><div id="details-content-${route.route_id}">Loading...</div></td>`;
+        details.className = 'details-row';
+        details.innerHTML = `<td colspan="7" class="route-details-box"><div id="details-content-${route.route_id}">Loading Preview Canvas...</div></td>`;
 
         row.onclick = async () => {
             details.hidden = !details.hidden;
             if (!details.hidden) {
                 const container = document.getElementById(`details-content-${route.route_id}`);
                 
-                // Show info immediately
                 container.innerHTML = `
-                    <article class="route-details">
-                        <div class="route-layout">
-                            <div class="route-map-wrap"><div id="map-${route.route_id}" class="route-map"></div></div>
-                            <div class="route-info">
-                                <h4><a href="https://www.strava.com/routes/${route.route_id}" target="_blank">${route.name}</a></h4>
-                                <ul class="route-meta">
-                                    <li><strong>Distance:</strong> ${Number(route.distance_km).toFixed(2)} km</li>
-                                    <li><strong>Elevation:</strong> ${route.elevation} m</li>
-                                    <li><strong>Type:</strong> ${routeTypeLabel(route.type)}</li>
-                                </ul>
-                                <div class="route-tags">
-                                    <strong>Tags</strong><br>
-                                    <input type="text" value="${route.tags || ''}" onblur="saveTags('${route.route_id}', this.value)">
-                                </div>
+                    <div class="route-layout">
+                        <div class="route-map-wrap"><div id="map-${route.route_id}" class="route-map"></div></div>
+                        <div class="route-info">
+                            <h4><a href="https://www.strava.com/routes/${route.route_id}" target="_blank">${route.name}</a></h4>
+                            <ul class="route-meta">
+                                <li><strong>Distance:</strong> ${Number(route.distance_km).toFixed(2)} km</li>
+                                <li><strong>Elevation:</strong> ${route.elevation} m</li>
+                                <li><strong>Type:</strong> ${routeTypeLabel(route.type)}</li>
+                            </ul>
+                            <div class="route-tags">
+                                <strong>Tags</strong>
+                                <input type="text" value="${route.tags || ''}" placeholder="Add comma-separated tags..." onblur="saveTags('${route.route_id}', this.value)">
                             </div>
                         </div>
-                    </article>`;
+                    </div>`;
 
-                // Fetch polyline if missing
                 if (!route.summary_polyline) {
                     try {
                         const res = await fetch(`get_polyline.php?route_id=${route.route_id}`);
                         const polyData = await res.json();
                         route.summary_polyline = polyData.polyline;
-                    } catch (e) { console.error("Polyline fetch failed", e); }
+                    } catch (e) { console.error("Polyline dynamic data load failure", e); }
                 }
 
                 if (route.summary_polyline) {
@@ -424,10 +491,6 @@ async function renderTable(data) {
     });
 }
 
-/* ===============================
-   LEAFLET MAP INIT (VISIBLE ONLY)
-================================ */
-
 function addDistanceMarkers(map, latlngs, stepKm = 10) {
   let distance = 0;
   let nextMarker = stepKm;
@@ -437,11 +500,11 @@ function addDistanceMarkers(map, latlngs, stepKm = 10) {
 
     if (distance >= nextMarker) {
       const marker = L.circleMarker(latlngs[i], {
-        radius: 3,
-        color: '#666',
-        fillColor: '#fff',
+        radius: 4,
+        color: '#475569',
+        fillColor: '#ffffff',
         fillOpacity: 1,
-        weight: 1
+        weight: 1.5
       }).addTo(map);
 
       marker.bindTooltip(`${nextMarker} km`, {
@@ -455,7 +518,6 @@ function addDistanceMarkers(map, latlngs, stepKm = 10) {
   }
 }
     
-// Map Initialization Fix
 function initMap(route) {
     const mapId = `map-${route.route_id}`;
     const el = document.getElementById(mapId);
@@ -464,29 +526,22 @@ function initMap(route) {
     try {
         const coords = polyline.decode(route.summary_polyline).map(c => [c[0], c[1]]);
         const map = L.map(mapId);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap'
+        
+        // Match Positron Light Mode Style
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap &copy; CARTO'
         }).addTo(map);
 
-        const line = L.polyline(coords).addTo(map);
+        const line = L.polyline(coords, { color: '#0284c7', weight: 4 }).addTo(map);
         map.fitBounds(line.getBounds());
         map.invalidateSize();
         el.dataset.loaded = "true";
         if (typeof addDistanceMarkers === 'function') addDistanceMarkers(map, coords, 10);
     } catch (err) {
-        console.error("Map failure:", err);
+        console.error("Leaflet target runtime engine failure:", err);
     }
 }
 
-
-    
-/* ===============================
-   FETCH ROUTES (AJAX)
-================================ */
-
-/* ===============================
-   BATCH FETCH ROUTES (AJAX)
-================================ */
 document.getElementById('fetchRoutes').addEventListener('click', async () => {
     const btn = document.getElementById('fetchRoutes');
     const originalText = btn.innerText;
@@ -500,7 +555,6 @@ document.getElementById('fetchRoutes').addEventListener('click', async () => {
 
     try {
         while (keepGoing) {
-            // Update button text to show progress
             btn.innerText = `Syncing page ${page}... (${totalSynced} routes)`;
 
             const res = await fetch(`fetch_routes.php?page=${page}`);
@@ -522,14 +576,12 @@ document.getElementById('fetchRoutes').addEventListener('click', async () => {
             
             if (data.has_more) {
                 page++;
-                // Add a 1-second pause before the next batch
                 await new Promise(resolve => setTimeout(resolve, 1000));
             } else {
                 keepGoing = false;
             }
         }
 
-        // --- NEW: START COUNTRY GEOCODING ---
         btn.innerText = "Sync complete! Filling in country data...";
         
         let geocodingDone = false;
@@ -537,26 +589,22 @@ document.getElementById('fetchRoutes').addEventListener('click', async () => {
 
         while (!geocodingDone) {
             try {
-                // Call the maintenance script we discussed
                 const geoRes = await fetch('sync_countries.php'); 
                 const geoData = await geoRes.json();
 
                 if (geoData.updated_count > 0) {
                     totalFixed += geoData.updated_count;
                     btn.innerText = `Geocoding... (${totalFixed} countries fixed)`;
-                    // Small delay to keep things smooth
                     await new Promise(r => setTimeout(r, 500));
                 } else {
-                    // No more rows to update
                     geocodingDone = true;
                 }
             } catch (err) {
-                console.warn("Geocoding batch failed, stopping maintenance loop.", err);
-                geocodingDone = true; // Stop if the script errors out
+                console.warn("Geocoding batch failed.", err);
+                geocodingDone = true; 
             }
         }
 
-        // Final success state
         btn.innerText = `All Done! ${totalSynced} synced, ${totalFixed} geocoded.`;
         setTimeout(() => {
             location.reload(); 
@@ -581,33 +629,18 @@ function routeTypeLabel(type) {
   }[type] || 'Other';
 }
 
-/* ===============================
- Map Distance markers
-================================ */
 function haversineDistance(a, b) {
-  const R = 6371; // km
+  const R = 6371; 
   const dLat = (b[0] - a[0]) * Math.PI / 180;
   const dLng = (b[1] - a[1]) * Math.PI / 180;
-
   const lat1 = a[0] * Math.PI / 180;
   const lat2 = b[0] * Math.PI / 180;
-
-  const h =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1) * Math.cos(lat2) *
-    Math.sin(dLng / 2) ** 2;
-
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
   return 2 * R * Math.asin(Math.sqrt(h));
 }
     
-
-    
-
 async function saveTags(routeId, value) {
-  const tags = value
-    .split(',')
-    .map(t => t.trim())
-    .filter(Boolean);
+  const tags = value.split(',').map(t => t.trim()).filter(Boolean);
 
   try {
     const res = await fetch('save_route_tags.php', {
@@ -624,12 +657,10 @@ async function saveTags(routeId, value) {
     alert('Error saving tags');
   }
 }
-    
 </script>
 
-
-  <script>
-  const mapLink = document.getElementById('mapLink');
+<script>
+const mapLink = document.getElementById('mapLink');
 
 function updateMapLinkFromURL() {
     if (!mapLink) return;
@@ -645,9 +676,7 @@ history.replaceState = function (...args) {
     updateMapLinkFromURL();
 };
 
-// 5. Initial Run
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("Main Page Ready. Data check:", typeof routes);
     renderTable(routes);
 });
 
@@ -657,7 +686,6 @@ document.querySelectorAll('.routesTable th[data-sort]').forEach(th => {
     th.addEventListener('click', () => {
         const column = th.dataset.sort;
         
-        // Toggle direction if clicking same column
         if (currentSort.column === column) {
             currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
         } else {
@@ -665,21 +693,17 @@ document.querySelectorAll('.routesTable th[data-sort]').forEach(th => {
             currentSort.direction = 'asc';
         }
 
-        // Update UI classes
         document.querySelectorAll('.routesTable th').forEach(el => el.classList.remove('sort-asc', 'sort-desc'));
         th.classList.add(currentSort.direction === 'asc' ? 'sort-asc' : 'sort-desc');
 
-        // Sort the global 'routes' variable
         routes.sort((a, b) => {
             let valA = a[column];
             let valB = b[column];
 
-            // Handle numeric values (distance, elevation, etc)
             if (!isNaN(parseFloat(valA)) && isFinite(valA)) {
                 valA = parseFloat(valA);
                 valB = parseFloat(valB);
             } else {
-                // Case insensitive string sort
                 valA = (valA || '').toString().toLowerCase();
                 valB = (valB || '').toString().toLowerCase();
             }
@@ -689,17 +713,12 @@ document.querySelectorAll('.routesTable th[data-sort]').forEach(th => {
             return 0;
         });
 
-        // Re-render the table with sorted data
-        // Note: If you have filters active, you might want to call 
-        // the filtering function from routes_shared.js instead!
-        //renderTable(routes);
         applyFilters();
     });
 });
-
-</script>
+</style>
     
 <script src="routes_shared.js?v=1.0.1"></script>
 
-
 <?php include 'footer.php'; ?>
+<?php exit(0); ?>
