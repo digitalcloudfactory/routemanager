@@ -96,7 +96,7 @@ $needsAuth = true;
 if (isset($_SESSION['internal_user_id'])) {
     // 1. Fetch access token, refresh token, and expiration timestamp
     $stmt = $pdo->prepare("
-        SELECT access_token, refresh_token, expires_at 
+        SELECT access_token, refresh_token, token_expires_at 
         FROM users 
         WHERE id = ?
     ");
@@ -106,7 +106,7 @@ if (isset($_SESSION['internal_user_id'])) {
     if ($row && $row['access_token']) {
         
         // 2. Check if the token has expired (or is within 5 minutes of expiring)
-        if (time() >= ($row['expires_at'] - 300)) {
+        if (time() >= ($row['token_expires_at'] - 300)) {
             
             // 3. Token is expired! Refresh it seamlessly.
             $ch = curl_init();
@@ -129,13 +129,13 @@ if (isset($_SESSION['internal_user_id'])) {
                 // 4. Update the DB with the shiny new tokens
                 $updateStmt = $pdo->prepare("
                     UPDATE users 
-                    SET access_token = ?, refresh_token = ?, expires_at = ? 
+                    SET access_token = ?, refresh_token = ?, token_expires_at = ? 
                     WHERE id = ?
                 ");
                 $updateStmt->execute([
                     $data['access_token'],
                     $data['refresh_token'],
-                    $data['expires_at'],
+                    $data['token_expires_at'],
                     $_SESSION['internal_user_id']
                 ]);
                 
