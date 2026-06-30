@@ -410,7 +410,8 @@ figure {
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/@mapbox/polyline"></script>
-
+<script src="routes_shared.js?v=1.0.1"></script>
+    
 <script>
 var routes = <?= json_encode($routes, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?: '[]'; ?>;
 const tbody = document.getElementById('routesBody');
@@ -717,8 +718,6 @@ document.querySelectorAll('.routesTable th[data-sort]').forEach(th => {
     });
 });
 </style>
-    
-<script src="routes_shared.js?v=1.0.1"></script>
 
 <?php include 'footer.php'; ?>
 <?php exit(0); ?>
