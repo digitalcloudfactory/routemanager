@@ -8,7 +8,7 @@ Session auth check         internal_user_id
 ================================ */
 session_start();
 
-ini_set('display_errors', 0); // Turned off on production screens to protect dynamic JSON injection pipelines
+ini_set('display_errors', 0); 
 error_reporting(E_ALL);
 
 if (!isset($_SESSION['internal_user_id'])) {
@@ -107,23 +107,23 @@ $countries = $countryStmt->fetchAll(PDO::FETCH_COLUMN);
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background-color: #f8fafc;
+  background-color: #fcfcfd;
   color: #1e293b;
   margin: 0;
   padding: 0;
   -webkit-font-smoothing: antialiased;
 }
 
-
+/* Edge-to-edge flexible wide control frame */
 .container-premium {
   width: 100%;
-  max-width: 100%; /* Removes the viewport walls */
-  padding: 1.5rem 2rem; /* Tighter top/bottom gap, clean side breathing room */
+  max-width: 100%;
+  padding: 1.5rem 2rem;
   box-sizing: border-box;
 }
 
@@ -132,30 +132,23 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2.5rem;
+  margin-bottom: 2rem;
 }
 
 .title-area h1 {
-  font-size: 1.85rem;
-  font-weight: 800;
+  font-size: 1.6rem;
+  font-weight: 700;
   color: #0f172a;
   letter-spacing: -0.03em;
-  margin: 0 0 0.4rem 0;
-}
-
-.title-area p {
-  color: #64748b;
-  font-size: 0.95rem;
-  font-weight: 500;
-  margin: 0;
+  margin: 0 0 0.3rem 0;
 }
 
 .profile-summary-tag {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   background: #ffffff;
-  padding: 0.5rem 1rem 0.5rem 0.5rem;
+  padding: 0.4rem 0.8rem 0.4rem 0.4rem;
   border-radius: 30px;
   border: 1px solid #e2e8f0;
 }
@@ -164,84 +157,70 @@ body {
   object-fit: cover;
 }
 
-/* Premium Button Architecture */
+/* Minimalist Button System */
 .btn-premium-action {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   background-color: #0f172a;
   color: #ffffff;
-  font-size: 0.88rem;
-  font-weight: 600;
-  padding: 0.65rem 1.1rem;
-  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.55rem 1rem;
+  border-radius: 6px;
   border: 1px solid #0f172a;
   cursor: pointer;
   text-decoration: none;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
-  transition: all 0.15s ease;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .btn-premium-action:hover {
   background-color: #1e293b;
   border-color: #1e293b;
-  transform: translateY(-1px);
 }
 
 .btn-premium-secondary {
   background-color: #ffffff;
-  color: #334155;
-  border: 1px solid #cbd5e1;
+  color: #475569;
+  border: 1px solid #e2e8f0;
 }
 
 .btn-premium-secondary:hover {
   background-color: #f8fafc;
-  border-color: #94a3b8;
+  border-color: #cbd5e1;
   color: #0f172a;
 }
 
 /* --- THE DATA CARRIAGE SHEET MODULE --- */
-/* Ensure the wrapper card goes corner-to-corner seamlessly */
 .premium-data-card {
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 8px; /* Slightly tighter corner radius for wide views */
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.02);
   overflow: hidden;
   margin-bottom: 2rem;
   width: 100%;
 }
 
-/* --- REFINED STABLE GRID LAYOUT --- */
+/* --- REFINED SLIM GRID LAYOUT --- */
 .routesTable {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
-  font-size: 0.92rem;
+  font-size: 0.88rem;
 }
-
 
 .routesTable th {
   background-color: #f8fafc;
-  color: #475569;
-  font-weight: 600;
-  font-size: 0.74rem; /* Micro-typography looks crisper when compressed */
+  color: #64748b;
+  font-weight: 500;
+  font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  padding: 0.6rem 1rem; /* Dropped from 1rem to 0.6rem vertical padding */
+  padding: 0.65rem 1rem;
   border-bottom: 1px solid #e2e8f0;
   user-select: none;
 }
-
-.routesTable td {
-  padding: 0.55rem 1rem; /* Dropped from 1.1rem to 0.55rem vertical padding */
-  border-bottom: 1px solid #f1f5f9;
-  color: #334155;
-  font-weight: 500;
-  vertical-align: middle;
-}
-
-    
 
 .routesTable th[data-sort] {
   cursor: pointer;
@@ -249,6 +228,15 @@ body {
 .routesTable th[data-sort]:hover {
   color: #0f172a;
   background-color: #f1f5f9;
+}
+
+/* Dense list spacing without structural bold rules */
+.routesTable td {
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  font-weight: 400; /* No bold on the rows */
+  vertical-align: middle;
 }
 
 .routesTable tbody tr.route-row {
@@ -259,45 +247,53 @@ body {
   background-color: #f8fafc;
 }
 
-/* Inline Collapsible Preview Canvas Container Module */
+/* --- EXPANSIVE PREVIEW CANVAS LAYER --- */
 .details-row {
-  background-color: #fafafa;
+  background-color: #fbfbfc;
 }
 .details-row td {
   padding: 0 !important;
-}
-.route-details-box {
-  padding: 1.75rem 2rem !important;
   border-bottom: 1px solid #cbd5e1;
 }
+.route-details-box {
+  padding: 2.5rem 3rem !important; /* Spacious internal padding structure */
+}
 
-/* Leaflet Layout Structuring Elements inside Row Details */
 .route-layout {
   display: flex;
-  gap: 24px;
+  gap: 40px; /* Sweeping space separation */
+  align-items: stretch;
 }
+
 .route-map-wrap {
-  flex: 1;
+  flex: 1.4; /* Gives map significantly more visual layout landscape prominence */
   min-width: 0;
-  height: 320px;
-  border-radius: 8px;
+  height: 480px; /* Tall upscale architectural map display canvas */
+  border-radius: 6px;
   overflow: hidden;
-  border: 1px solid #cbd5e1;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.03);
 }
+
 .route-map {
   width: 100%;
   height: 100%;
 }
+
 .route-info {
-  width: 380px;
+  flex: 0.8;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
 }
+
 .route-info h4 {
-  margin: 0 0 1rem 0;
-  font-size: 1.2rem;
-  font-weight: 700;
+  margin: 0 0 1.5rem 0;
+  font-size: 1.4rem;
+  font-weight: 400; /* Sophisticated light weight header typography */
+  letter-spacing: -0.02em;
 }
+
 .route-info h4 a {
   color: #0f172a;
   text-decoration: none;
@@ -305,58 +301,80 @@ body {
 .route-info h4 a:hover {
   color: #0284c7;
 }
+
 .route-meta {
   list-style: none;
   padding: 0;
-  margin: 0 0 1.5rem 0;
-}
-.route-meta li {
-  padding: 0.5rem 0;
-  border-bottom: 1px solid #e2e8f0;
-  font-size: 0.88rem;
-}
-.route-tags label {
-  display: block;
-  font-size: 0.78rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  color: #64748b;
-  margin-bottom: 0.4rem;
-}
-.route-tags input {
-  width: 100%;
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
-  border: 1px solid #cbd5e1;
-  font-family: inherit;
-  font-size: 0.88rem;
+  margin: 0 0 2rem 0;
 }
 
-/* --- PREMIUM GRAPHIC MICRO BADGES --- */
+.route-meta li {
+  padding: 0.85rem 0; /* Expanded data field parameters */
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.9rem;
+  color: #475569;
+  font-weight: 400; /* Explicit weight override configuration */
+}
+
+.route-meta li span.data-label {
+  color: #94a3b8;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: inline-block;
+  width: 140px;
+}
+
+.route-tags label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #94a3b8;
+  margin-bottom: 0.5rem;
+}
+
+.route-tags input {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  font-family: inherit;
+  font-size: 0.88rem;
+  color: #334155;
+  transition: all 0.15s ease;
+}
+.route-tags input:focus {
+  outline: none;
+  border-color: #0284c7;
+}
+
+/* --- MONOCHROME SLIM GRAPHIC MICRO BADGES --- */
 .route-discipline-badge {
   display: inline-flex;
   align-items: center;
-  padding: 2px 6px; /* Tighter padding boundaries */
+  padding: 2px 6px;
   border-radius: 4px;
-  font-size: 0.72rem; /* Slightly smaller font balance */
-  font-weight: 700;
+  font-size: 0.72rem;
+  font-weight: 500; /* Balanced, readable text weight */
   text-transform: uppercase;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
+  border: 1px solid transparent;
 }
-.badge-discipline-1 { background-color: #eff6ff; color: #1d4ed8; }
-.badge-discipline-6 { background-color: #fef3c7; color: #b45309; }
-.badge-discipline-2 { background-color: #ecfdf5; color: #047857; }
-.badge-discipline-3 { background-color: #f5f5f4; color: #44403c; }
+.badge-discipline-1 { background-color: #f1f5f9; color: #1e293b; border-color: #e2e8f0; }
+.badge-discipline-6 { background-color: #fafaf9; color: #44403c; border-color: #e7e5e4; }
+.badge-discipline-2 { background-color: #f0fdf4; color: #166534; border-color: #dcfce7; }
+.badge-discipline-3 { background-color: #fbfbfa; color: #57534e; border-color: #f5f5f4; }
 
-.stat-numeric-bold {
+.stat-numeric-flat {
   font-variant-numeric: tabular-nums;
-  font-weight: 700;
   color: #0f172a;
 }
 .stat-unit-label {
-  font-size: 0.8rem;
-  color: #64748b;
-  font-weight: 500;
+  font-size: 0.78rem;
+  color: #94a3b8;
   margin-left: 2px;
 }
 </style>
@@ -366,21 +384,21 @@ body {
   <div class="dashboard-header-block">
     <div class="title-area">
       <h1>My Saved Routes</h1>
-      <div style="display:flex; align-items:center; gap:12px; margin-top:0.4rem;">
+      <div style="display:flex; align-items:center; gap:16px; margin-top:0.4rem;">
         <div class="profile-summary-tag">
-          <img src="<?= htmlspecialchars($user['avatar']) ?>" alt="Avatar" width="32" height="32">
-          <span style="font-size:0.88rem; font-weight:600; color:#334155;">
+          <img src="<?= htmlspecialchars($user['avatar']) ?>" alt="Avatar" width="28" height="28">
+          <span style="font-size:0.85rem; font-weight:400; color:#334155;">
             <?= htmlspecialchars($user['firstname'].' '.$user['lastname']) ?>
           </span>
         </div>
-        <p style="font-size:0.85rem; color:#64748b;">
-          Last Strava Sync: <span style="font-weight:600; color:#475569;"><?= $user['last_routes_sync'] ? htmlspecialchars($user['last_routes_sync']) : 'Never' ?></span>
+        <p style="font-size:0.85rem; color:#94a3b8;">
+          Last Strava Sync: <span style="color:#475569;"><?= $user['last_routes_sync'] ? htmlspecialchars($user['last_routes_sync']) : 'Never' ?></span>
         </p>
       </div>
     </div>
 
-    <div style="display: flex; gap: 10px; align-items: center;">
-      <a id="mapLink" href="map.php" class="btn-premium-action btn-premium-secondary">Map View Map 🗺️</a>
+    <div style="display: flex; gap: 8px; align-items: center;">
+      <a id="mapLink" href="map.php" class="btn-premium-action btn-premium-secondary">Map View 🗺️</a>
       <button id="openFilters" class="btn-premium-action btn-premium-secondary" type="button">Filters Panel ⚙️</button>
       <button id="fetchRoutes" class="btn-premium-action" type="button">Sync Strava Tracks</button>
     </div>  
@@ -390,12 +408,12 @@ body {
     <table class="routesTable">
       <thead>
         <tr>
-          <th data-sort="name" style="width: 35%;">Name</th>
-          <th data-sort="type" style="width: 12%;">Type</th>
-          <th data-sort="distance_km" style="width: 13%;">Distance</th>
-          <th data-sort="elevation" style="width: 13%;">Elevation Change</th>
-          <th data-sort="estimated_moving_time" style="width: 12%;">Moving Time</th>
-          <th data-sort="created_date" style="width: 15%;">Creation Date</th>
+          <th data-sort="name" style="width: 38%;">Name</th>
+          <th data-sort="type" style="width: 10%;">Type</th>
+          <th data-sort="distance_km" style="width: 12%;">Distance</th>
+          <th data-sort="elevation" style="width: 12%;">Elevation</th>
+          <th data-sort="estimated_moving_time" style="width: 11%;">Moving Time</th>
+          <th data-sort="created_date" style="width: 12%;">Creation Date</th>
           <th style="width: 5%; text-align: center;">Status</th>
         </tr>
       </thead>
@@ -427,7 +445,7 @@ async function renderTable(data) {
     tbody.innerHTML = '';
 
     if (!data || data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 3rem; color: #64748b; font-weight:500;">No routes found matching your active filter configuration.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 4rem; color: #94a3b8;">No routes found matching your active filter configuration.</td></tr>`;
         return;
     }
 
@@ -435,24 +453,23 @@ async function renderTable(data) {
         const row = document.createElement('tr');
         row.className = 'route-row';
         
-        // Status indicator parsing matching style context configurations
         let statusString = '';
         if (route.starred == 1) statusString += '<span style="color:#f59e0b; margin-right:4px;">★</span>';
-        if (route.private == 1) statusString += '<span style="color:#64748b;">🔒</span>';
+        if (route.private == 1) statusString += '<span style="color:#94a3b8;">🔒</span>';
         if (!statusString) statusString = '<span style="color:#cbd5e1;">—</span>';
 
         row.innerHTML = `
-            <td style="font-weight: 600; color: #0f172a;">${route.name || 'Untitled Track'}</td>
+            <td style="color: #0f172a;">${route.name || 'Untitled Track'}</td>
             <td>
                 <span class="route-discipline-badge badge-discipline-${route.type || 1}">
                     ${routeTypeLabel(route.type)}
                 </span>
             </td>
-            <td><span class="stat-numeric-bold">${route.distance_km ? Number(route.distance_km).toFixed(1) : '0.0'}</span><span class="stat-unit-label">km</span></td>
-            <td><span class="stat-numeric-bold">${Math.round(route.elevation) || 0}</span><span class="stat-unit-label">m</span></td>
-            <td style="font-variant-numeric: tabular-nums; font-weight:500;">${formatDuration(route.estimated_moving_time)}</td>
-            <td style="color: #64748b; font-size: 0.88rem;">${route.created_date || '—'}</td>
-            <td style="text-align: center; font-size: 1rem;">${statusString}</td>
+            <td><span class="stat-numeric-flat">${route.distance_km ? Number(route.distance_km).toFixed(1) : '0.0'}</span><span class="stat-unit-label">km</span></td>
+            <td><span class="stat-numeric-flat">${Math.round(route.elevation) || 0}</span><span class="stat-unit-label">m</span></td>
+            <td style="font-variant-numeric: tabular-nums;">${formatDuration(route.estimated_moving_time)}</td>
+            <td style="color: #64748b;">${route.created_date || '—'}</td>
+            <td style="text-align: center; font-size: 0.95rem;">${statusString}</td>
         `;
 
         const details = document.createElement('tr');
@@ -469,13 +486,15 @@ async function renderTable(data) {
                     <div class="route-layout">
                         <div class="route-map-wrap"><div id="map-${route.route_id}" class="route-map"></div></div>
                         <div class="route-info">
-                            <h4><a href="https://www.strava.com/routes/${route.route_id}" target="_blank">${route.name}</a></h4>
-                            <ul class="route-meta">
-                                <li><strong>Distance Boundary:</strong> ${Number(route.distance_km).toFixed(2)} km</li>
-                                <li><strong>Net Elevation:</strong> ${Math.round(route.elevation)} meters</li>
-                                <li><strong>Activity Profile:</strong> ${routeTypeLabel(route.type)}</li>
-                                <li><strong>Regional Origin:</strong> ${route.country || 'Undefined Region'}</li>
-                            </ul>
+                            <div>
+                                <h4><a href="https://www.strava.com/routes/${route.route_id}" target="_blank">${route.name}</a></h4>
+                                <ul class="route-meta">
+                                    <li><span class="data-label">Distance</span><span class="stat-numeric-flat">${Number(route.distance_km).toFixed(2)}</span><span class="stat-unit-label">km</span></li>
+                                    <li><span class="data-label">Net Elevation</span><span class="stat-numeric-flat">${Math.round(route.elevation)}</span><span class="stat-unit-label">m</span></li>
+                                    <li><span class="data-label">Profile</span>${routeTypeLabel(route.type)}</li>
+                                    <li><span class="data-label">Region</span>${route.country || 'Undefined Region'}</li>
+                                </ul>
+                            </div>
                             <div class="route-tags">
                                 <label>Track Classification Tags</label>
                                 <input type="text" value="${route.tags || ''}" placeholder="e.g. weekend, gravel, climbing..." onblur="saveTags('${route.route_id}', this.value)">
@@ -510,8 +529,8 @@ function addDistanceMarkers(map, latlngs, stepKm = 10) {
 
     if (distance >= nextMarker) {
       const marker = L.circleMarker(latlngs[i], {
-        radius: 4,
-        color: '#475569',
+        radius: 3.5,
+        color: '#94a3b8',
         fillColor: '#ffffff',
         fillOpacity: 1,
         weight: 1.5
@@ -541,7 +560,7 @@ function initMap(route) {
             attribution: '&copy; OpenStreetMap &copy; CARTO'
         }).addTo(map);
 
-        const line = L.polyline(coords, { color: '#0284c7', weight: 4 }).addTo(map);
+        const line = L.polyline(coords, { color: '#0284c7', weight: 3.5 }).addTo(map);
         map.fitBounds(line.getBounds());
         map.invalidateSize();
         el.dataset.loaded = "true";
