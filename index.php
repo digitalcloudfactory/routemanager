@@ -91,30 +91,74 @@ $pdo = new PDO(
     ]
 );
 
-
-
 $needsAuth = true;
 
 if (isset($_SESSION['internal_user_id'])) {
+    // 1. Fetch access token, refresh token, and expiration timestamp
     $stmt = $pdo->prepare("
-        SELECT access_token
-        FROM users
+        SELECT access_token, refresh_token, expires_at 
+        FROM users 
         WHERE id = ?
     ");
     $stmt->execute([$_SESSION['internal_user_id']]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($row && $row['access_token']) {
-        header("Location: routes.php");
-        exit;
+        
+        // 2. Check if the token has expired (or is within 5 minutes of expiring)
+        if (time() >= ($row['expires_at'] - 300)) {
+            
+            // 3. Token is expired! Refresh it seamlessly.
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, "https://www.strava.com/oauth/token");
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
+                'client_id'     => $client_id,
+                'client_secret' => '1a1057defe991fd6c2711f1199a3563cb3d5395f', // Add your client secret here
+                'grant_type'    => 'refresh_token',
+                'refresh_token' => $row['refresh_token']
+            ]));
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            
+            $response = curl_exec($ch);
+            curl_close($ch);
+            
+            $data = json_decode($response, true);
+            
+            if (isset($data['access_token'])) {
+                // 4. Update the DB with the shiny new tokens
+                $updateStmt = $pdo->prepare("
+                    UPDATE users 
+                    SET access_token = ?, refresh_token = ?, expires_at = ? 
+                    WHERE id = ?
+                ");
+                $updateStmt->execute([
+                    $data['access_token'],
+                    $data['refresh_token'],
+                    $data['expires_at'],
+                    $_SESSION['internal_user_id']
+                ]);
+                
+                // Proceed to routes with the newly updated token
+                header("Location: routes.php");
+                exit;
+            } else {
+                // Refresh failed (e.g., app access revoked), force re-auth
+                $needsAuth = true;
+            }
+        } else {
+            // Token is still valid! Proceed smoothly.
+            header("Location: routes.php");
+            exit;
+        }
     }
 }
 
-if ($needsAuth) {
+ if ($needsAuth) {
     $auth_url = "https://www.strava.com/oauth/authorize" .
         "?client_id={$client_id}" .
         "&response_type=code" .
-        "&redirect_uri={$redirect_uri}" .
+        "&redirect_uri=" . urlencode($redirect_uri) .
         "&approval_prompt=auto" .
         "&scope=activity:read_all";
 }
