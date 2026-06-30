@@ -343,22 +343,40 @@ document.getElementById('fetchRoutes').addEventListener('click', async () => {
     }
 });
 
+// Master Application Synchronization Bootstrapper for map.php
 document.addEventListener('DOMContentLoaded', () => {
-    const viewToggleLink = document.getElementById('mapLink');
-    if (!viewToggleLink) return;
+    // 1. Instantly consume and pre-populate your view state variables from URL params
+    const initialParams = new URLSearchParams(window.location.search);
+    
+    if (initialParams.has('country') && document.getElementById('filterCountry')) {
+        document.getElementById('filterCountry').value = initialParams.get('country');
+    }
+    if (initialParams.has('search') && document.getElementById('filterSearch')) {
+        document.getElementById('filterSearch').value = initialParams.get('search');
+    }
+    if (initialParams.has('dist_min') && document.getElementById('filterDistanceMin')) {
+        document.getElementById('filterDistanceMin').value = initialParams.get('dist_min');
+    }
+    if (initialParams.has('dist_max') && document.getElementById('filterDistanceMax')) {
+        document.getElementById('filterDistanceMax').value = initialParams.get('dist_max');
+    }
 
-    // Intercept when the user attempts to click or navigate views
-    viewToggleLink.addEventListener('click', (e) => {
-        // Prevent immediate raw fallback link navigation
-        e.preventDefault();
+    // 2. Map-Specific Step: Async Remote Database Payload Sync
+    fetch('get_map_routes.php')
+        .then(response => response.json())
+        .then(data => {
+            routes = data;
+            if (typeof applyFilters === 'function') {
+                applyFilters(); 
+            } else {
+                drawRoutes(routes); 
+            }
+        })
+        .catch(error => console.error('Error loading API tracks route payload:', error));
 
-        // 1. Snatch up the window's original base navigation target URL (e.g., 'map.php' or 'routes.php')
-        const targetUrl = new URL(viewToggleLink.getAttribute('href'), window.location.origin);
-
-        // 2. Dynamically gather the live filtering variables directly out of your shared state or DOM inputs
+    // 3. REAL-TIME URL BAR SYNCHRONIZER
+    function syncFiltersToURLBar() {
         const currentParams = new URLSearchParams();
-
-        // Fetch inputs from your filter_panel components if they exist
         const countryEl = document.getElementById('filterCountry');
         const searchEl  = document.getElementById('filterSearch');
         const distMinEl = document.getElementById('filterDistanceMin');
@@ -369,24 +387,39 @@ document.addEventListener('DOMContentLoaded', () => {
         if (distMinEl && distMinEl.value) currentParams.set('dist_min', distMinEl.value);
         if (distMaxEl && distMaxEl.value) currentParams.set('dist_max', distMaxEl.value);
 
-        // 3. Forward the updated parameters and swap view execution
-        window.location.href = `${targetUrl.pathname}?${currentParams.toString()}`;
+        const newRelativePathQuery = window.location.pathname + '?' + currentParams.toString();
+        history.replaceState(null, '', newRelativePathQuery);
+    }
+
+    // Attach listeners to all standard slider inputs and filter nodes
+    ['filterCountry', 'filterSearch', 'filterDistanceMin', 'filterDistanceMax'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', syncFiltersToURLBar);
+            el.addEventListener('change', syncFiltersToURLBar);
+        }
     });
 
-    // --- DEEP-LINKING SYNCHRONIZER ---
-    // Run this sequence immediately on page load to pre-populate UI controls from deep-link URLs
-    const initialParams = new URLSearchParams(window.location.search);
-    
-    if (initialParams.has('country') && document.getElementById('filterCountry')) {
-        document.getElementById('filterCountry').value = initialParams.get('country');
-    }
-    if (initialParams.has('search') && document.getElementById('filterSearch')) {
-        document.getElementById('filterSearch').value = initialParams.get('search');
-    }
-    
-    // Automatically execute the filtering logic after assigning variables if the method is loaded
-    if (typeof applyFilters === 'function') {
-        applyFilters();
+    // 4. LIVE TOGGLE PARAMETER INTERCEPTOR (For routing back to routes.php cleanly)
+    const viewToggleLink = document.getElementById('mapLink');
+    if (viewToggleLink) {
+        viewToggleLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetUrl = new URL(viewToggleLink.getAttribute('href'), window.location.origin);
+            const currentParams = new URLSearchParams();
+
+            const countryEl = document.getElementById('filterCountry');
+            const searchEl  = document.getElementById('filterSearch');
+            const distMinEl = document.getElementById('filterDistanceMin');
+            const distMaxEl = document.getElementById('filterDistanceMax');
+
+            if (countryEl && countryEl.value) currentParams.set('country', countryEl.value);
+            if (searchEl  && searchEl.value)  currentParams.set('search', searchEl.value);
+            if (distMinEl && distMinEl.value) currentParams.set('dist_min', distMinEl.value);
+            if (distMaxEl && distMaxEl.value) currentParams.set('dist_max', distMaxEl.value);
+
+            window.location.href = `${targetUrl.pathname}?${currentParams.toString()}`;
+        });
     }
 });
 </script>
