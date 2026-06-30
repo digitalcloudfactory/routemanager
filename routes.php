@@ -540,6 +540,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (initialParams.has('search') && document.getElementById('filterSearch')) {
         document.getElementById('filterSearch').value = initialParams.get('search');
     }
+    if (initialParams.has('dist_min') && document.getElementById('filterDistanceMin')) {
+        document.getElementById('filterDistanceMin').value = initialParams.get('dist_min');
+    }
+    if (initialParams.has('dist_max') && document.getElementById('filterDistanceMax')) {
+        document.getElementById('filterDistanceMax').value = initialParams.get('dist_max');
+    }
 
     // Render original or initial deeply-linked filters
     if (typeof applyFilters === 'function') { 
@@ -547,6 +553,32 @@ document.addEventListener('DOMContentLoaded', () => {
     } else { 
         renderTable(routes); 
     }
+
+    // --- REAL-TIME URL BAR SYNCHRONIZER ---
+    function syncFiltersToURLBar() {
+        const currentParams = new URLSearchParams();
+        const countryEl = document.getElementById('filterCountry');
+        const searchEl  = document.getElementById('filterSearch');
+        const distMinEl = document.getElementById('filterDistanceMin');
+        const distMaxEl = document.getElementById('filterDistanceMax');
+
+        if (countryEl && countryEl.value) currentParams.set('country', countryEl.value);
+        if (searchEl  && searchEl.value)  currentParams.set('search', searchEl.value);
+        if (distMinEl && distMinEl.value) currentParams.set('dist_min', distMinEl.value);
+        if (distMaxEl && distMaxEl.value) currentParams.set('dist_max', distMaxEl.value);
+
+        const newRelativePathQuery = window.location.pathname + '?' + currentParams.toString();
+        history.replaceState(null, '', newRelativePathQuery);
+    }
+
+    // Attach listeners to all standard slider inputs and filter nodes
+    ['filterCountry', 'filterSearch', 'filterDistanceMin', 'filterDistanceMax'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', syncFiltersToURLBar);
+            el.addEventListener('change', syncFiltersToURLBar);
+        }
+    });
 
     // --- LIVE TOGGLE PARAMETER INTERCEPTOR ---
     const viewToggleLink = document.getElementById('mapLink');
