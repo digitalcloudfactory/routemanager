@@ -107,275 +107,287 @@ $countries = $countryStmt->fetchAll(PDO::FETCH_COLUMN);
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background-color: #fcfcfd;
-  color: #1e293b;
-  margin: 0;
-  padding: 0;
-  -webkit-font-smoothing: antialiased;
+    font-family: 'Inter', sans-serif;
+    background-color: #f4f6f9; /* Soft slate grey canvas */
+    color: #1e293b; /* Deep charcoal text */
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
 }
 
-/* Edge-to-edge flexible wide control frame */
+/* Wide control frame matching layout architecture */
 .container-premium {
-  width: 100%;
-  max-width: 100%;
-  padding: 1.5rem 2rem;
-  box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    padding: 2rem;
+    box-sizing: border-box;
 }
 
 /* --- UPPER ACTION HEADER DASHBOARD --- */
 .dashboard-header-block {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
 }
 
 .title-area h1 {
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: #0f172a;
-  letter-spacing: -0.03em;
-  margin: 0 0 0.3rem 0;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.5px;
+    margin: 0 0 0.3rem 0;
+}
+
+.title-area h1 span { 
+    color: #0284c7; /* Athletic blue accent link */
 }
 
 .profile-summary-tag {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: #ffffff;
-  padding: 0.4rem 0.8rem 0.4rem 0.4rem;
-  border-radius: 30px;
-  border: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #ffffff;
+    padding: 0.4rem 0.8rem 0.4rem 0.4rem;
+    border-radius: 30px;
+    border: 1px solid #e2e8f0;
 }
 .profile-summary-tag img {
-  border-radius: 50%;
-  object-fit: cover;
+    border-radius: 50%;
+    object-fit: cover;
 }
 
-/* Minimalist Button System */
+/* Minimalist Premium Button System aligned with form styling */
 .btn-premium-action {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background-color: #0f172a;
-  color: #ffffff;
-  font-size: 0.85rem;
-  font-weight: 500;
-  padding: 0.55rem 1rem;
-  border-radius: 6px;
-  border: 1px solid #0f172a;
-  cursor: pointer;
-  text-decoration: none;
-  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #0284c7;
+    color: #ffffff !important;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 0.55rem 1rem;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    box-shadow: 0 2px 4px rgba(2, 132, 199, 0.08);
 }
 
 .btn-premium-action:hover {
-  background-color: #1e293b;
-  border-color: #1e293b;
+    background-color: #0369a1;
 }
 
 .btn-premium-secondary {
-  background-color: #ffffff;
-  color: #475569;
-  border: 1px solid #e2e8f0;
+    background-color: #ffffff;
+    color: #1e293b !important;
+    border: 1px solid #cbd5e1;
+    box-shadow: none;
 }
 
 .btn-premium-secondary:hover {
-  background-color: #f8fafc;
-  border-color: #cbd5e1;
-  color: #0f172a;
+    background-color: #f8fafc;
+    border-color: #0284c7;
 }
 
 /* --- THE DATA CARRIAGE SHEET MODULE --- */
 .premium-data-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.02);
-  overflow: hidden;
-  margin-bottom: 2rem;
-  width: 100%;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 4px 0 24px rgba(148, 163, 184, 0.08);
+    overflow: hidden;
+    margin-bottom: 2rem;
+    width: 100%;
 }
 
 /* --- REFINED SLIM GRID LAYOUT --- */
 .routesTable {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: left;
-  font-size: 0.88rem;
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.88rem;
 }
 
 .routesTable th {
-  background-color: #f8fafc;
-  color: #64748b;
-  font-weight: 500;
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  padding: 0.65rem 1rem;
-  border-bottom: 1px solid #e2e8f0;
-  user-select: none;
+    background-color: #f8fafc;
+    color: #64748b;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0.85rem 1.25rem;
+    border-bottom: 1px solid #e2e8f0;
+    user-select: none;
 }
 
 .routesTable th[data-sort] {
-  cursor: pointer;
+    cursor: pointer;
 }
 .routesTable th[data-sort]:hover {
-  color: #0f172a;
-  background-color: #f1f5f9;
+    color: #0f172a;
+    background-color: #f1f5f9;
 }
 
-/* Dense list spacing without structural bold rules */
 .routesTable td {
-  padding: 0.6rem 1rem;
-  border-bottom: 1px solid #f1f5f9;
-  color: #334155;
-  font-weight: 400; /* No bold on the rows */
-  vertical-align: middle;
+    padding: 0.85rem 1.25rem;
+    border-bottom: 1px solid #e2e8f0;
+    color: #1e293b;
+    font-weight: 400;
+    vertical-align: middle;
 }
 
 .routesTable tbody tr.route-row {
-  cursor: pointer;
-  transition: background-color 0.15s ease;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
 }
 .routesTable tbody tr.route-row:hover {
-  background-color: #f8fafc;
+    background-color: #f8fafc;
 }
 
 /* --- EXPANSIVE PREVIEW CANVAS LAYER --- */
 .details-row {
-  background-color: #fbfbfc;
+    background-color: #f8fafc; /* Subtle grey card style inner row bg */
 }
 .details-row td {
-  padding: 0 !important;
-  border-bottom: 1px solid #cbd5e1;
+    padding: 0 !important;
+    border-bottom: 1px solid #cbd5e1;
 }
 .route-details-box {
-  padding: 2.5rem 3rem !important; /* Spacious internal padding structure */
+    padding: 2rem !important;
 }
 
 .route-layout {
-  display: flex;
-  gap: 40px; /* Sweeping space separation */
-  align-items: stretch;
+    display: flex;
+    gap: 30px;
+    align-items: stretch;
 }
 
 .route-map-wrap {
-  flex: 1.4; /* Gives map significantly more visual layout landscape prominence */
-  min-width: 0;
-  height: 480px; /* Tall upscale architectural map display canvas */
-  border-radius: 6px;
-  overflow: hidden;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.03);
+    flex: 1.4;
+    min-width: 0;
+    height: 440px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #cbd5e1;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.04);
 }
 
 .route-map {
-  width: 100%;
-  height: 100%;
+    width: 100%;
+    height: 100%;
 }
 
 .route-info {
-  flex: 0.8;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+    flex: 0.8;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    padding: 1.25rem;
+    border-radius: 12px;
 }
 
 .route-info h4 {
-  margin: 0 0 1.5rem 0;
-  font-size: 1.4rem;
-  font-weight: 400; /* Sophisticated light weight header typography */
-  letter-spacing: -0.02em;
+    margin: 0 0 1rem 0;
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
 }
 
 .route-info h4 a {
-  color: #0f172a;
-  text-decoration: none;
+    color: #0f172a;
+    text-decoration: none;
 }
 .route-info h4 a:hover {
-  color: #0284c7;
+    color: #0284c7;
 }
 
 .route-meta {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 2rem 0;
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.5rem 0;
 }
 
 .route-meta li {
-  padding: 0.85rem 0; /* Expanded data field parameters */
-  border-bottom: 1px solid #f1f5f9;
-  font-size: 0.9rem;
-  color: #475569;
-  font-weight: 400; /* Explicit weight override configuration */
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 0.9rem;
+    color: #1e293b;
+}
+
+.route-meta li:last-child {
+    border-bottom: none;
 }
 
 .route-meta li span.data-label {
-  color: #94a3b8;
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  display: inline-block;
-  width: 140px;
+    color: #64748b;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    display: inline-block;
+    width: 120px;
 }
 
 .route-tags label {
-  display: block;
-  font-size: 0.75rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #94a3b8;
-  margin-bottom: 0.5rem;
+    display: block;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #64748b;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
 }
 
 .route-tags input {
-  width: 100%;
-  padding: 0.65rem 0.85rem;
-  border-radius: 6px;
-  border: 1px solid #e2e8f0;
-  background-color: #ffffff;
-  font-family: inherit;
-  font-size: 0.88rem;
-  color: #334155;
-  transition: all 0.15s ease;
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    background-color: #ffffff;
+    font-family: inherit;
+    font-size: 0.88rem;
+    color: #1e293b;
+    transition: all 0.15s ease;
 }
 .route-tags input:focus {
-  outline: none;
-  border-color: #0284c7;
+    outline: none;
+    border-color: #0284c7;
+    box-shadow: 0 0 0 0.25rem rgba(2, 132, 199, 0.15);
 }
 
-/* --- MONOCHROME SLIM GRAPHIC MICRO BADGES --- */
+/* --- DISCIPLINE GRAPHIC MICRO BADGES --- */
 .route-discipline-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 0.72rem;
-  font-weight: 500; /* Balanced, readable text weight */
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  border: 1px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid transparent;
 }
-.badge-discipline-1 { background-color: #f1f5f9; color: #1e293b; border-color: #e2e8f0; }
-.badge-discipline-6 { background-color: #fafaf9; color: #44403c; border-color: #e7e5e4; }
-.badge-discipline-2 { background-color: #f0fdf4; color: #166534; border-color: #dcfce7; }
-.badge-discipline-3 { background-color: #fbfbfa; color: #57534e; border-color: #f5f5f4; }
+.badge-discipline-1 { background-color: rgba(2, 132, 199, 0.08); color: #0369a1; border-color: rgba(2, 132, 199, 0.15); }
+.badge-discipline-6 { background-color: #f8fafc; color: #475569; border-color: #e2e8f0; }
+.badge-discipline-2 { background-color: rgba(0, 230, 118, 0.1); color: #1b5e20; border-color: rgba(0, 230, 118, 0.2); }
+.badge-discipline-3 { background-color: #f1f5f9; color: #334155; border-color: #cbd5e1; }
 
 .stat-numeric-flat {
-  font-variant-numeric: tabular-nums;
-  color: #0f172a;
+    font-variant-numeric: tabular-nums;
+    color: #0f172a;
+    font-weight: 600;
 }
 .stat-unit-label {
-  font-size: 0.78rem;
-  color: #94a3b8;
-  margin-left: 2px;
+    font-size: 0.78rem;
+    color: #64748b;
+    margin-left: 2px;
 }
 </style>
 
@@ -383,24 +395,25 @@ body {
 
   <div class="dashboard-header-block">
     <div class="title-area">
-      <h1>My Saved Routes</h1>
+      <h1>My Saved <span>Routes</span></h1>
       <div style="display:flex; align-items:center; gap:16px; margin-top:0.4rem;">
         <div class="profile-summary-tag">
           <img src="<?= htmlspecialchars($user['avatar']) ?>" alt="Avatar" width="28" height="28">
-          <span style="font-size:0.85rem; font-weight:400; color:#334155;">
+          <span style="font-size:0.85rem; font-weight:500; color:#1e293b;">
             <?= htmlspecialchars($user['firstname'].' '.$user['lastname']) ?>
           </span>
         </div>
-        <p style="font-size:0.85rem; color:#94a3b8;">
-          Last Strava Sync: <span style="color:#475569;"><?= $user['last_routes_sync'] ? htmlspecialchars($user['last_routes_sync']) : 'Never' ?></span>
+        <p style="font-size:0.85rem; color:#64748b; margin:0;">
+          Last Strava Sync: <span style="color:#1e293b; font-weight:500;"><?= $user['last_routes_sync'] ? htmlspecialchars($user['last_routes_sync']) : 'Never' ?></span>
         </p>
       </div>
     </div>
 
     <div style="display: flex; gap: 8px; align-items: center;">
       <a id="mapLink" href="map.php" class="btn-premium-action btn-premium-secondary">Map View 🗺️</a>
+      <a id="dubLink" href="duplicate_finder.php" class="btn-premium-action btn-premium-secondary">Duplicate Finder</a>
       <button id="openFilters" class="btn-premium-action btn-premium-secondary" type="button">Filters Panel ⚙️</button>
-      <button id="fetchRoutes" class="btn-premium-action" type="button">Sync Strava Tracks</button>
+      <button id="fetchRoutes" class="btn-premium-action" type="button" style="background-color: #00E676 !important; border: none; color: #0f172a !important; font-weight: 700;">🚀 Sync Strava Tracks</button>
     </div>  
   </div>
 
@@ -445,7 +458,7 @@ async function renderTable(data) {
     tbody.innerHTML = '';
 
     if (!data || data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 4rem; color: #94a3b8;">No routes found matching your active filter configuration.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 4rem; color: #64748b;">No routes found matching your active filter configuration.</td></tr>`;
         return;
     }
 
@@ -455,11 +468,11 @@ async function renderTable(data) {
         
         let statusString = '';
         if (route.starred == 1) statusString += '<span style="color:#f59e0b; margin-right:4px;">★</span>';
-        if (route.private == 1) statusString += '<span style="color:#94a3b8;">🔒</span>';
+        if (route.private == 1) statusString += '<span style="color:#64748b;">🔒</span>';
         if (!statusString) statusString = '<span style="color:#cbd5e1;">—</span>';
 
         row.innerHTML = `
-            <td style="color: #0f172a;">${route.name || 'Untitled Track'}</td>
+            <td style="color: #0f172a; font-weight: 500;">${route.name || 'Untitled Track'}</td>
             <td>
                 <span class="route-discipline-badge badge-discipline-${route.type || 1}">
                     ${routeTypeLabel(route.type)}
@@ -467,7 +480,7 @@ async function renderTable(data) {
             </td>
             <td><span class="stat-numeric-flat">${route.distance_km ? Number(route.distance_km).toFixed(1) : '0.0'}</span><span class="stat-unit-label">km</span></td>
             <td><span class="stat-numeric-flat">${Math.round(route.elevation) || 0}</span><span class="stat-unit-label">m</span></td>
-            <td style="font-variant-numeric: tabular-nums;">${formatDuration(route.estimated_moving_time)}</td>
+            <td style="font-variant-numeric: tabular-nums; color: #1e293b;">${formatDuration(route.estimated_moving_time)}</td>
             <td style="color: #64748b;">${route.created_date || '—'}</td>
             <td style="text-align: center; font-size: 0.95rem;">${statusString}</td>
         `;
@@ -475,7 +488,7 @@ async function renderTable(data) {
         const details = document.createElement('tr');
         details.hidden = true;
         details.className = 'details-row';
-        details.innerHTML = `<td colspan="7" class="route-details-box"><div id="details-content-${route.route_id}">Loading Canvas Frame Preview Layer...</div></td>`;
+        details.innerHTML = `<td colspan="7" class="route-details-box"><div id="details-content-${route.route_id}" style="color:#64748b; font-size:0.9rem;">Loading Canvas Frame Preview Layer...</div></td>`;
 
         row.onclick = async () => {
             details.hidden = !details.hidden;
@@ -530,7 +543,7 @@ function addDistanceMarkers(map, latlngs, stepKm = 10) {
     if (distance >= nextMarker) {
       const marker = L.circleMarker(latlngs[i], {
         radius: 3.5,
-        color: '#94a3b8',
+        color: '#0284c7',
         fillColor: '#ffffff',
         fillOpacity: 1,
         weight: 1.5
@@ -557,10 +570,10 @@ function initMap(route) {
         const map = L.map(mapId);
         
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; OpenStreetMap &copy; CARTO'
+            attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
         }).addTo(map);
 
-        const line = L.polyline(coords, { color: '#0284c7', weight: 3.5 }).addTo(map);
+        const line = L.polyline(coords, { color: '#ef4444', weight: 4, opacity: 0.85, lineJoin: 'round' }).addTo(map); // Aligned vivid coral red line trace
         map.fitBounds(line.getBounds());
         map.invalidateSize();
         el.dataset.loaded = "true";
@@ -582,7 +595,7 @@ document.getElementById('fetchRoutes').addEventListener('click', async () => {
 
     try {
         while (keepGoing) {
-            btn.innerText = `Syncing page ${page}... (${totalSynced} tracks)`;
+            btn.innerText = `⏳ Syncing page ${page}... (${totalSynced} tracks)`;
 
             const res = await fetch(`fetch_routes.php?page=${page}`);
             const text = await res.text();
@@ -609,7 +622,7 @@ document.getElementById('fetchRoutes').addEventListener('click', async () => {
             }
         }
 
-        btn.innerText = "Sync complete! Resolving geography tags...";
+        btn.innerText = "⏳ Success! Resolving geography tags...";
         
         let geocodingDone = false;
         let totalFixed = 0;
@@ -621,7 +634,7 @@ document.getElementById('fetchRoutes').addEventListener('click', async () => {
 
                 if (geoData.updated_count > 0) {
                     totalFixed += geoData.updated_count;
-                    btn.innerText = `Geocoding... (${totalFixed} paths localized)`;
+                    btn.innerText = `⏳ Geocoding... (${totalFixed} paths localized)`;
                     await new Promise(r => setTimeout(r, 500));
                 } else {
                     geocodingDone = true;
@@ -632,7 +645,7 @@ document.getElementById('fetchRoutes').addEventListener('click', async () => {
             }
         }
 
-        btn.innerText = `Success! ${totalSynced} structural updates completed.`;
+        btn.innerText = `🚀 Success! ${totalSynced} tracks updated.`;
         setTimeout(() => {
             location.reload(); 
         }, 1200);
