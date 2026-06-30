@@ -20,7 +20,7 @@ $internalUserId = $_SESSION['internal_user_id'];
 /* ===============================
     DATABASE CONFIG
 ================================ */
-$db_host = 'db.fr-pari1.bengt.wasmernet.com';
+$db_host = 'db.fr-pari1.bengt.wasmernet.com';\
 $db_port = 10272;
 $db_name = 'dbcmpLT2zrmwmur5UEjZ3Xj8';
 $db_user = 'de142c5d7a0180009884f0319fb7';
@@ -312,7 +312,6 @@ body {
     <section class="center-data-platform">
         <div class="platform-table-header">
             <div>
-                <h2 style="margin:0 0 0.25rem 0; font-size:1.25rem; font-weight:800; color:#0f172a;">Track Database Matrix</h2>
                 <div class="user-meta-bar">
                     <div class="profile-badge">
                         <img src="<?= htmlspecialchars($user['avatar']) ?>" alt="User Avatar" width="22" height="22">
