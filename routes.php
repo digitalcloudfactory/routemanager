@@ -327,7 +327,7 @@ body {
                         <span style="font-size: 0.78rem; font-weight: 600; color: #334155;"><?= htmlspecialchars($user['firstname']) ?></span>
                     </div>
                     <div style="font-size: 0.72rem; color: #64748b;">
-                        Sync: <span style="font-weight:600; color:#1e293b;"><?= $user['last_routes_sync'] ? date('d M', strtotime($user['last_routes_sync'])) : 'Never' ?></span>
+                        Sync: <span style="font-weight:600; color:#1e293b;"><?= !empty($user['last_routes_sync']) ? htmlspecialchars($user['last_routes_sync']) : 'Never' ?></span>
                     </div>
                 </div>
             </div>
