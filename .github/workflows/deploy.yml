@@ -7,7 +7,7 @@ on:
 
 jobs:
   deploy:
-    runs-down: ubuntu-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -15,4 +15,4 @@ jobs:
       - name: Deploy to Wasmer
         uses: wasmerio/wasmer-deploy-action@v1
         with:
-          wasmer-token: ${{ secrets::WASMER_TOKEN }}
+          wasmer-token: ${{ secrets.WASMER_TOKEN }}
