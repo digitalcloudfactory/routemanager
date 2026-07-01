@@ -526,6 +526,25 @@ document.getElementById('fetchRoutes').addEventListener('click', async () => {
         btn.disabled = false;
     }
 });
+
+document.addEventListener('DOMContentLoaded', () => {
+    initWorkspaceMap();
+
+    // Note: routes_shared.js handles loadFiltersFromURL() and renderTable() automatically here!
+
+    // --- VIEW LINK INTERCEPTOR ---
+    const viewToggleLink = document.getElementById('mapLink');
+    if (viewToggleLink) {
+        viewToggleLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetUrl = new URL(viewToggleLink.getAttribute('href'), window.location.origin);
+            
+            // Forwards exactly what routes_shared.js put in the browser URL bar
+            window.location.href = `${targetUrl.pathname}${window.location.search}`;
+        });
+    }
+});
+
 </script>
 <?php include 'footer.php'; ?>
 <?php exit(0); ?>

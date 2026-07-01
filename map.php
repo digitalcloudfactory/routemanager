@@ -309,18 +309,6 @@ function renderNextChunk() {
     }
 }
 
-fetch('get_map_routes.php')
-    .then(response => response.json())
-    .then(data => {
-        routes = data;
-        if (typeof applyFilters === 'function') {
-            applyFilters(); 
-        } else {
-            drawRoutes(routes); 
-        }
-    })
-    .catch(error => console.error('Error loading API tracks route payload:', error));
-
 document.getElementById('fetchRoutes').addEventListener('click', async () => {
     const btn = document.getElementById('fetchRoutes');
     btn.disabled = true;
@@ -343,6 +331,37 @@ document.getElementById('fetchRoutes').addEventListener('click', async () => {
     }
 });
 
+document.addEventListener('DOMContentLoaded', () => {
+    
+    // 1. Fetch your track payload arrays asynchronously
+    fetch('get_map_routes.php')
+        .then(response => response.json())
+        .then(data => {
+            routes = data;
+            
+            // 2. Once data exists, have routes_shared.js read the incoming URL keys & render
+            if (typeof loadFiltersFromURL === 'function') {
+                loadFiltersFromURL();
+            } else if (typeof applyFilters === 'function') {
+                applyFilters(); 
+            } else {
+                drawRoutes(routes); 
+            }
+        })
+        .catch(error => console.error('Error loading API tracks route payload:', error));
+
+    // --- VIEW LINK INTERCEPTOR ---
+    const viewToggleLink = document.getElementById('mapLink');
+    if (viewToggleLink) {
+        viewToggleLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetUrl = new URL(viewToggleLink.getAttribute('href'), window.location.origin);
+            
+            // Forwards exactly what routes_shared.js put in the browser URL bar
+            window.location.href = `${targetUrl.pathname}${window.location.search}`;
+        });
+    }
+});
 
 </script>
 
