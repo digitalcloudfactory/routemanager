@@ -2,6 +2,7 @@ kind: wasmer.io/App.v0
 name: map-routes
 owner: digitalcloudfactory
 app_id: da_RvJI4t0UE5bv
+package: .
 enableDatabase: true
 scaling:
   mode: single_concurrency
