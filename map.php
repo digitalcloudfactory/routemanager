@@ -331,17 +331,20 @@ document.getElementById('fetchRoutes').addEventListener('click', async () => {
     }
 });
 
+// Master Unified Lifecycle Framework inside map.php
 document.addEventListener('DOMContentLoaded', () => {
     
-    // 1. Fetch your track payload arrays asynchronously
+    // 1. Single Fetch execution layer
     fetch('get_map_routes.php')
         .then(response => response.json())
         .then(data => {
+            // Assign the fresh network payload to our global state variable
             routes = data;
             
-            // 2. Once data exists, have routes_shared.js read the incoming URL keys & render
+            // 2. CRITICAL: Force routes_shared.js to re-read URL parameters 
+            // NOW that the data arrays actually exist to be filtered!
             if (typeof loadFiltersFromURL === 'function') {
-                loadFiltersFromURL();
+                loadFiltersFromURL(); 
             } else if (typeof applyFilters === 'function') {
                 applyFilters(); 
             } else {
@@ -356,8 +359,6 @@ document.addEventListener('DOMContentLoaded', () => {
         viewToggleLink.addEventListener('click', (e) => {
             e.preventDefault();
             const targetUrl = new URL(viewToggleLink.getAttribute('href'), window.location.origin);
-            
-            // Forwards exactly what routes_shared.js put in the browser URL bar
             window.location.href = `${targetUrl.pathname}${window.location.search}`;
         });
     }

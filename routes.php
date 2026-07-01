@@ -527,10 +527,20 @@ document.getElementById('fetchRoutes').addEventListener('click', async () => {
     }
 });
 
+// Master Application Synchronization Bootstrapper inside routes.php
 document.addEventListener('DOMContentLoaded', () => {
+    // 1. Initialize the Leaflet workspace map layout container
     initWorkspaceMap();
 
-    // Note: routes_shared.js handles loadFiltersFromURL() and renderTable() automatically here!
+    // 2. CRITICAL: Force routes_shared to re-read URL query bars 
+    // now that the map canvas and the embedded database rows are entirely ready
+    if (typeof loadFiltersFromURL === 'function') {
+        loadFiltersFromURL();
+    } else if (typeof applyFilters === 'function') {
+        applyFilters();
+    } else {
+        renderTable(routes);
+    }
 
     // --- VIEW LINK INTERCEPTOR ---
     const viewToggleLink = document.getElementById('mapLink');
