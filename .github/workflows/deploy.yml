@@ -12,7 +12,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy to Wasmer
-        uses: wasmerio/wasmer-deploy-action@v1
-        with:
-          wasmer-token: ${{ secrets.WASMER_TOKEN }}
+      # 1. This installs the Wasmer CLI onto the GitHub runner environment
+      - name: Setup Wasmer CLI
+        uses: wasmerio/setup-wasmer@v3.1
+
+      # 2. This authenticates and executes the cloud build/deploy 
+      - name: Deploy to Wasmer Edge
+        run: wasmer deploy --token=${{ secrets.WASMER_TOKEN }}
