@@ -1,4 +1,4 @@
-kind: wasmer.io/App.v0
+kind: wasmer.io/App.v1
 name: map-routes
 owner: digitalcloudfactory
 app_id: da_RvJI4t0UE5bv
