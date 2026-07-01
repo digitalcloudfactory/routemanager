@@ -1,4 +1,14 @@
 <?php
+
+session_set_cookie_params([
+    'lifetime' => 1209600,
+    'path' => '/',
+    'domain' => '', // Automatically uses current domain
+    'secure' => false, // Set to true if your site uses https://
+    'httponly' => true, // Security best practice: protects cookie from JS injection
+    'samesite' => 'Lax'
+]);
+
 session_start();
 
 ini_set('memory_limit', '512M'); 

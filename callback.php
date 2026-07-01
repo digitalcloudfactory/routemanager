@@ -3,6 +3,15 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
+session_set_cookie_params([
+    'lifetime' => 1209600,
+    'path' => '/',
+    'domain' => '', // Automatically uses current domain
+    'secure' => false, // Set to true if your site uses https://
+    'httponly' => true, // Security best practice: protects cookie from JS injection
+    'samesite' => 'Lax'
+]);
+
 session_start();
 header('Content-Type: text/html; charset=UTF-8');
 
