@@ -18,4 +18,4 @@ jobs:
 
       # 2. This authenticates and executes the cloud build/deploy 
       - name: Deploy to Wasmer Edge
-        run: wasmer deploy --token=${{ secrets.WASMER_TOKEN }}
+        run: wasmer deploy --build-remote --token=${{ secrets.WASMER_TOKEN }}
