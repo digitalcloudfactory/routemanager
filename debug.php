@@ -4,7 +4,7 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-// Ensure your session parameters match your config
+// Long-lived session configurations
 session_set_cookie_params([
     'lifetime' => 1209600,
     'path' => '/',
@@ -15,27 +15,26 @@ session_set_cookie_params([
 ]);
 session_start();
 
-//require_once 'config.php'; // Ensure database connection ($pdo) is available
+// --- HARDCODED CREDENTIALS FOR STANDALONE TESTING ---
+$client_id = '6839';
+$strava_client_secret = '1a1057defe991fd6c2711f1199a3563cb3d5395f';
 
-/* ===============================
-    DATABASE CONFIG
-================================ */
 $db_host = 'db.fr-pari1.bengt.wasmernet.com';
 $db_port = 10272;
 $db_name = 'dbcmpLT2zrmwmur5UEjZ3Xj8';
 $db_user = 'de142c5d7a0180009884f0319fb7';
 $db_pass = '0696de14-2c5d-7bb2-8000-fe77e5a731bf';
 
-$pdo = new PDO(
-    "mysql:host=$db_host;port=$db_port;dbname=$db_name;charset=utf8mb4",
-    $db_user,
-    $db_pass,
-    [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4"
-    ]
-);
-
+try {
+    $pdo = new PDO(
+        "mysql:host=$db_host;port=$db_port;dbname=$db_name;charset=utf8mb4",
+        $db_user,
+        $db_pass,
+        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+    );
+} catch (PDOException $e) {
+    die("DB connection failed: " . $e->getMessage());
+}
 
 echo "<h2>============= STAGE 1: BROWSER & SESSION APPLICATION =============</h2>";
 echo "<strong>Current Server Time (Unix):</strong> " . time() . " (" . date('Y-m-d H:i:s') . ")<br>";
@@ -95,5 +94,5 @@ $data = json_decode($response, true);
 if (isset($data['access_token'])) {
     echo "<span style='color:green;'>✅ SUCCESS: Strava accepted the refresh token and handed back a new access token seamlessly!</span>";
 } else {
-    echo "<span style='color:red;'>🛑 FAILURE: Strava rejected the refresh token configuration. Check your client_secret or verify if token wasn't revoked.</span>";
+    echo "<span style='color:red;'>🛑 FAILURE: Strava rejected the refresh token configuration. Check the payload message above.</span>";
 }
