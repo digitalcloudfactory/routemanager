@@ -93,7 +93,7 @@ session_set_cookie_params([
     'lifetime' => 1209600,
     'path' => '/',
     'domain' => '', 
-    'secure' => false, 
+    'secure' => true, 
     'httponly' => true, 
     'samesite' => 'Lax'
 ]);
