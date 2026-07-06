@@ -4,57 +4,56 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-// Long-lived session configurations
-session_set_cookie_params([
-    'lifetime' => 1209600,
-    'path' => '/',
-    'domain' => '', 
-    'secure' => true, 
-    'httponly' => true,
-    'samesite' => 'Lax'
-]);
-session_start();
+// 1. Initialize your new database session architecture completely via config
+require_once 'config.php'; 
 
-// --- HARDCODED CREDENTIALS FOR STANDALONE TESTING ---
-$client_id = '6839';
-$strava_client_secret = '1a1057defe991fd6c2711f1199a3563cb3d5395f';
+echo "<h2>============= STAGE 1: BROWSER & DATABASE SESSION APPLICATION =============</h2>";
+echo "<strong>Current Server Time (Unix):</strong> " . time() . " (" . date('Y-m-d H:i:s') . ")<br>";
 
-$db_host = 'db.fr-pari1.bengt.wasmernet.com';
-$db_port = 10272;
-$db_name = 'dbcmpLT2zrmwmur5UEjZ3Xj8';
-$db_user = 'de142c5d7a0180009884f0319fb7';
-$db_pass = '0696de14-2c5d-7bb2-8000-fe77e5a731bf';
+$browserSessionId = session_id();
+echo "<strong>Browser Session ID (Cookie value):</strong> " . $browserSessionId . "<br>";
+echo "<strong>Active Session PHP Array:</strong> <pre>" . print_r($_SESSION, true) . "</pre>";
 
+// --- INSPECT THE CUSTOM SESSIONS TABLE LIVE ---
+echo "<h3>--- Live MySQL sessions Table Check ---</h3>";
 try {
-    $pdo = new PDO(
-        "mysql:host=$db_host;port=$db_port;dbname=$db_name;charset=utf8mb4",
-        $db_user,
-        $db_pass,
-        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
-    );
+    $sessionStmt = $pdo->prepare("SELECT id, access, data FROM sessions WHERE id = ?");
+    $sessionStmt->execute([$browserSessionId]);
+    $dbSession = $sessionStmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($dbSession) {
+        echo "<span style='color:green;'>✅ MATCH FOUND: This session ID is actively recorded in your database 'sessions' table.</span><br>";
+        echo "<strong>Last Activity Timestamp:</strong> " . date('Y-m-d H:i:s', $dbSession['access']) . "<br>";
+        echo "<strong>Raw Database Session Contents:</strong> <pre>" . htmlspecialchars($dbSession['data']) . "</pre>";
+    } else {
+        echo "<span style='color:red;'>🛑 CRITICAL FAILURE: The browser sent a session ID, but NO corresponding row exists in your MySQL 'sessions' table. The session was purged or never written.</span><br>";
+    }
 } catch (PDOException $e) {
-    die("DB connection failed: " . $e->getMessage());
+    echo "<span style='color:red;'>🛑 DATABASE ERROR querying sessions table: " . $e->getMessage() . "</span><br>";
 }
 
-echo "<h2>============= STAGE 1: BROWSER & SESSION APPLICATION =============</h2>";
-echo "<strong>Current Server Time (Unix):</strong> " . time() . " (" . date('Y-m-d H:i:s') . ")<br>";
-echo "<strong>Browser Session ID:</strong> " . session_id() . "<br>";
-echo "<strong>Session Contents:</strong> <pre>" . print_r($_SESSION, true) . "</pre>";
-
 if (!isset($_SESSION['internal_user_id'])) {
-    die("<span style='color:red;'>🛑 CRITICAL FAILURE: No internal_user_id found in session. Your browser or server is dropping the session cookie.</span>");
+    die("<br><span style='color:red;'>🛑 DIAGNOSTIC HALTED: No internal_user_id found in active session state. Cannot proceed with user checks.</span>");
 }
 
 echo "<h2>============= STAGE 2: DATABASE RECORD INSPECTION =============</h2>";
-$stmt = $pdo->prepare("SELECT access_token, refresh_token, token_expires_at FROM users WHERE id = ?");
-$stmt->execute([$_SESSION['internal_user_id']]);
+$internalUserId = $_SESSION['internal_user_id'];
+echo "<strong>Target internal_user_id to evaluate:</strong> $internalUserId <br>";
+
+$stmt = $pdo->prepare("SELECT access_token, refresh_token, token_expires_at, firstname, lastname FROM users WHERE id = ?");
+$stmt->execute([$internalUserId]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$user) {
-    die("<span style='color:red;'>🛑 CRITICAL FAILURE: User ID found in session, but no matching row exists in the database.</span>");
+    die("<span style='color:red;'>🛑 CRITICAL FAILURE: internal_user_id ($internalUserId) exists in session, but no matching row exists in your 'users' table.</span>");
 }
 
-echo "<strong>Database Row Data:</strong><pre>" . print_r($user, true) . "</pre>";
+echo "<strong>Logged Athlete:</strong> " . htmlspecialchars($user['firstname'] . ' ' . $user['lastname']) . "<br>";
+echo "<strong>User Protected Token Data:</strong><pre>" . print_r([
+    'access_token' => substr($user['access_token'], 0, 8) . '...',
+    'refresh_token' => substr($user['refresh_token'], 0, 8) . '...',
+    'token_expires_at' => $user['token_expires_at']
+], true) . "</pre>";
 
 $expiresAt = (int)$user['token_expires_at'];
 $secondsLeft = $expiresAt - time();
@@ -63,21 +62,21 @@ echo "<strong>Token Expiration Time:</strong> " . date('Y-m-d H:i:s', $expiresAt
 if ($secondsLeft > 0) {
     echo "<strong>Status:</strong> <span style='color:green;'>Token is still valid for " . round($secondsLeft / 60) . " more minutes.</span><br>";
 } else {
-    echo "<strong>Status:</strong> <span style='color:orange;'>Token is EXPIRED by " . abs(round($secondsLeft / 60)) . " minutes. Renewal should trigger.</span><br>";
+    echo "<strong>Status:</strong> <span style='color:orange;'>Token is EXPIRED by " . abs(round($secondsLeft / 60)) . " minutes. Renewal loop will trigger on next user home access.</span><br>";
 }
 
 echo "<h2>============= STAGE 3: TEST DRY-RUN REFRESH CALL =============</h2>";
 echo "Attempting a live test-refresh API call to Strava using stored refresh token...<br>";
 
 if (empty($user['refresh_token'])) {
-    die("<span style='color:red;'>🛑 FAILURE: Refresh token column is empty. Cannot refresh.</span>");
+    die("<span style='color:red;'>🛑 FAILURE: Refresh token column is empty for this user. Cannot execute refresh call.</span>");
 }
 
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, "https://www.strava.com/oauth/token");
 curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
-    'client_id'     => $client_id,
+    'client_id'     => $strava_client_id,
     'client_secret' => $strava_client_secret,
     'grant_type'    => 'refresh_token',
     'refresh_token' => $user['refresh_token']
@@ -88,11 +87,12 @@ $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 curl_close($ch);
 
 echo "<strong>Strava API HTTP Status Code:</strong> $httpCode<br>";
-echo "<strong>Strava Response Payload:</strong><pre>" . htmlspecialchars($response) . "</pre>";
 
 $data = json_decode($response, true);
-if (isset($data['access_token'])) {
-    echo "<span style='color:green;'>✅ SUCCESS: Strava accepted the refresh token and handed back a new access token seamlessly!</span>";
+if ($httpCode === 200 && isset($data['access_token'])) {
+    echo "<span style='color:green;'>✅ SUCCESS: Strava accepted the tokens via your global variables and returned a fresh token pair flawlessly!</span>";
+    echo "<pre>Returned scope: " . htmlspecialchars($data['scope'] ?? 'None declared') . "</pre>";
 } else {
-    echo "<span style='color:red;'>🛑 FAILURE: Strava rejected the refresh token configuration. Check the payload message above.</span>";
+    echo "<span style='color:red;'>🛑 FAILURE: Strava rejected the refresh configuration request. Payload returned:</span>";
+    echo "<pre>" . htmlspecialchars($response) . "</pre>";
 }
