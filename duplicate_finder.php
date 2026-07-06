@@ -309,19 +309,34 @@ $allRoutes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 </div>
 
 <script>
-// 1. Data ingestion from PHP backend array definition
-const allRoutesData = <?= json_encode($allRoutes ?? []) ?>;
+// --- CORE TRACKING TELEMETRY ---
+console.log("🔍 TELEMETRY: Script section parsed successfully. Initializing...");
 
-// 2. Pre-process and categorize coordinates (Bringing back max/min bounds fixes calculation bug)
-const decodedRoutes = allRoutesData.map(r => {
-    if (!r.summary_polyline || r.summary_polyline.length < 10) return null;
+const allRoutesData = <?= json_encode($allRoutes ?? []) ?>;
+console.log("📥 DATALAYER: Raw payload array injected from PHP. Count:", allRoutesData.length);
+if (allRoutesData.length > 0) {
+    console.log("📥 DATALAYER SAMPLE [Index 0]:", allRoutesData[0]);
+}
+
+// 2. Pre-process and categorize coordinates
+console.log("⚙️ TELEMETRY: Starting polyline extraction and bounding box construction loop...");
+const decodedRoutes = allRoutesData.map((r, idx) => {
+    if (!r.summary_polyline || r.summary_polyline.length < 10) {
+        console.warn(`⚠️ SKIPPED [Index ${idx}]: Route ID ${r.route_id || 'N/A'} missing valid summary_polyline string.`);
+        return null;
+    }
     try {
         const points = polyline.decode(r.summary_polyline);
+        if (!points || points.length === 0) {
+            console.warn(`⚠️ SKIPPED [ID ${r.route_id}]: Polyline string decoded into 0 coordinate pairs.`);
+            return null;
+        }
+        
         const lats = points.map(p => p[0]);
         const lons = points.map(p => p[1]);
         return {
-            name: r.name,
-            country: r.country,
+            name: r.name || "Unnamed Route",
+            country: r.country || "",
             id: r.route_id,
             latlngs: points.map(p => L.latLng(p[0], p[1])),
             startPoint: [points[0][0], points[0][1]],
@@ -330,8 +345,13 @@ const decodedRoutes = allRoutesData.map(r => {
             minLon: Math.min(...lons),
             maxLon: Math.max(...lons)
         };
-    } catch (e) { return null; }
+    } catch (e) { 
+        console.error(`🛑 DECODER CRASH [Index ${idx}]: Failed to decode route string.`, e);
+        return null; 
+    }
 }).filter(r => r !== null);
+
+console.log(`✅ DATA PROCESSING SUCCESS: ${decodedRoutes.length} out of ${allRoutesData.length} track paths completely mapped in memory.`);
 
 function fastDist(p1, p2) {
     const dy = p1[0] - p2[0];
@@ -405,28 +425,52 @@ function findOverlap(latlngsA, latlngsB, tolerance = 8) {
 }
 
 async function runDuplicateCheck() {
+    console.log("🚀 PIPELINE: runDuplicateCheck pipeline started.");
     isRunning = true;
-    const threshold = parseInt(document.getElementById('overlapSlider').value);
-    const selectedCountry = document.getElementById('countryFilter').value;
+    
+    const sliderEl = document.getElementById('overlapSlider');
+    const countryEl = document.getElementById('countryFilter');
     const tbody = document.getElementById('resultsBody');
+    
+    if (!sliderEl || !countryEl || !tbody) {
+        console.error("🛑 UI ERROR: Could not find controls or resultsBody element in DOM tree.");
+        return;
+    }
+
+    const threshold = parseInt(sliderEl.value);
+    const selectedCountry = countryEl.value;
+    console.log(`🚀 PIPELINE parameters isolated. Threshold Target: ${threshold}%, Country Filter: ${selectedCountry}`);
     
     const activeRoutes = decodedRoutes.filter(r => {
         if (selectedCountry === "all") return true;
         return r.country === selectedCountry;
     });
     
+    console.log(`🚀 PIPELINE calculation scope narrowed down to ${activeRoutes.length} active routes.`);
     tbody.innerHTML = `<tr><td colspan='4' style='text-align:center; padding:30px; color:#64748b;'>Checking ${activeRoutes.length} routes... <span id='progress'>0</span>%</td></tr>`;
 
     let html = "";
     const totalPairs = (activeRoutes.length * (activeRoutes.length - 1)) / 2;
+    console.log(`🚀 PIPELINE total calculations matrix required: ${totalPairs} pair sets.`);
+    
+    if (totalPairs === 0) {
+        console.warn("ℹ️ PIPELINE HALTED: Matrix total evaluation configurations result is 0. Not enough matching entries.");
+        tbody.innerHTML = `<tr><td colspan='4' style='text-align:center; padding:30px; color:#64748b;'>No combinations available to track matches for this category.</td></tr>`;
+        return;
+    }
+    
     let processedPairs = 0;
+    let crossMatchHits = 0;
 
     for (let i = 0; i < activeRoutes.length; i++) {
         for (let j = i + 1; j < activeRoutes.length; j++) {
-            if (!isRunning) return;
+            if (!isRunning) {
+                console.log("🛑 PIPELINE: Execution halted safely via pipeline swap check.");
+                return;
+            }
             
             processedPairs++;
-            if (processedPairs % 10 === 0) {
+            if (processedPairs % 10 === 0 || processedPairs === totalPairs) {
                 const progEl = document.getElementById('progress');
                 if (progEl) progEl.innerText = Math.round((processedPairs / totalPairs) * 100);
                 await new Promise(r => setTimeout(r, 1));
@@ -435,6 +479,7 @@ async function runDuplicateCheck() {
             const rA = activeRoutes[i];
             const rB = activeRoutes[j];
 
+            // Distance & Bounding-Box Guard evaluation logging
             if (fastDist(rA.startPoint, rB.startPoint) > 0.5) continue;
             if (rA.maxLat < rB.minLat || rA.minLat > rB.maxLat || rA.maxLon < rB.minLon || rA.minLon > rB.maxLon) continue;
 
@@ -443,6 +488,7 @@ async function runDuplicateCheck() {
             const finalPercent = Math.min(resA.percent, resB.percent);
 
             if (finalPercent >= threshold) {
+                crossMatchHits++;
                 html += `<tr>
                     <td style='font-weight: 500; color: #0f172a;'>${rA.name}</td>
                     <td style='font-weight: 500; color: #0f172a;'>${rB.name}</td>
@@ -455,6 +501,7 @@ async function runDuplicateCheck() {
         }
     }
     
+    console.log(`🏁 PIPELINE CONCLUDED: Processed ${processedPairs} checks. Found ${crossMatchHits} duplicate structures.`);
     tbody.innerHTML = html || `<tr><td colspan='4' style='text-align:center; padding:30px; color:#64748b;'>No duplicates found above ${threshold}%.</td></tr>`;
 }
 
@@ -464,6 +511,7 @@ let debounceTimer;
 document.getElementById('overlapSlider').oninput = function() {
     const val = this.value;
     document.getElementById('sliderVal').innerText = val;
+    console.log(`🎛️ CONTROL EVENT: Slider shifted manually to ${val}%. Restarting search grid...`);
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
         isRunning = false; 
@@ -472,6 +520,7 @@ document.getElementById('overlapSlider').oninput = function() {
 };
 
 document.getElementById('countryFilter').onchange = function() {
+    console.log(`🎛️ CONTROL EVENT: Country change to "${this.value}". Re-evaluating profiles...`);
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
         isRunning = false;
@@ -479,7 +528,8 @@ document.getElementById('countryFilter').onchange = function() {
     }, 300);
 };
 
-// Auto-run core process on layout initial baseline mount
+// Auto-run trigger block sequence
+console.log("🚀 AUTOBOOT: Triggering baseline programmatic search initialization pass...");
 runDuplicateCheck();
 
 let previewMap;
@@ -517,5 +567,6 @@ function closeMap() {
     document.getElementById('mapModal').style.display = 'none';
 }
 </script>
+
 </body>
 </html>
