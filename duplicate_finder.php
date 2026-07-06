@@ -42,7 +42,7 @@ $allRoutes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             background-color: #f8fafc;
             font-family: 'Inter', sans-serif;
             color: #0f172a;
-            margin: 0;
+            margin: 1;
             padding: 2rem;
         }
 
