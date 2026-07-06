@@ -200,6 +200,7 @@ header.grid {
 
     <div class="actions-block">
         <a id="mapLink" href="routes.php" class="btn-action-pill">📊 Table View</a>
+        <a href="duplicate_finder.php" class="btn-action-pill">👥 Find Duplicates</a>
         <button id="openFilters" class="btn-action-pill" type="button">⚙️ Filters</button>
         <button id="fetchRoutes" class="btn-action-pill btn-sync" type="button">🚀 Sync Tracks</button>
     </div>    
