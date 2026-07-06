@@ -1,46 +1,12 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
-session_set_cookie_params([
-    'lifetime' => 1209600,
-    'path' => '/',
-    'domain' => '', // Automatically uses current domain
-    'secure' => true, // Set to true if your site uses https://
-    'httponly' => true, // Security best practice: protects cookie from JS injection
-    'samesite' => 'Lax'
-]);
-
-session_start();
+require_once 'config.php'; // 🟩 Everything loads instantly
 header('Content-Type: text/html; charset=UTF-8');
-
-// --- CONFIG ---
-$db_host = 'db.fr-pari1.bengt.wasmernet.com';
-$db_port = 10272;
-$db_name = 'dbcmpLT2zrmwmur5UEjZ3Xj8';
-$db_user = 'de142c5d7a0180009884f0319fb7';
-$db_pass = '0696de14-2c5d-7bb2-8000-fe77e5a731bf';
-$strava_client_id = '6839';
-$strava_client_secret = '1a1057defe991fd6c2711f1199a3563cb3d5395f';
-$redirect_uri  = 'http://map-routes.wasmer.app/callback.php';
-
-// --- CONNECT DB ---
-try {
-    $pdo = new PDO(
-        "mysql:host=$db_host;port=$db_port;dbname=$db_name;charset=utf8mb4",
-        $db_user,
-        $db_pass
-    );
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    die("DB connection failed: " . $e->getMessage());
-}
 
 // --- GET AUTH CODE ---
 if (!isset($_GET['code'])) {
     die("No code returned from Strava.");
 }
+
 
 $code = $_GET['code'];
 

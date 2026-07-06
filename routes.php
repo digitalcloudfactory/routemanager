@@ -6,44 +6,14 @@ DB queries                 internal_user_id ✅
 Strava API calls           strava_id
 Session auth check         internal_user_id
 ================================ */
-session_set_cookie_params([
-    'lifetime' => 1209600,
-    'path' => '/',
-    'domain' => '', // Automatically uses current domain
-    'secure' => true, // Set to true if your site uses https://
-    'httponly' => true, // Security best practice: protects cookie from JS injection
-    'samesite' => 'Lax'
-]);
 
-session_start();
+require_once 'config.php'; // 🟩 Everything loads instantly
 
-ini_set('display_errors', 0); 
-error_reporting(E_ALL);
-
+// Access control layer: kick them out to index if they aren't authenticated
 if (!isset($_SESSION['internal_user_id'])) {
     header("Location: index.php");
     exit;
 }
-$internalUserId = $_SESSION['internal_user_id'];
-
-/* ===============================
-    DATABASE CONFIG
-================================ */
-$db_host = 'db.fr-pari1.bengt.wasmernet.com';
-$db_port = 10272;
-$db_name = 'dbcmpLT2zrmwmur5UEjZ3Xj8';
-$db_user = 'de142c5d7a0180009884f0319fb7';
-$db_pass = '0696de14-2c5d-7bb2-8000-fe77e5a731bf';
-
-$pdo = new PDO(
-    "mysql:host=$db_host;port=$db_port;dbname=$db_name;charset=utf8mb4",
-    $db_user,
-    $db_pass,
-    [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4"
-    ]
-);
 
 /* ===============================
     LOAD USER PROFILE

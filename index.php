@@ -89,47 +89,23 @@
 <div class="login-wrapper">
 
 <?php
-session_set_cookie_params([
-    'lifetime' => 1209600,
-    'path' => '/',
-    'domain' => '', 
-    'secure' => true, 
-    'httponly' => true, 
-    'samesite' => 'Lax'
-]);
+require_once 'config.php'; // 🟩 Everything loads instantly
 
-session_start();
 error_log('Session ID: ' . session_id());
 error_log('Session contents: ' . print_r($_SESSION, true));
-
-// Strava API credentials
-$client_id = '6839';
-$redirect_uri = 'http://map-routes.wasmer.app/callback.php'; 
-
-$db_host = 'db.fr-pari1.bengt.wasmernet.com';
-$db_port = 10272;
-$db_name = 'dbcmpLT2zrmwmur5UEjZ3Xj8';
-$db_user = 'de142c5d7a0180009884f0319fb7';
-$db_pass = '0696de14-2c5d-7bb2-8000-fe77e5a731bf';
-
-$pdo = new PDO(
-    "mysql:host=$db_host;port=$db_port;dbname=$db_name;charset=utf8mb4",
-    $db_user,
-    $db_pass,
-    [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4"
-    ]
-);
 
 $needsAuth = true;
 
 if (isset($_SESSION['internal_user_id'])) {
+    // 1. Fetch access token using the global $pdo instance
     $stmt = $pdo->prepare("
         SELECT access_token, refresh_token, token_expires_at 
         FROM users 
         WHERE id = ?
     ");
+
+$needsAuth = true;
+
     $stmt->execute([$_SESSION['internal_user_id']]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
