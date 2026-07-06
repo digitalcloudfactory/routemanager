@@ -9,11 +9,13 @@ Session auth check         internal_user_id
 
 require_once 'config.php'; // 🟩 Everything loads instantly
 
+
 // Access control layer: kick them out to index if they aren't authenticated
 if (!isset($_SESSION['internal_user_id'])) {
     header("Location: index.php");
     exit;
 }
+$internalUserId = $_SESSION['internal_user_id'];
 
 /* ===============================
     LOAD USER PROFILE

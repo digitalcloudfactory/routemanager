@@ -6,7 +6,7 @@ if (!isset($_SESSION['internal_user_id'])) {
     header("Location: index.php");
     exit;
 }
-
+$internalUserId = $_SESSION['internal_user_id'];
 /* ===============================
     LOAD USER PROFILE
 ================================ */
@@ -21,6 +21,8 @@ $user = $userStmt->fetch(PDO::FETCH_ASSOC);
 $countryStmt = $pdo->prepare("SELECT DISTINCT country FROM strava_routes WHERE user_id = ? AND country IS NOT NULL AND country != '' ORDER BY country ASC");
 $countryStmt->execute([$internalUserId]);
 $countries = $countryStmt->fetchAll(PDO::FETCH_COLUMN);
+
+
 ?>
 
 <?php include 'header.php'; ?>
