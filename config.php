@@ -45,6 +45,6 @@ session_set_cookie_params([
 session_start();
 
 // 5. Shared Strava API Credentials
-$client_id = '6839';
+$strava_client_id = '6839';
 $strava_client_secret = '1a1057defe991fd6c2711f1199a3563cb3d5395f';
 $redirect_uri  = 'http://map-routes.wasmer.app/callback.php';

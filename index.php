@@ -1,4 +1,78 @@
-<?php include 'header.php'; ?>
+<?php include 'config.php';?>
+
+<?php
+
+
+error_log('Session ID: ' . session_id());
+error_log('Session contents: ' . print_r($_SESSION, true));
+
+$needsAuth = true;
+
+if (isset($_SESSION['internal_user_id'])) {
+    // 1. Fetch access token using the global $pdo instance
+    $stmt = $pdo->prepare("
+        SELECT access_token, refresh_token, token_expires_at 
+        FROM users 
+        WHERE id = ?
+    ");
+
+
+    $stmt->execute([$_SESSION['internal_user_id']]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($row && $row['access_token']) {
+        if (time() >= ($row['token_expires_at'] - 300)) {
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, "https://www.strava.com/oauth/token");
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
+                'client_id'     => $strava_client_id,
+                'client_secret' => $strava_client_secret, 
+                'grant_type'    => 'refresh_token',
+                'refresh_token' => $row['refresh_token']
+            ]));
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            
+            $response = curl_exec($ch);
+            curl_close($ch);
+            
+            $data = json_decode($response, true);
+            
+            if (isset($data['access_token'])) {
+                $updateStmt = $pdo->prepare("
+                    UPDATE users 
+                    SET access_token = ?, refresh_token = ?, token_expires_at = ? 
+                    WHERE id = ?
+                ");
+                $updateStmt->execute([
+                    $data['access_token'],
+                    $data['refresh_token'],
+                    $data['expires_at'],
+                    $_SESSION['internal_user_id']
+                ]);
+                
+                header("Location: routes.php");
+                exit;
+            } else {
+                $needsAuth = true;
+            }
+        } else {
+            header("Location: routes.php");
+            exit;
+        }
+    }
+}
+
+if ($needsAuth) {
+    $auth_url = "https://www.strava.com/oauth/authorize" .
+        "?client_id={$strava_client_id}" .
+        "&response_type=code" .
+        "&redirect_uri=" . urlencode($redirect_uri) .
+        "&approval_prompt=auto" .
+        "&scope=read_all"; // 🟩 Requesting full read scope access
+}
+include 'header.php';
+?>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -87,80 +161,6 @@
 
 <body>
 <div class="login-wrapper">
-
-<?php
-require_once 'config.php'; // 🟩 Everything loads instantly
-
-error_log('Session ID: ' . session_id());
-error_log('Session contents: ' . print_r($_SESSION, true));
-
-$needsAuth = true;
-
-if (isset($_SESSION['internal_user_id'])) {
-    // 1. Fetch access token using the global $pdo instance
-    $stmt = $pdo->prepare("
-        SELECT access_token, refresh_token, token_expires_at 
-        FROM users 
-        WHERE id = ?
-    ");
-
-$needsAuth = true;
-
-    $stmt->execute([$_SESSION['internal_user_id']]);
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if ($row && $row['access_token']) {
-        if (time() >= ($row['token_expires_at'] - 300)) {
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, "https://www.strava.com/oauth/token");
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
-                'client_id'     => $client_id,
-                'client_secret' => '1a1057defe991fd6c2711f1199a3563cb3d5395f', 
-                'grant_type'    => 'refresh_token',
-                'refresh_token' => $row['refresh_token']
-            ]));
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            
-            $response = curl_exec($ch);
-            curl_close($ch);
-            
-            $data = json_decode($response, true);
-            
-            if (isset($data['access_token'])) {
-                $updateStmt = $pdo->prepare("
-                    UPDATE users 
-                    SET access_token = ?, refresh_token = ?, token_expires_at = ? 
-                    WHERE id = ?
-                ");
-                $updateStmt->execute([
-                    $data['access_token'],
-                    $data['refresh_token'],
-                    $data['expires_at'],
-                    $_SESSION['internal_user_id']
-                ]);
-                
-                header("Location: routes.php");
-                exit;
-            } else {
-                $needsAuth = true;
-            }
-        } else {
-            header("Location: routes.php");
-            exit;
-        }
-    }
-}
-
-if ($needsAuth) {
-    $auth_url = "https://www.strava.com/oauth/authorize" .
-        "?client_id={$client_id}" .
-        "&response_type=code" .
-        "&redirect_uri=" . urlencode($redirect_uri) .
-        "&approval_prompt=auto" .
-        "&scope=read_all";
-}
-?>
 
   <section class="login-container">
     <h1>Strava <span>Routes</span></h1>
