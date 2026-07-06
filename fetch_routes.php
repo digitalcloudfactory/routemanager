@@ -1,37 +1,14 @@
 <?php
-session_set_cookie_params([
-    'lifetime' => 1209600,
-    'path' => '/',
-    'domain' => '', // Automatically uses current domain
-    'secure' => true, // Set to true if your site uses https://
-    'httponly' => true, // Security best practice: protects cookie from JS injection
-    'samesite' => 'Lax'
-]);
 
-session_start();
+require_once 'config.php'; // 🟩 Everything loads instantly
 
-ini_set('display_errors', 0); // Turned off on-screen errors so they don't corrupt JSON strings
-error_reporting(E_ALL);
 
-// Session lock prevention: read what we need, then close.
+// Access control layer: kick them out to index if they aren't authenticated
 if (!isset($_SESSION['internal_user_id'])) {
-    header('Content-Type: application/json');
-    echo json_encode(['success' => false, 'error' => 'Not logged in']);
+    header("Location: index.php");
     exit;
 }
 $internalUserId = $_SESSION['internal_user_id'];
-session_write_close(); 
-
-header('Content-Type: application/json');
-
-// --- CONFIG ---
-$db_host = 'db.fr-pari1.bengt.wasmernet.com';
-$db_port = 10272;
-$db_name = 'dbcmpLT2zrmwmur5UEjZ3Xj8';
-$db_user = 'de142c5d7a0180009884f0319fb7';
-$db_pass = '0696de14-2c5d-7bb2-8000-fe77e5a731bf';
-$strava_client_id = '6839';
-$strava_client_secret = '1a1057defe991fd6c2711f1199a3563cb3d5395f';
 
 // Get current page from request, default to 1
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;

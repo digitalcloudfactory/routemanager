@@ -1,18 +1,11 @@
 <?php
-session_set_cookie_params([
-    'lifetime' => 1209600,
-    'path' => '/',
-    'domain' => '', // Automatically uses current domain
-    'secure' => true, // Set to true if your site uses https://
-    'httponly' => true, // Security best practice: protects cookie from JS injection
-    'samesite' => 'Lax'
-]);
 
-session_start();
+require_once 'config.php'; // 🟩 Everything loads instantly
 
 
+// Access control layer: kick them out to index if they aren't authenticated
 if (!isset($_SESSION['internal_user_id'])) {
-    echo json_encode(['success' => false, 'error' => 'Not logged in']);
+    header("Location: index.php");
     exit;
 }
 
@@ -33,28 +26,6 @@ error_log('Tags received: ' . json_encode($tags, JSON_UNESCAPED_UNICODE));
 
 if ($routeId === '') {
     echo json_encode(['success' => false, 'error' => 'Invalid route']);
-    exit;
-}
-
-// --- CONFIG ---
-$db_host = 'db.fr-pari1.bengt.wasmernet.com';
-$db_port = 10272;
-$db_name = 'dbcmpLT2zrmwmur5UEjZ3Xj8';
-$db_user = 'de142c5d7a0180009884f0319fb7';
-$db_pass = '0696de14-2c5d-7bb2-8000-fe77e5a731bf';
-$strava_client_id = '6839';
-$strava_client_secret = '1a1057defe991fd6c2711f1199a3563cb3d5395f';
-
-// --- CONNECT DB ---
-try {
-    $pdo = new PDO(
-        "mysql:host=$db_host;port=$db_port;dbname=$db_name;charset=utf8mb4",
-        $db_user,
-        $db_pass
-    );
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    echo json_encode(['success' => false, 'error' => 'DB Connection failed']);
     exit;
 }
 
