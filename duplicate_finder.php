@@ -338,14 +338,31 @@ $allRoutes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://unpkg.com/@mapbox/polyline"></script>
 <script>
-const allRoutesData = <?= json_encode($allRoutes ?? []) ?>;
+// --- DIAGNOSTIC LOGGING INITIALIZATION ---
+console.log("🔍 DIAGNOSTIC: Script block execution started.");
 
-const decodedRoutes = allRoutesData.map(r => {
-    if (!r.summary_polyline || r.summary_polyline.length < 10) return null;
+const allRoutesData = <?= json_encode($allRoutes ?? []) ?>;
+console.log("📥 DATABASE FETCH: Total raw route entries loaded from PHP:", allRoutesData.length);
+if (allRoutesData.length > 0) {
+    console.log("📥 DATABASE FETCH SAMPLE:", allRoutesData[0]);
+}
+
+// 1. Pre-process and decode map tracks with granular error catch blocks
+const decodedRoutes = allRoutesData.map((r, idx) => {
+    if (!r.summary_polyline || r.summary_polyline.length < 10) {
+        console.warn(`⚠️ DECODE SKIP [Index ${idx}, ID ${r.route_id}]: Polyline string missing or too short.`);
+        return null;
+    }
     try {
         const points = polyline.decode(r.summary_polyline);
+        if (!points || points.length === 0) {
+            console.warn(`⚠️ DECODE SKIP [ID ${r.route_id}]: Polyline decoded into 0 coordinates.`);
+            return null;
+        }
+        
         const lats = points.map(p => p[0]);
         const lons = points.map(p => p[1]);
+        
         return {
             name: r.name,
             country: r.country,
@@ -357,9 +374,15 @@ const decodedRoutes = allRoutesData.map(r => {
             minLon: Math.min(...lons),
             maxLon: Math.max(...lons)
         };
-    } catch (e) { return null; }
+    } catch (e) { 
+        console.error(`🛑 CRITICAL DECODE FAILURE [ID ${r.route_id}]:`, e.message);
+        return null; 
+    }
 }).filter(r => r !== null);
 
+console.log("✅ DECODE SUCCESS: Geographically parsed profiles available for analysis:", decodedRoutes.length);
+
+// --- COMPUTE ENGINES ---
 function fastDist(p1, p2) {
     const dy = p1[0] - p2[0];
     const dx = p1[1] - p2[1];
@@ -434,10 +457,23 @@ function findOverlap(latlngsA, latlngsB, tolerance = 8) {
     };
 }
 
+// --- ANALYSIS LOOP ---
 async function runDuplicateCheck() {
+    console.log("⚙️ PIPELINE: runDuplicateCheck called.");
     isRunning = true;
-    const threshold = parseInt(document.getElementById('overlapSlider').value);
-    const selectedCountry = document.getElementById('countryFilter').value;
+    
+    const sliderEl = document.getElementById('overlapSlider');
+    const countryEl = document.getElementById('countryFilter');
+    
+    if (!sliderEl || !countryEl) {
+        console.error("🛑 UI ERROR: Required form control element targets are missing from DOM.");
+        return;
+    }
+
+    const threshold = parseInt(sliderEl.value);
+    const selectedCountry = countryEl.value;
+    console.log(`⚙️ PIPELINE: Starting pass with Threshold: ${threshold}%, Country Scope: ${selectedCountry}`);
+
     const tbody = document.getElementById('resultsBody');
     
     const activeRoutes = decodedRoutes.filter(r => {
@@ -445,29 +481,40 @@ async function runDuplicateCheck() {
         return r.country === selectedCountry;
     });
     
-    tbody.innerHTML = `<tr><td colspan='4' style='text-align:center; padding:30px; color:#64748b;'><div class='progress-spinner'></div> Analyzing cross-overlap configurations for ${activeRoutes.length} profiles... <strong id='progress' style='color:#0f172a;'>0</strong>%</td></tr>`;
+    console.log(`⚙️ PIPELINE: Evaluation subset isolated. Matching pairs across ${activeRoutes.length} available targets.`);
+    tbody.innerHTML = `<tr><td colspan='4' style='text-align:center; padding:30px; color:#64748b;'><div class='progress-spinner'></div> Analyzing cross-overlap configurations for ${activeRoutes.length} profiles... <strong id='progress' style='color:#0284c7;'>0</strong>%</td></tr>`;
 
     let html = "";
     const totalPairs = (activeRoutes.length * (activeRoutes.length - 1)) / 2;
+    console.log(`⚙️ PIPELINE: Calculated total matrix comparisons to compute: ${totalPairs}`);
+    
     if (totalPairs === 0) {
         tbody.innerHTML = `<tr><td colspan='4' style='text-align:center; padding:30px; color:#64748b;'>Not enough valid track logs available to build a comparison matrix.</td></tr>`;
         return;
     }
+    
     let processedPairs = 0;
+    let matchesCount = 0;
 
     for (let i = 0; i < activeRoutes.length; i++) {
         for (let j = i + 1; j < activeRoutes.length; j++) {
-            if (!isRunning) return;
+            if (!isRunning) {
+                console.log("🛑 PIPELINE TERMINATED: Loop killed by execution flag swap.");
+                return;
+            }
             
             processedPairs++;
             if (processedPairs % 15 === 0) {
-                document.getElementById('progress').innerText = Math.round((processedPairs / totalPairs) * 100);
+                const progressPct = Math.round((processedPairs / totalPairs) * 100);
+                const progressIndicator = document.getElementById('progress');
+                if (progressIndicator) progressIndicator.innerText = progressPct;
                 await new Promise(r => setTimeout(r, 1));
             }
 
             const rA = activeRoutes[i];
             const rB = activeRoutes[j];
 
+            // Distance & Matrix Box Guards
             if (fastDist(rA.startPoint, rB.startPoint) > 0.5) continue;
             if (rA.maxLat < rB.minLat || rA.minLat > rB.maxLat || rA.maxLon < rB.minLon || rA.minLon > rB.maxLon) continue;
 
@@ -476,6 +523,7 @@ async function runDuplicateCheck() {
             const finalPercent = Math.min(resA.percent, resB.percent);
 
             if (finalPercent >= threshold) {
+                matchesCount++;
                 html += `<tr>
                     <td style='font-weight: 500; color: #0f172a;'>${rA.name}</td>
                     <td style='font-weight: 500; color: #0f172a;'>${rB.name}</td>
@@ -488,45 +536,72 @@ async function runDuplicateCheck() {
         }
     }
     
+    console.log(`✅ PIPELINE FINISHED: Loop execution complete. Found ${matchesCount} duplicate matches.`);
     tbody.innerHTML = html || `<tr><td colspan='4' style='text-align:center; padding:30px; color:#64748b;'>No track duplicates identified matching a <b>>${threshold}%</b> baseline matrix requirement.</td></tr>`;
 }
 
+// --- INTERFACE INTERACTORS & LISTENERS ---
 let isRunning = false;
 let debounceTimer;
 
-document.getElementById('overlapSlider').oninput = function() {
-    const val = this.value;
-    document.getElementById('sliderVal').innerText = val;
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => {
-        isRunning = false; 
-        setTimeout(() => { runDuplicateCheck(); }, 10);
-    }, 300);
-};
+const sliderInput = document.getElementById('overlapSlider');
+if (sliderInput) {
+    console.log("🔗 INITIALIZATION: Attaching Event Handlers to Slider Control Element.");
+    sliderInput.oninput = function() {
+        const val = this.value;
+        console.log("🎛️ USER ACTION: Slider dragged. New value tracking target:", val);
+        
+        const textIndicator = document.getElementById('sliderVal');
+        if (textIndicator) {
+            textIndicator.innerText = val;
+        } else {
+            console.error("🛑 UI ERROR: Span element #sliderVal not found in current view tree.");
+        }
 
-document.getElementById('countryFilter').onchange = function() {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => {
-        isRunning = false;
-        setTimeout(() => { runDuplicateCheck(); }, 10);
-    }, 300);
-};
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            console.log("🎛️ USER ACTION: Debounce timer fired. Resetting old pipeline run.");
+            isRunning = false; 
+            setTimeout(() => { runDuplicateCheck(); }, 10);
+        }, 300);
+    };
+} else {
+    console.error("🛑 CRITICAL INITIALIZATION ERROR: Element #overlapSlider is missing from the DOM markup.");
+}
 
-// Initial boot execution sequence run
+const countrySelector = document.getElementById('countryFilter');
+if (countrySelector) {
+    countrySelector.onchange = function() {
+        console.log("🎛️ USER ACTION: Country filter adjusted to:", this.value);
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            isRunning = false;
+            setTimeout(() => { runDuplicateCheck(); }, 10);
+        }, 300);
+    };
+}
+
+// Initial automatic boot sequence execution execution
 window.addEventListener('DOMContentLoaded', () => {
+    console.log("🚀 DOM LOADED: Triggering core matrix auto-run routine.");
     runDuplicateCheck();
 });
 
 let previewMap;
 
 function showComparison(idA, idB) {
+    console.log(`🗺️ MAP MODAL: Requesting cross-render for Track ${idA} vs Track ${idB}`);
     document.getElementById('mapModal').style.display = 'block';
     const rA = decodedRoutes.find(r => r.id === idA);
     const rB = decodedRoutes.find(r => r.id === idB);
 
-    if (!rA || !rB) return;
+    if (!rA || !rB) {
+        console.error("🛑 MAP ERROR: Failed to isolate matching objects in memory array tracking definitions.");
+        return;
+    }
 
     if (!previewMap) {
+        console.log("🗺️ MAP MODAL: Generating new Leaflet viewport canvas instance.");
         previewMap = L.map('compareMap');
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(previewMap);
     } else {
@@ -540,6 +615,7 @@ function showComparison(idA, idB) {
 
     const matchData = findOverlap(rA.latlngs, rB.latlngs);
     const overlapSegments = matchData.segments || []; 
+    console.log(`🗺️ MAP MODAL: Rendering ${overlapSegments.length} direct proximity match segments.`);
     
     overlapSegments.forEach(seg => {
         L.polyline(seg, {color: '#22c55e', weight: 6, opacity: 1}).addTo(previewMap);
@@ -554,4 +630,3 @@ function closeMap() {
     document.getElementById('mapModal').style.display = 'none';
 }
 </script>
-<?php include 'footer.php'; ?>
