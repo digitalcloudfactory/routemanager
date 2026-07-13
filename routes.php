@@ -169,7 +169,7 @@ body {
     line-height: 1;
     height: 24px;                  /* Fixed uniform height across links and buttons */
     padding: 0 0.45rem;             /* Horizontal padding (vertical handled by height) */
-    box-sizing: border-border;      /* Keeps border included in total height calculation */
+    box-sizing: border-box;     /* Keeps border included in total height calculation */
     border-radius: 4px;
     border: 1px solid #cbd5e1;
     background: #ffffff;
@@ -352,6 +352,63 @@ body {
             <h3 style="margin:0 0 0.25rem 0; font-weight:700; color:#0f172a;">Performance Canvas Engine</h3>
             <p style="margin:0; font-size:0.8rem; color:#64748b;">Select an active route timeline index coordinate to build spatial tracking visualizations.</p>
         </div>
+    
+    
+    <!-- Floating Map Control Button -->
+<div class="position-absolute bottom-0 end-0 m-3" style="z-index: 1000;">
+    <button type="button" class="btn btn-primary shadow-lg d-flex align-items-center gap-2 rounded-pill px-3 py-2 fw-semibold" data-bs-toggle="offcanvas" data-bs-target="#stopsDrawer">
+        <span>🛒</span>
+        <span>Stops Planner</span>
+    </button>
+</div>
+
+<!-- Offcanvas Sidebar / Drawer -->
+<div class="offcanvas offcanvas-end shadow" tabindex="-1" id="stopsDrawer" aria-labelledby="stopsDrawerLabel" style="width: 380px;">
+    <div class="offcanvas-header border-bottom">
+        <h5 class="offcanvas-title fw-bold" id="stopsDrawerLabel">Anti-Bonk <span>GPX</span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    
+    <div class="offcanvas-body">
+        <!-- 1. Stop Categories -->
+        <div class="config-card mb-3 p-3 rounded bg-light border">
+            <label class="card-label fw-bold text-muted small mb-2 d-block">1. Stop Categories</label>
+            
+            <div class="form-check form-switch mb-2">
+                <input class="form-check-input" type="checkbox" id="SundayBox">
+                <label class="form-check-label small" for="SundayBox">Sunday Mode (Spar/Delhaize/Carrefour)</label>
+            </div>
+            
+            <div class="form-check form-switch mb-3">
+                <input class="form-check-input" type="checkbox" id="drinkFountains" checked>
+                <label class="form-check-label small" for="drinkFountains">Water Tap Points</label>
+            </div>
+
+            <hr class="my-2">
+
+            <label for="radiusSelect" class="small text-muted mb-1 d-block">Search Radius:</label>
+            <select id="radiusSelect" class="form-select form-select-sm mb-3">
+                <option value="200">200 meters (Tight)</option>
+                <option value="500" selected>500 meters (Default)</option>
+                <option value="800">800 meters (Wide)</option>
+            </select>
+
+            <button type="button" class="btn btn-primary btn-sm w-100 fw-semibold" onclick="refreshShops()">
+                🔄 Find POIs Along Route
+            </button>
+        </div>
+
+        <!-- POI Summary Bar -->
+        <div class="d-flex justify-content-between align-items-center p-2 rounded bg-light border">
+            <span class="small fw-semibold text-secondary">Shops found near route:</span>
+            <span id="shopCount" class="badge bg-primary text-white fw-bold px-2 py-1">0</span>
+        </div>
+    </div>
+</div>
+    
+    
+    
+    
     </main>
 
 </div>
@@ -438,21 +495,37 @@ async function handleTrackSelection(route, UIComponentElementId) {
 
     document.getElementById('mapSplashHud').style.opacity = '0';
 
-    if (!route.summary_polyline) {
+   if (!route.summary_polyline) {
         try {
             const res = await fetch(`get_polyline.php?route_id=${route.route_id}`);
             const polyData = await res.json();
             route.summary_polyline = polyData.polyline;
-        } catch (e) { console.error("Trace buffer line tracking fetch error:", e); }
+        } catch (e) { 
+            console.error("Trace buffer line tracking fetch error:", e); 
+        }
     }
 
     if (route.summary_polyline) {
         try {
             const coords = polyline.decode(route.summary_polyline).map(c => [c[0], c[1]]);
+            
+            // 1. Store coordinates for Overpass POI searches
+            currentRouteCoords = coords;
+
+            // 2. Clear previous route POI markers from map
+            poiMarkersGroup.clearLayers();
+            const shopCountElem = document.getElementById("shopCount");
+            if (shopCountElem) shopCountElem.innerText = "0";
+
+            // 3. Draw active polyline & fit map view
             currentActivePolyline = L.polyline(coords, { color: '#ef4444', weight: 4.5, opacity: 0.9, lineJoin: 'round' }).addTo(globalWorkspaceMap);
             globalWorkspaceMap.fitBounds(currentActivePolyline.getBounds(), { padding: [40, 40] });
+            
+            // 4. Place 10km step markers
             addDistanceMarkers(coords, 10);
-        } catch (err) { console.error("Leaflet drawing exception parameters:", err); }
+        } catch (err) { 
+            console.error("Leaflet drawing exception parameters:", err); 
+        }
     }
 }
 
@@ -550,6 +623,122 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+
+/* ===============================
+    STOPS PLANNER / OVERPASS POI ENGINE
+================================ */
+let currentRouteCoords = []; // Holds current [[lat, lng], ...]
+let poiMarkersGroup = L.layerGroup(); // Layer group to easily add/remove POI markers
+
+/**
+ * Executes the Overpass API query to fetch supermarkets, convenience stores, or water points.
+ */
+async function fetchSupermarkets(coords) {
+    if (!coords || coords.length === 0) {
+        alert("Please select a route first.");
+        return;
+    }
+
+    const sundayOnly = document.getElementById("SundayBox")?.checked || false;
+    const waterOnly = document.getElementById("drinkFountains")?.checked || false;
+    const searchRadius = parseInt(document.getElementById("radiusSelect")?.value || "500", 10);
+
+    // Filter points to prevent sending overly dense requests to Overpass API
+    const step = Math.max(1, Math.floor(coords.length / 50));
+    const sampledCoords = coords.filter((_, idx) => idx % step === 0);
+
+    // Clear existing markers from map
+    if (globalWorkspaceMap) {
+        poiMarkersGroup.clearLayers();
+        if (!globalWorkspaceMap.hasLayer(poiMarkersGroup)) {
+            poiMarkersGroup.addTo(globalWorkspaceMap);
+        }
+    }
+
+    // Build bounding boxes for sampled points
+    let queryParts = [];
+    sampledCoords.forEach(c => {
+        const lat = c[0];
+        const lon = c[1];
+        
+        if (waterOnly) {
+            queryParts.push(`node["amenity"="drinking_water"](around:${searchRadius},${lat},${lon});`);
+        } else if (sundayOnly) {
+            queryParts.push(`node["shop"="supermarket"]["brand"~"Spar|Delhaize|Carrefour", i](around:${searchRadius},${lat},${lon});`);
+            queryParts.push(`way["shop"="supermarket"]["brand"~"Spar|Delhaize|Carrefour", i](around:${searchRadius},${lat},${lon});`);
+        } else {
+            queryParts.push(`node["shop"~"supermarket|convenience"](around:${searchRadius},${lat},${lon});`);
+            queryParts.push(`way["shop"~"supermarket|convenience"](around:${searchRadius},${lat},${lon});`);
+        }
+    });
+
+    const overpassQuery = `[out:json][timeout:25];(${queryParts.join("")});out center;`;
+    const url = "https://overpass-api.de/api/interpreter?data=" + encodeURIComponent(overpassQuery);
+
+    const shopCountElem = document.getElementById("shopCount");
+    if (shopCountElem) shopCountElem.innerText = "...";
+
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("Overpass API request failed");
+        const data = await response.json();
+
+        let foundCount = 0;
+        const seenIds = new Set();
+
+        data.elements.forEach(item => {
+            if (seenIds.has(item.id)) return;
+            seenIds.add(item.id);
+
+            const lat = item.lat || (item.center && item.center.lat);
+            const lon = item.lon || (item.center && item.center.lon);
+            const name = item.tags?.name || (waterOnly ? "Water Tap Point" : "Local Shop");
+
+            if (lat && lon) {
+                foundCount++;
+                const iconSymbol = waterOnly ? '💧' : '🛒';
+                
+                const poiMarker = L.marker([lat, lon], {
+                    icon: L.divIcon({
+                        className: 'poi-custom-marker',
+                        html: `<div style="background:#ffffff; border:2px solid #0284c7; border-radius:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; font-size:14px; box-shadow:0 2px 6px rgba(0,0,0,0.2);">${iconSymbol}</div>`,
+                        iconSize: [28, 28],
+                        iconAnchor: [14, 14]
+                    })
+                });
+
+                poiMarker.bindPopup(`
+                    <div style="font-family: Inter, sans-serif; padding: 4px;">
+                        <strong style="font-size: 0.85rem; color: #0f172a;">${name}</strong><br>
+                        <span style="font-size: 0.75rem; color: #64748b;">${waterOnly ? 'Drinking Water' : (item.tags?.shop || 'Store')}</span>
+                    </div>
+                `);
+
+                poiMarkersGroup.addLayer(poiMarker);
+            }
+        });
+
+        if (shopCountElem) shopCountElem.innerText = foundCount;
+
+    } catch (err) {
+        console.error("Error fetching POIs from Overpass:", err);
+        if (shopCountElem) shopCountElem.innerText = "Error";
+    }
+}
+
+/**
+ * Triggered by the "Find POIs Along Route" button in the offcanvas sidebar.
+ */
+function refreshShops() {
+    if (currentRouteCoords && currentRouteCoords.length > 0) {
+        fetchSupermarkets(currentRouteCoords);
+    } else {
+        alert("Please select a route from the table first.");
+    }
+}
+
+
 
 </script>
 <?php include 'footer.php'; ?>
