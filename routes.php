@@ -377,81 +377,84 @@ body {
         </div>
     </section>
 
-    <main class="map-canvas-frame">
-        <div id="primary-workspace-map"></div>
-        <div class="map-splash-hud" id="mapSplashHud">
-            <div style="font-size: 2rem; margin-bottom: 0.5rem;">🚴‍♂️</div>
-            <h3 style="margin:0 0 0.25rem 0; font-weight:700; color:#0f172a;">Performance Canvas Engine</h3>
-            <p style="margin:0; font-size:0.8rem; color:#64748b;">Select an active route timeline index coordinate to build spatial tracking visualizations.</p>
-        </div>
-    
-    
-    <!-- Floating Map Control Button -->
-<!-- Modern POI Action Group -->
-<div class="d-flex align-items-center gap-2">
-  <button 
-    type="button" 
-    id="btnFetchPois" 
-    class="btn btn-outline-primary btn-sm rounded-pill d-inline-flex align-items-center gap-2 px-3 shadow-sm transition-all"
-    onclick="refreshShops()"
-  >
-    <!-- Icon with loading animation support -->
-    <i id="poiBtnIcon" class="bi bi-shop fs-6"></i>
-    <span class="fw-semibold">Find Stops</span>
-    
-    <!-- Count Badge -->
-    <span id="shopCount" class="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 ms-1">0</span>
-  </button>
-</div>
+<main class="map-canvas-frame">
+    <div id="primary-workspace-map"></div>
 
-<!-- Offcanvas Sidebar / Drawer -->
-<div class="offcanvas offcanvas-end shadow" tabindex="-1" id="stopsDrawer" aria-labelledby="stopsDrawerLabel" style="width: 380px;">
-    <div class="offcanvas-header border-bottom">
-        <h5 class="offcanvas-title fw-bold" id="stopsDrawerLabel">Anti-Bonk <span>GPX</span></h5>
-        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    <div class="map-splash-hud" id="mapSplashHud">
+        <div style="font-size: 2rem; margin-bottom: 0.5rem;">🚴‍♂️</div>
+        <h3 style="margin:0 0 0.25rem 0; font-weight:700; color:#0f172a;">Performance Canvas Engine</h3>
+        <p style="margin:0; font-size:0.8rem; color:#64748b;">Select an active route timeline index coordinate to build spatial tracking visualizations.</p>
     </div>
-    
-    <div class="offcanvas-body">
-        <!-- 1. Stop Categories -->
-        <div class="config-card mb-3 p-3 rounded bg-light border">
-            <label class="card-label fw-bold text-muted small mb-2 d-block">1. Stop Categories</label>
-            
-            <div class="form-check form-switch mb-2">
-                <input class="form-check-input" type="checkbox" id="SundayBox">
-                <label class="form-check-label small" for="SundayBox">Sunday Mode (Spar/Delhaize/Carrefour)</label>
-            </div>
-            
-            <div class="form-check form-switch mb-3">
-                <input class="form-check-input" type="checkbox" id="drinkFountains" checked>
-                <label class="form-check-label small" for="drinkFountains">Water Tap Points</label>
-            </div>
 
-            <hr class="my-2">
+    <!-- Floating Map Control Button (Positioned over the map top-left/top-right) -->
+    <div class="position-absolute top-0 end-0 m-3 z-3">
+      <button 
+        type="button" 
+        id="btnFetchPois" 
+        class="btn btn-light btn-sm rounded-pill shadow-sm d-inline-flex align-items-center gap-2 px-3 border"
+        onclick="refreshShops()"
+      >
+        <i id="poiBtnIcon" class="bi bi-shop fs-6 text-primary"></i>
+        <span class="fw-semibold text-dark" style="font-size: 0.75rem;">Find Stops</span>
+        <span id="shopCount" class="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 ms-1">0</span>
+      </button>
 
-            <label for="radiusSelect" class="small text-muted mb-1 d-block">Search Radius:</label>
-            <select id="radiusSelect" class="form-select form-select-sm mb-3">
-                <option value="200">200 meters (Tight)</option>
-                <option value="500" selected>500 meters (Default)</option>
-                <option value="800">800 meters (Wide)</option>
-            </select>
+      <!-- Button to toggle the Offcanvas Drawer if needed -->
+      <button 
+        type="button" 
+        class="btn btn-light btn-sm rounded-circle shadow-sm border p-1 ms-1"
+        data-bs-toggle="offcanvas" 
+        data-bs-target="#stopsDrawer" 
+        title="Stop Settings"
+      >
+        ⚙️
+      </button>
+    </div>
 
-            <button type="button" class="btn btn-primary btn-sm w-100 fw-semibold" onclick="refreshShops()">
-                🔄 Find POIs Along Route
-            </button>
+    <!-- Offcanvas Sidebar / Drawer -->
+    <div class="offcanvas offcanvas-end shadow" tabindex="-1" id="stopsDrawer" aria-labelledby="stopsDrawerLabel" style="width: 380px;">
+        <div class="offcanvas-header border-bottom">
+            <h5 class="offcanvas-title fw-bold" id="stopsDrawerLabel">Anti-Bonk <span>GPX</span></h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
+        
+        <div class="offcanvas-body">
+            <!-- 1. Stop Categories -->
+            <div class="config-card mb-3 p-3 rounded bg-light border">
+                <label class="card-label fw-bold text-muted small mb-2 d-block">1. Stop Categories</label>
+                
+                <div class="form-check form-switch mb-2">
+                    <input class="form-check-input" type="checkbox" id="SundayBox">
+                    <label class="form-check-label small" for="SundayBox">Sunday Mode (Spar/Delhaize/Carrefour)</label>
+                </div>
+                
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="drinkFountains" checked>
+                    <label class="form-check-label small" for="drinkFountains">Water Tap Points</label>
+                </div>
 
-        <!-- POI Summary Bar -->
-        <div class="d-flex justify-content-between align-items-center p-2 rounded bg-light border">
-            <span class="small fw-semibold text-secondary">Shops found near route:</span>
-            <span id="shopCount" class="badge bg-primary text-white fw-bold px-2 py-1">0</span>
+                <hr class="my-2">
+
+                <label for="radiusSelect" class="small text-muted mb-1 d-block">Search Radius:</label>
+                <select id="radiusSelect" class="form-select form-select-sm mb-3">
+                    <option value="200">200 meters (Tight)</option>
+                    <option value="500" selected>500 meters (Default)</option>
+                    <option value="800">800 meters (Wide)</option>
+                </select>
+
+                <button type="button" class="btn btn-primary btn-sm w-100 fw-semibold" onclick="refreshShops()">
+                    🔄 Find POIs Along Route
+                </button>
+            </div>
+
+            <!-- POI Summary Bar -->
+            <div class="d-flex justify-content-between align-items-center p-2 rounded bg-light border">
+                <span class="small fw-semibold text-secondary">Shops found near route:</span>
+                <span id="shopCount" class="badge bg-primary text-white fw-bold px-2 py-1">0</span>
+            </div>
         </div>
     </div>
-</div>
-    
-    
-    
-    
-    </main>
+</main>
 
 </div>
 
