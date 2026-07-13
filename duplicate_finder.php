@@ -36,17 +36,26 @@ async function loadRoutesFromAPI(selectedCountry = 'all') {
         rawRoutesData = await response.json();
         logStage('1. FETCH COMPLETE', `Successfully downloaded ${rawRoutesData.length} routes from background API.`);
 
+        if (rawRoutesData.length > 0) {
+            console.log("🔍 Sample route object structure from API:", rawRoutesData[0]);
+        }
+
         // Decode polylines in memory
         console.groupCollapsed('🔍 Polyline Decoding Engine');
         let skippedCount = 0;
 
-        decodedRoutes = rawRoutesData.map((r) => {
-            if (!r.summary_polyline || r.summary_polyline.length < 10) {
+        decodedRoutes = rawRoutesData.map((r, idx) => {
+            // Check for potential polyline property names
+            const polyStr = r.summary_polyline || r.polyline || r.summaryPolyline;
+
+            if (!polyStr || typeof polyStr !== 'string' || polyStr.length < 5) {
+                if (idx < 5) console.warn(`Route [${r.name || r.route_id}] missing valid polyline string:`, polyStr);
                 skippedCount++;
                 return null;
             }
+
             try {
-                const points = polyline.decode(r.summary_polyline);
+                const points = polyline.decode(polyStr);
                 if (!points || points.length < 2) {
                     skippedCount++;
                     return null;
@@ -65,13 +74,14 @@ async function loadRoutesFromAPI(selectedCountry = 'all') {
                 });
 
                 return {
-                    name: r.name,
-                    country: r.country,
+                    name: r.name || 'Unnamed Route',
+                    country: r.country || '',
                     id: r.route_id,
                     coords: coords,
                     minLat, maxLat, minLon, maxLon
                 };
             } catch (e) { 
+                if (idx < 5) console.error(`Error decoding polyline for route [${r.route_id}]:`, e);
                 skippedCount++;
                 return null; 
             }
@@ -168,11 +178,21 @@ function findOverlap(coordsA, coordsB, tolerance = 10) {
 // =============================================================
 async function runDuplicateCheck() {
     const executionId = ++currentExecutionId;
-    const threshold = parseInt(document.getElementById('overlapSlider').value, 10);
-    const selectedCountry = document.getElementById('countryFilter').value;
+    
+    // SAFE DOM ACCESS WITH FALLBACKS
+    const sliderElem = document.getElementById('overlapSlider');
+    const countryElem = document.getElementById('countryFilter');
+    
+    const threshold = sliderElem ? parseInt(sliderElem.value, 10) : 50;
+    const selectedCountry = countryElem ? countryElem.value : 'all';
     const tbody = document.getElementById('resultsBody');
     
     logStage('3. SCAN STARTED', `Analyzing ${decodedRoutes.length} routes. Min Overlap: ${threshold}%, Country: "${selectedCountry}" (Exec ID: #${executionId})`);
+
+    if (!tbody) {
+        console.error("CRITICAL: Element #resultsBody not found in DOM!");
+        return;
+    }
 
     const activeRoutes = decodedRoutes.filter(r => {
         if (selectedCountry === "all") return true;
