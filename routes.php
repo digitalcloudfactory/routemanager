@@ -155,38 +155,48 @@ body {
 /* Actions Header Panel */
 .table-action-row {
     display: flex;
-    gap: 8px;
+    gap: 4px; /* Reduced gap between buttons */
+    align-items: center;
 }
 
 .btn-action-pill {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 4px; /* Reduced from 6px */
-    font-size: 0.75rem; /* Reduced from 0.8rem */
+    gap: 3px;
+    font-size: 0.68rem;          /* Tighter font size */
     font-weight: 600;
-    padding: 0.35rem 0.65rem; /* Reduced from 0.55rem 0.75rem */
-    border-radius: 6px; /* Reduced from 8px */
+    line-height: 1;              /* Kills extra vertical line height */
+    padding: 0.25rem 0.45rem;    /* Ultra-compact padding */
+    border-radius: 4px;          /* Sleeker radius */
     border: 1px solid #cbd5e1;
     background: #ffffff;
-    color: #1e293b;
+    color: #334155;
     cursor: pointer;
     text-decoration: none;
+    white-space: nowrap;         /* Keeps button text on 1 line */
     transition: all 0.15s ease;
 }
+
 .btn-action-pill:hover {
     border-color: #0284c7;
     background: #f0f9ff;
     color: #0284c7;
 }
+
 .btn-action-pill.btn-sync {
     background-color: #00E676;
     border: none;
     color: #0f172a;
     font-weight: 700;
     text-transform: uppercase;
+    font-size: 0.65rem;          /* Extra clean look for uppercase button */
+    padding: 0.28rem 0.5rem;
 }
-.btn-action-pill.btn-sync:hover { background-color: #00c853; }
+
+.btn-action-pill.btn-sync:hover { 
+    background-color: #00c853; 
+}
 
 /* Premium High Density Structured Spreadsheet Layout */
 .dense-matrix-table {
