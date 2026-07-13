@@ -381,35 +381,38 @@ body {
 <main class="map-canvas-frame">
     <div id="primary-workspace-map"></div>
 
+    <!-- HUD Overlay (Fades out when route is clicked) -->
     <div class="map-splash-hud" id="mapSplashHud">
         <div style="font-size: 2rem; margin-bottom: 0.5rem;">🚴‍♂️</div>
         <h3 style="margin:0 0 0.25rem 0; font-weight:700; color:#0f172a;">Performance Canvas Engine</h3>
         <p style="margin:0; font-size:0.8rem; color:#64748b;">Select an active route timeline index coordinate to build spatial tracking visualizations.</p>
     </div>
 
-    <!-- Floating Map Control Button (Positioned over the map top-left/top-right) -->
-    <div class="position-absolute top-0 end-0 m-3 z-3">
-      <button 
-        type="button" 
-        id="btnFetchPois" 
-        class="btn btn-light btn-sm rounded-pill shadow-sm d-inline-flex align-items-center gap-2 px-3 border"
-        onclick="refreshShops()"
-      >
-        <i id="poiBtnIcon" class="bi bi-shop fs-6 text-primary"></i>
-        <span class="fw-semibold text-dark" style="font-size: 0.75rem;">Find Stops</span>
-        <span id="shopCount" class="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 ms-1">0</span>
-      </button>
+    <!-- Floating Map Controls (Independent of mapSplashHud so it stays visible) -->
+    <div class="position-absolute top-0 end-0 m-3" style="z-index: 1000;">
+        <div class="d-flex align-items-center gap-1 bg-white p-1 rounded-pill shadow-sm border">
+            <button 
+                type="button" 
+                id="btnFetchPois" 
+                class="btn btn-sm rounded-pill d-inline-flex align-items-center gap-2 px-3 border-0"
+                onclick="refreshShops()"
+            >
+                <i id="poiBtnIcon" class="bi bi-shop fs-6 text-primary"></i>
+                <span class="fw-semibold text-dark" style="font-size: 0.75rem;">Find Stops</span>
+                <span id="shopCount" class="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 ms-1">0</span>
+            </button>
 
-      <!-- Button to toggle the Offcanvas Drawer if needed -->
-      <button 
-        type="button" 
-        class="btn btn-light btn-sm rounded-circle shadow-sm border p-1 ms-1"
-        data-bs-toggle="offcanvas" 
-        data-bs-target="#stopsDrawer" 
-        title="Stop Settings"
-      >
-        ⚙️
-      </button>
+            <!-- Gear button to open drawer settings -->
+            <button 
+                type="button" 
+                class="btn btn-sm rounded-circle border-0 text-secondary px-2"
+                data-bs-toggle="offcanvas" 
+                data-bs-target="#stopsDrawer" 
+                title="Stop Settings"
+            >
+                ⚙️
+            </button>
+        </div>
     </div>
 
     <!-- Offcanvas Sidebar / Drawer -->
