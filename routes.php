@@ -340,6 +340,57 @@ body {
   to { transform: rotate(360deg); }
 }
 
+/* ==========================================================================
+   ENHANCED DISTANCE & MILESTONE MARKERS
+   ========================================================================== */
+.km-marker-container {
+    background: transparent !important;
+    border: none !important;
+}
+
+.km-badge {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(4px);
+    color: #0f172a;
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+    height: 26px;
+    min-width: 26px;
+    padding: 0 6px;
+    line-height: 22px;
+    border-radius: 13px; /* Smooth pill shape */
+    border: 2px solid #0284c7; /* Vibrant Blue Accent */
+    box-shadow: 0 3px 8px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.5);
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    cursor: pointer;
+    user-select: none;
+}
+
+.km-badge:hover {
+    transform: scale(1.18);
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4);
+    z-index: 1000 !important;
+}
+
+/* Start Milestone (Green Accent) */
+.km-badge-start {
+    border-color: #10b981 !important;
+    color: #065f46;
+    background: #ecfdf5;
+}
+
+/* Finish Milestone (Dark / Red Accent) */
+.km-badge-finish {
+    border-color: #ef4444 !important;
+    color: #991b1b;
+    background: #fef2f2;
+}
+
 </style>
 
 <div class="app-workspace-frame" id="workspaceMainShell">
@@ -607,18 +658,81 @@ async function handleTrackSelection(route, UIComponentElementId) {
     }
 }
 
-function addDistanceMarkers(latlngs, stepKm = 10) {
-    let distance = 0;
-    let nextMarker = stepKm;
-    for (let i = 1; i < latlngs.length; i++) {
-        distance += haversineDistance(latlngs[i - 1], latlngs[i]);
-        if (distance >= nextMarker) {
-            const marker = L.circleMarker(latlngs[i], { radius: 3.5, color: '#0f172a', fillColor: '#ffffff', fillOpacity: 1, weight: 2 }).addTo(globalWorkspaceMap);
-            marker.bindTooltip(`${nextMarker} k`, { permanent: true, direction: 'top', className: 'distance-label', offset: [0, -4] });
-            currentDistanceMarkers.push(marker);
-            nextMarker += stepKm;
-        }
+/**
+ * Places distance milestone badges (e.g., Start, 10km, 20km... Finish) along the route polyline.
+ * @param {Array} coords - Array of [lat, lng] coordinates from polyline decoding.
+ * @param {number} intervalKm - Interval in kilometers (default 10km).
+ */
+function addDistanceMarkers(coords, intervalKm = 10) {
+    if (!coords || coords.length < 2) return;
+
+    // Haversine distance calculator between two [lat, lng] points in meters
+    function getDistanceMeters(p1, p2) {
+        const R = 6371000; // Earth radius in meters
+        const dLat = (p2[0] - p1[0]) * Math.PI / 180;
+        const dLon = (p2[1] - p1[1]) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                  Math.cos(p1[0] * Math.PI / 180) * Math.cos(p2[0] * Math.PI / 180) *
+                  Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
+
+    let accumulatedDistance = 0;
+    let nextMilestone = intervalKm * 1000; // convert to meters
+
+    // 1. Place Start Pin (0 km)
+    const startIcon = L.divIcon({
+        className: 'km-marker-container',
+        html: `<div class="km-badge km-badge-start" title="Start Point">0 km</div>`,
+        iconSize: [36, 26],
+        iconAnchor: [18, 13]
+    });
+    const startMarker = L.marker(coords[0], { icon: startIcon }).addTo(globalWorkspaceMap);
+    startMarker.bindTooltip("🚩 <strong>Start</strong> (0 km)", { direction: 'top', offset: [0, -10] });
+    currentDistanceMarkers.push(startMarker);
+
+    // 2. Loop through route and place intermediate KM markers
+    for (let i = 0; i < coords.length - 1; i++) {
+        const p1 = coords[i];
+        const p2 = coords[i + 1];
+        const segmentDist = getDistanceMeters(p1, p2);
+
+        while (accumulatedDistance + segmentDist >= nextMilestone) {
+            // Interpolate position along line segment
+            const ratio = (nextMilestone - accumulatedDistance) / segmentDist;
+            const lat = p1[0] + (p2[0] - p1[0]) * ratio;
+            const lng = p1[1] + (p2[1] - p1[1]) * ratio;
+
+            const kmValue = Math.round(nextMilestone / 1000);
+
+            const kmIcon = L.divIcon({
+                className: 'km-marker-container',
+                html: `<div class="km-badge">${kmValue}</div>`,
+                iconSize: [28, 26],
+                iconAnchor: [14, 13]
+            });
+
+            const marker = L.marker([lat, lng], { icon: kmIcon }).addTo(globalWorkspaceMap);
+            marker.bindTooltip(`📍 <strong>${kmValue} km</strong> point`, { direction: 'top', offset: [0, -10] });
+            currentDistanceMarkers.push(marker);
+
+            nextMilestone += intervalKm * 1000;
+        }
+
+        accumulatedDistance += segmentDist;
+    }
+
+    // 3. Place Finish Pin
+    const totalKm = (accumulatedDistance / 1000).toFixed(1);
+    const finishIcon = L.divIcon({
+        className: 'km-marker-container',
+        html: `<div class="km-badge km-badge-finish" title="Finish Line">${totalKm}k</div>`,
+        iconSize: [42, 26],
+        iconAnchor: [21, 13]
+    });
+    const finishMarker = L.marker(coords[coords.length - 1], { icon: finishIcon }).addTo(globalWorkspaceMap);
+    finishMarker.bindTooltip(`🏁 <strong>Finish Line</strong> (${totalKm} km total)`, { direction: 'top', offset: [0, -10] });
+    currentDistanceMarkers.push(finishMarker);
 }
 
 function haversineDistance(a, b) {
