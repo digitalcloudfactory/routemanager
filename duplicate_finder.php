@@ -386,108 +386,127 @@ table.styled-table tbody tr:last-of-type {
 </div>
 
 <script>
-// 1. Data from PHP
-const allRoutesData = <?= json_encode($allRoutes ?? []) ?>;
+// -------------------------------------------------------------
+// LOGGING HELPER: Formats console messages with timestamps
+// -------------------------------------------------------------
+function logStage(stage, message, details = null) {
+    const time = new Date().toLocaleTimeString();
+    const style = 'background: #0284c7; color: #fff; padding: 2px 6px; border-radius: 4px; font-weight: bold;';
+    if (details !== null) {
+        console.log(`%c[${time}] [${stage}]`, style, message, details);
+    } else {
+        console.log(`%c[${time}] [${stage}]`, style, message);
+    }
+}
 
-// 1. Pre-process and categorize (WITH BOUNDING BOX FIX)
-const decodedRoutes = allRoutesData.map(r => {
-    if (!r.summary_polyline || r.summary_polyline.length < 10) return null;
+// =============================================================
+// STAGE 1: RAW DATA INGESTION FROM PHP
+// =============================================================
+const allRoutesData = <?= json_encode($allRoutes ?? []) ?>;
+logStage('1. DATA LOAD', `Fetched ${allRoutesData.length} routes from PHP session/database.`);
+
+// =============================================================
+// STAGE 2: PREPROCESSING & POLYLINE DECODING
+// =============================================================
+console.groupCollapsed('🔍 Polyline Decoding & Bounding Box Log');
+let skippedCount = 0;
+
+const decodedRoutes = allRoutesData.map((r, index) => {
+    if (!r.summary_polyline || r.summary_polyline.length < 10) {
+        skippedCount++;
+        return null;
+    }
     try {
         const points = polyline.decode(r.summary_polyline);
+        if (!points || points.length < 2) {
+            skippedCount++;
+            return null;
+        }
         
-        // Calculate Bounding Box (required for spatial guard checks)
         let minLat = Infinity, maxLat = -Infinity;
         let minLon = Infinity, maxLon = -Infinity;
 
-        const latlngs = points.map(p => {
-            const lat = p[0];
-            const lon = p[1];
+        const coords = points.map(p => {
+            const lat = p[0], lon = p[1];
             if (lat < minLat) minLat = lat;
             if (lat > maxLat) maxLat = lat;
             if (lon < minLon) minLon = lon;
             if (lon > maxLon) maxLon = lon;
-            return L.latLng(lat, lon);
+            return [lat, lon];
         });
 
         return {
             name: r.name,
             country: r.country,
             id: r.route_id,
-            latlngs: latlngs,
-            startPoint: [points[0][0], points[0][1]],
-            minLat, maxLat, minLon, maxLon // Added missing bounding box properties
+            coords: coords,
+            minLat, maxLat, minLon, maxLon
         };
-    } catch (e) { return null; }
+    } catch (e) { 
+        skippedCount++;
+        return null; 
+    }
 }).filter(r => r !== null);
 
-// 2. Simple distance check for the "Guard"
-function fastDist(p1, p2) {
-    const dy = p1[0] - p2[0];
-    const dx = p1[1] - p2[1];
-    return Math.sqrt(dx*dx + dy*dy); // Simple Euclidean for rough filtering
-}
+console.groupEnd();
+logStage('2. DECODE COMPLETE', `Successfully decoded ${decodedRoutes.length} valid route polylines. Ignored/Skipped: ${skippedCount}.`);
 
-// Distance & Overlap Calculations
+// =============================================================
+// SPATIAL CALCULATION HELPERS
+// =============================================================
 function haversineDistance(p1, p2) {
-  const R = 6371000;
-  const toRad = Math.PI / 180;
-  const dLat = (p2[0] - p1[0]) * toRad;
-  const dLon = (p2[1] - p1[1]) * toRad;
-  const lat1 = p1[0] * toRad;
-  const lat2 = p2[0] * toRad;
+    const R = 6371000;
+    const toRad = Math.PI / 180;
+    const dLat = (p2[0] - p1[0]) * toRad;
+    const dLon = (p2[1] - p1[1]) * toRad;
+    const lat1 = p1[0] * toRad;
+    const lat2 = p2[0] * toRad;
 
-  const a = Math.sin(dLat/2)**2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon/2)**2;
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c;
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
 function pointToSegmentDistanceMeters(p, a, b) {
-  const dx = b[1] - a[1];
-  const dy = b[0] - a[0];
+    const dx = b[1] - a[1];
+    const dy = b[0] - a[0];
+    if (dx === 0 && dy === 0) return haversineDistance(p, a);
 
-  if (dx === 0 && dy === 0) return haversineDistance(p, a);
+    let t = ((p[1] - a[1]) * dx + (p[0] - a[0]) * dy) / (dx * dx + dy * dy);
+    t = Math.max(0, Math.min(1, t));
 
-  let t = ((p[1]-a[1])*dx + (p[0]-a[0])*dy)/(dx*dx + dy*dy);
-  t = Math.max(0, Math.min(1, t));
-
-  const proj = [a[0] + t*dy, a[1] + t*dx];
-  return haversineDistance(p, proj);
+    const proj = [a[0] + t * dy, a[1] + t * dx];
+    return haversineDistance(p, proj);
 }
 
 function segmentDistanceMeters(p1a, p1b, p2a, p2b) {
-  return Math.min(
-    pointToSegmentDistanceMeters(p1a, p2a, p2b),
-    pointToSegmentDistanceMeters(p1b, p2a, p2b),
-    pointToSegmentDistanceMeters(p2a, p1a, p1b),
-    pointToSegmentDistanceMeters(p2b, p1a, p1b)
-  );
+    return Math.min(
+        pointToSegmentDistanceMeters(p1a, p2a, p2b),
+        pointToSegmentDistanceMeters(p1b, p2a, p2b),
+        pointToSegmentDistanceMeters(p2a, p1a, p1b),
+        pointToSegmentDistanceMeters(p2b, p1a, p1b)
+    );
 }
 
-function findOverlap(latlngsA, latlngsB, tolerance = 8) {
+function findOverlap(coordsA, coordsB, tolerance = 10) {
     let total = 0;
     let overlap = 0;
     let segments = [];
-    
     const step = 2; 
 
-    for (let i = 0; i < latlngsA.length - 1; i += step) {
-        const a1 = latlngsA[i];
-        const a2 = latlngsA[i+1] || latlngsA[i];
-        const segLen = haversineDistance([a1.lat, a1.lng], [a2.lat, a2.lng]);
+    for (let i = 0; i < coordsA.length - 1; i += step) {
+        const a1 = coordsA[i];
+        const a2 = coordsA[i + 1] || coordsA[i];
+        const segLen = haversineDistance(a1, a2);
         total += segLen;
 
         let matched = false;
-        
-        for (let j = 0; j < latlngsB.length - 1; j += step) {
-            const b1 = latlngsB[j];
+        for (let j = 0; j < coordsB.length - 1; j += step) {
+            const b1 = coordsB[j];
             
-            if (Math.abs(a1.lat - b1.lat) > 0.002 || Math.abs(a1.lng - b1.lng) > 0.002) {
-                continue; 
-            }
+            if (Math.abs(a1[0] - b1[0]) > 0.003 || Math.abs(a1[1] - b1[1]) > 0.003) continue;
 
-            const b2 = latlngsB[j+1];
-            if (segmentDistanceMeters([a1.lat, a1.lng], [a2.lat, a2.lng],
-                                      [b1.lat, b1.lng], [b2.lat, b2.lng]) <= tolerance) {
+            const b2 = coordsB[j + 1] || coordsB[j];
+            if (segmentDistanceMeters(a1, a2, b1, b2) <= tolerance) {
                 matched = true;
                 break;
             }
@@ -505,22 +524,30 @@ function findOverlap(latlngsA, latlngsB, tolerance = 8) {
     };
 }
 
-let isRunning = false;
+// =============================================================
+// STAGE 3: DUPLICATE SCAN ENGINE
+// =============================================================
+let currentExecutionId = 0;
 let debounceTimer;
 
 async function runDuplicateCheck() {
-    isRunning = true;
-    const threshold = parseInt(document.getElementById('overlapSlider').value);
+    const executionId = ++currentExecutionId;
+    const threshold = parseInt(document.getElementById('overlapSlider').value, 10);
     const selectedCountry = document.getElementById('countryFilter').value;
     const tbody = document.getElementById('resultsBody');
     
+    logStage('3. SCAN STARTED', `Running check with Min Overlap: ${threshold}%, Country Filter: "${selectedCountry}" (Exec ID: #${executionId})`);
+
     const activeRoutes = decodedRoutes.filter(r => {
         if (selectedCountry === "all") return true;
         return r.country === selectedCountry;
     });
     
+    logStage('3. FILTER APPLIED', `${activeRoutes.length} routes match country "${selectedCountry}".`);
+
     if (activeRoutes.length < 2) {
-        tbody.innerHTML = `<tr><td colspan='4' style='text-align:center; padding:30px; color: #64748b;'>Not enough routes in ${selectedCountry} to compare (requires at least 2).</td></tr>`;
+        logStage('3. SCAN CANCELLED', 'Fewer than 2 routes available to compare.');
+        tbody.innerHTML = `<tr><td colspan='4' style='text-align:center; padding:30px; color: #64748b;'>Not enough routes in selected filter to compare (requires at least 2).</td></tr>`;
         return;
     }
 
@@ -529,35 +556,46 @@ async function runDuplicateCheck() {
     let html = "";
     const totalPairs = (activeRoutes.length * (activeRoutes.length - 1)) / 2;
     let processedPairs = 0;
+    let boundingBoxPruned = 0;
+    let matchesFound = 0;
+
+    console.groupCollapsed(`⚡ Comparison Matrix (${totalPairs} total pairs to check)`);
 
     for (let i = 0; i < activeRoutes.length; i++) {
         for (let j = i + 1; j < activeRoutes.length; j++) {
-            if (!isRunning) return;
+            if (executionId !== currentExecutionId) {
+                console.groupEnd();
+                logStage('3. SCAN ABORTED', `Execution #${executionId} superseded by a new filter action.`);
+                return;
+            }
             
             processedPairs++;
-            if (processedPairs % 10 === 0) {
+            if (processedPairs % 15 === 0) {
                 const progElem = document.getElementById('progress');
                 if (progElem) progElem.innerText = Math.round((processedPairs / totalPairs) * 100);
-                await new Promise(r => setTimeout(r, 1));
+                await new Promise(r => setTimeout(r, 0));
             }
 
             const rA = activeRoutes[i];
             const rB = activeRoutes[j];
 
-            // Distance Guard
-            if (fastDist(rA.startPoint, rB.startPoint) > 0.5) continue;
-
-            // Bounding Box Overlap Check
-            if (rA.maxLat < rB.minLat || rA.minLat > rB.maxLat || 
-                rA.maxLon < rB.minLon || rA.minLon > rB.maxLon) {
+            // Bounding box filter check
+            const buf = 0.005;
+            if (rA.maxLat + buf < rB.minLat || rA.minLat - buf > rB.maxLat || 
+                rA.maxLon + buf < rB.minLon || rA.minLon - buf > rB.maxLon) {
+                boundingBoxPruned++;
                 continue;
             }
 
-            const resA = findOverlap(rA.latlngs, rB.latlngs);
-            const resB = findOverlap(rB.latlngs, rA.latlngs);
+            const resA = findOverlap(rA.coords, rB.coords);
+            const resB = findOverlap(rB.coords, rA.coords);
             const finalPercent = Math.min(resA.percent, resB.percent);
 
+            console.log(` Comparing "${rA.name}" vs "${rB.name}" ➔ Overlap: ${finalPercent.toFixed(1)}%`);
+
             if (finalPercent >= threshold) {
+                matchesFound++;
+                console.log(`   └─ ✅ MATCH DETECTED ABOVE ${threshold}% THRESHOLD!`);
                 html += `<tr>
                     <td style="font-weight: 600; color: #0f172a;">${rA.name}</td>
                     <td style="font-weight: 600; color: #0f172a;">${rB.name}</td>
@@ -570,28 +608,45 @@ async function runDuplicateCheck() {
         }
     }
     
-    tbody.innerHTML = html || `<tr><td colspan='4' style='text-align:center; padding:30px; color:#64748b;'>No duplicates found above ${threshold}%.</td></tr>`;
+    console.groupEnd();
+
+    if (executionId === currentExecutionId) {
+        logStage('3. SCAN FINISHED', `Summary: Tested ${processedPairs} pairs. Skipped ${boundingBoxPruned} non-overlapping routes via Bounding Boxes. Found ${matchesFound} duplicates.`);
+        tbody.innerHTML = html || `<tr><td colspan='4' style='text-align:center; padding:30px; color:#64748b;'>No duplicates found above ${threshold}%.</td></tr>`;
+    }
 }
 
-function triggerDebouncedCheck() {
+// =============================================================
+// STAGE 4: USER UI INTERACTIONS & DEBOUNCE
+// =============================================================
+function triggerDebouncedCheck(sourceEvent) {
+    logStage('USER EVENT', `Input change triggered by: [${sourceEvent}]. Debouncing check (250ms)...`);
     clearTimeout(debounceTimer);
-    isRunning = false;
     debounceTimer = setTimeout(() => {
         runDuplicateCheck();
-    }, 300);
+    }, 250);
 }
 
+// =============================================================
+// STAGE 5: MODAL MAP PREVIEW
+// =============================================================
 let previewMap;
 
 function showComparison(idA, idB) {
-    document.getElementById('mapModal').style.display = 'block';
-
     const rA = decodedRoutes.find(r => r.id === idA);
     const rB = decodedRoutes.find(r => r.id === idB);
 
-    if (!rA || !rB) return;
+    logStage('MAP MODAL', `Opening map view for Route A: "${rA?.name}" vs Route B: "${rB?.name}"`);
+
+    document.getElementById('mapModal').style.display = 'block';
+
+    if (!rA || !rB) {
+        console.error("Route missing from memory array:", idA, idB);
+        return;
+    }
 
     if (!previewMap) {
+        logStage('MAP MODAL', 'Initializing Leaflet map instance...');
         previewMap = L.map('compareMap');
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
             attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
@@ -602,39 +657,45 @@ function showComparison(idA, idB) {
         });
     }
 
-    const lineA = L.polyline(rA.latlngs, {color: '#0284c7', weight: 4, opacity: 0.6}).addTo(previewMap);
-    const lineB = L.polyline(rB.latlngs, {color: '#e11d48', weight: 4, opacity: 0.6}).addTo(previewMap);
+    const lineA = L.polyline(rA.coords, {color: '#0284c7', weight: 4, opacity: 0.6}).addTo(previewMap);
+    const lineB = L.polyline(rB.coords, {color: '#e11d48', weight: 4, opacity: 0.6}).addTo(previewMap);
 
-    const matchData = findOverlap(rA.latlngs, rB.latlngs);
-    const overlapSegments = matchData.segments || []; 
-    
-    overlapSegments.forEach(seg => {
+    const matchData = findOverlap(rA.coords, rB.coords);
+    (matchData.segments || []).forEach(seg => {
         L.polyline(seg, {color: '#10b981', weight: 6, opacity: 1}).addTo(previewMap);
     });
 
-    const group = new L.featureGroup([lineA, lineB]);
+    const group = L.featureGroup([lineA, lineB]);
     previewMap.fitBounds(group.getBounds(), {padding: [30, 30]});
     
     setTimeout(() => { previewMap.invalidateSize(); }, 200);
 }
 
 function closeMap() {
+    logStage('MAP MODAL', 'Closing map modal.');
     document.getElementById('mapModal').style.display = 'none';
 }
 
-// Safely bind event listeners after DOM loads
+// =============================================================
+// DOM EVENT BINDINGS
+// =============================================================
 document.addEventListener('DOMContentLoaded', () => {
+    logStage('DOM READY', 'Binding UI element listeners and firing initial scan...');
+    
     const countrySelect = document.getElementById('countryFilter');
     const slider = document.getElementById('overlapSlider');
 
     if (countrySelect) {
-        countrySelect.addEventListener('change', triggerDebouncedCheck);
+        countrySelect.addEventListener('change', (e) => {
+            logStage('USER EVENT', `Country selection changed to: "${e.target.value}"`);
+            triggerDebouncedCheck('Country Select');
+        });
     }
 
     if (slider) {
-        slider.addEventListener('input', function() {
+        slider.addEventListener('input', function(e) {
             document.getElementById('sliderVal').innerText = this.value + '%';
-            triggerDebouncedCheck();
+            triggerDebouncedCheck('Overlap Slider');
         });
     }
 
