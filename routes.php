@@ -679,24 +679,24 @@ async function fetchSupermarkets(coords) {
         }
     });
 
-    const overpassQuery = `[out:json][timeout:25];(${queryParts.join("")});out center;`;
+const overpassQuery = `[out:json][timeout:25];(${queryParts.join("")});out center;`;
 
-    const shopCountElem = document.getElementById("shopCount");
-    if (shopCountElem) shopCountElem.innerText = "...";
+const shopCountElem = document.getElementById("shopCount");
+if (shopCountElem) shopCountElem.innerText = "...";
 
-    try {
-        // Fetch through local PHP backend proxy to prevent CORS issues
-        const response = await fetch('/overpass.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ query: overpassQuery })
-        });
+try {
+    // Send as URLSearchParams (guarantees $_POST['query'] is populated in PHP)
+    const response = await fetch('/overpass.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({ query: overpassQuery })
+    });
 
-        if (!response.ok) throw new Error(`HTTP Error ${response.status}: Failed to fetch POIs`);
-        
-        const data = await response.json();
+    if (!response.ok) throw new Error(`HTTP Error ${response.status}: Failed to fetch POIs`);
+    
+    const data = await response.json();
 
         let foundCount = 0;
         const seenIds = new Set();
