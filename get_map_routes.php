@@ -1,6 +1,4 @@
 <?php
-
-<?php
 require_once 'config.php'; // 🟩 Everything loads instantly
 
 // Access control layer: kick them out to index if they aren't authenticated
