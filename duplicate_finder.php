@@ -32,7 +32,7 @@ $countryStmt->execute([$internalUserId]);
 $countries = $countryStmt->fetchAll(PDO::FETCH_COLUMN);
 
 // 2. Fetch all routes (Make sure 'country' is in the SELECT)
-$stmt = $pdo->prepare("SELECT route_id, name, summary_polyline, distance_km, country FROM strava_routes WHERE user_id = ?" LIMIT 200);
+$stmt = $pdo->prepare("SELECT route_id, name, summary_polyline, distance_km, country FROM strava_routes WHERE user_id = ? LIMIT 200");
 $stmt->execute([$internalUserId]);
 $allRoutes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
