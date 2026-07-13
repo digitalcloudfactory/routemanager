@@ -119,7 +119,7 @@ body {
 }
 
 .platform-table-header {
-    padding: 1.5rem;
+    padding: 0.6rem 1rem; /* Reduced from 1.5rem */
     border-bottom: 1px solid #e2e8f0;
     display: flex;
     justify-content: space-between;
@@ -129,22 +129,22 @@ body {
 .user-meta-bar {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px; /* Reduced from 12px */
 }
 
 .profile-badge {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px; /* Reduced from 8px */
     background: #f8fafc;
-    padding: 0.35rem 0.75rem 0.35rem 0.35rem;
+    padding: 0.15rem 0.5rem 0.15rem 0.15rem; /* Reduced padding */
     border-radius: 50px;
     border: 1px solid #e2e8f0;
 }
 .profile-badge img {
     border-radius: 50%;
     object-fit: cover;
-    border: 1.5px solid #0284c7;
+    border: 1px solid #0284c7; /* Reduced from 1.5px */
 }
 
 .table-wrapper-scroller {
@@ -162,17 +162,17 @@ body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    font-size: 0.8rem;
+    gap: 4px; /* Reduced from 6px */
+    font-size: 0.75rem; /* Reduced from 0.8rem */
     font-weight: 600;
-    padding: 0.55rem 0.75rem;
-    border-radius: 8px;
+    padding: 0.35rem 0.65rem; /* Reduced from 0.55rem 0.75rem */
+    border-radius: 6px; /* Reduced from 8px */
     border: 1px solid #cbd5e1;
     background: #ffffff;
     color: #1e293b;
     cursor: pointer;
     text-decoration: none;
-    transition: all 0.1s ease;
+    transition: all 0.15s ease;
 }
 .btn-action-pill:hover {
     border-color: #0284c7;
@@ -295,10 +295,10 @@ body {
             <div>
                 <div class="user-meta-bar">
                     <div class="profile-badge">
-                        <img src="<?= htmlspecialchars($user['avatar']) ?>" alt="User Avatar" width="22" height="22">
-                        <span style="font-size: 0.78rem; font-weight: 600; color: #334155;"><?= htmlspecialchars($user['firstname']) ?></span>
+                        <img src="<?= htmlspecialchars($user['avatar']) ?>" alt="User Avatar" width="16" height="16">
+                        <span style="font-size: 0.7rem; font-weight: 600; color: #334155;"><?= htmlspecialchars($user['firstname']) ?></span>
                     </div>
-                    <div style="font-size: 0.72rem; color: #64748b;">
+                    <div style="font-size: 0.68rem; color: #64748b;">
                         Sync: <span style="font-weight:600; color:#1e293b;"><?= !empty($user['last_routes_sync']) ? htmlspecialchars($user['last_routes_sync']) : 'Never' ?></span>
                     </div>
                 </div>
