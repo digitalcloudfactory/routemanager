@@ -5,9 +5,10 @@ function dbg(...args) {
   if (DEBUG_FILTERS) console.log('[filters]', ...args);
 }
 
-// Keep these global so map.php can reference them, but don't assign them yet!
+// Keep these global so map.php can reference them
 let filterName, filterNameNot, filterDistanceMin, filterDistanceMax, distValueDisplay;
-let filterElevation, filterType, filterTags, filterCountry, panel;
+let filterElevationMin, filterElevationMax, elevValueDisplay;
+let filterType, filterTags, filterCountry, panel;
 let filteredRoutes = [];
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -17,36 +18,59 @@ document.addEventListener('DOMContentLoaded', () => {
   panel = document.getElementById('filterPanel');
   filterName = document.getElementById('filterName');
   filterNameNot = document.getElementById('filterNameNot');
-  filterElevation = document.getElementById('filterElevation');
   filterType = document.getElementById('filterType');
   filterTags = document.getElementById('filterTags');
   filterCountry = document.getElementById('filterCountry');
+
+  // Distance Controls
   filterDistanceMin = document.getElementById('filterDistanceMin');
   filterDistanceMax = document.getElementById('filterDistanceMax');
   distValueDisplay = document.getElementById('distValue');
+
+  // Elevation Controls
+  filterElevationMin = document.getElementById('filterElevationMin');
+  filterElevationMax = document.getElementById('filterElevationMax');
+  elevValueDisplay = document.getElementById('elevValue');
 
   const openBtn = document.getElementById('openFilters');
   const closeBtn = document.getElementById('closeFilters');
 
   // 2. Setup Distance Sliders if they exist
-  const rangeUpdate = (e) => {
+  const distRangeUpdate = (e) => {
     if (!filterDistanceMin || !filterDistanceMax) return;
     if (parseFloat(filterDistanceMin.value) > parseFloat(filterDistanceMax.value)) {
       if (e.target.id === 'filterDistanceMin') filterDistanceMin.value = filterDistanceMax.value;
       else filterDistanceMax.value = filterDistanceMin.value;
     }
     if (distValueDisplay) {
-      distValueDisplay.textContent = `${filterDistanceMin.value} - ${filterDistanceMax.value}`;
+      distValueDisplay.textContent = `${filterDistanceMin.value} - ${filterDistanceMax.value} km`;
     }
     applyFilters();
     updateURLFromFilters();
   };
 
-  if (filterDistanceMin) filterDistanceMin.addEventListener('input', rangeUpdate);
-  if (filterDistanceMax) filterDistanceMax.addEventListener('input', rangeUpdate);
+  if (filterDistanceMin) filterDistanceMin.addEventListener('input', distRangeUpdate);
+  if (filterDistanceMax) filterDistanceMax.addEventListener('input', distRangeUpdate);
 
-  // 3. Setup Input Watchers safely
-  const filterIds = ['filterName', 'filterNameNot', 'filterElevation', 'filterType', 'filterTags', 'filterCountry'];
+  // 3. Setup Elevation Sliders if they exist
+  const elevRangeUpdate = (e) => {
+    if (!filterElevationMin || !filterElevationMax) return;
+    if (parseFloat(filterElevationMin.value) > parseFloat(filterElevationMax.value)) {
+      if (e.target.id === 'filterElevationMin') filterElevationMin.value = filterElevationMax.value;
+      else filterElevationMax.value = filterElevationMin.value;
+    }
+    if (elevValueDisplay) {
+      elevValueDisplay.textContent = `${filterElevationMin.value} - ${filterElevationMax.value} m`;
+    }
+    applyFilters();
+    updateURLFromFilters();
+  };
+
+  if (filterElevationMin) filterElevationMin.addEventListener('input', elevRangeUpdate);
+  if (filterElevationMax) filterElevationMax.addEventListener('input', elevRangeUpdate);
+
+  // 4. Setup Input Watchers for Text/Select/Checkbox Inputs safely
+  const filterIds = ['filterName', 'filterNameNot', 'filterType', 'filterTags', 'filterCountry'];
   filterIds.forEach(id => {
     const el = document.getElementById(id);
     if (!el) return; // Skip if missing, do not crash!
@@ -64,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // 4. Setup Panel Toggle Click Events
+  // 5. Setup Panel Toggle Click Events
   if (openBtn && panel) {
     dbg('✅ Filters button and panel bound successfully.');
     openBtn.addEventListener('click', (e) => {
@@ -88,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
     clearFilters();
   });
 
-  // 5. Fire off initial filter loading pass
+  // 6. Fire off initial filter loading pass
   loadFiltersFromURL();
 });
 
@@ -106,7 +130,9 @@ function applyFilters() {
   
   const minDist = filterDistanceMin ? (parseFloat(filterDistanceMin.value) || 0) : 0;
   const maxDist = filterDistanceMax ? (parseFloat(filterDistanceMax.value) || 9999) : 9999;
-  const minElev = filterElevation ? (parseFloat(filterElevation.value) || 0) : 0;
+  
+  const minElev = filterElevationMin ? (parseFloat(filterElevationMin.value) || 0) : 0;
+  const maxElev = filterElevationMax ? (parseFloat(filterElevationMax.value) || 10000) : 10000;
 
   const tags = filterTags && filterTags.value
     ? filterTags.value.toLowerCase().split(',').map(t => t.trim()).filter(Boolean)
@@ -122,11 +148,14 @@ function applyFilters() {
     const routeTags = (r.tags || '').split(',').map(t => t.trim().toLowerCase());
     const tagsMatch = !tags.length || tags.every(t => routeTags.includes(t));
 
+    const dist = parseFloat(r.distance_km || r.distance || 0);
+    const elev = parseFloat(r.elevation || r.elevation_gain || r.total_elevation_gain || 0);
+
     return (
       nameMatch &&
       tagsMatch &&
-      (parseFloat(r.distance_km) >= minDist && parseFloat(r.distance_km) <= maxDist) &&
-      (!minElev || parseFloat(r.elevation) >= minElev) &&
+      (dist >= minDist && dist <= maxDist) &&
+      (elev >= minElev && elev <= maxElev) &&
       (!type || r.type == type) &&
       (!selectedCountry || (r.country && r.country.trim() === selectedCountry.trim()))
     );
@@ -134,13 +163,13 @@ function applyFilters() {
 
   dbg(`Filters finished. Showing ${filteredRoutes.length} of ${routes.length} routes.`);
 
-  // --- UPDATED LAYER: Call map renderer if it exists ---
+  // --- Call map renderer if it exists ---
   if (typeof drawRoutes === 'function') {
     drawRoutes(filteredRoutes);
     console.log('drawRoutes Called -- Map Function');
   }
 
-  // --- NEW LAYER: Call table renderer if it exists ---
+  // --- Call table renderer if it exists ---
   if (typeof renderTable === 'function') {
     renderTable(filteredRoutes);
     console.log('renderTable Called -- Table Function');
@@ -155,8 +184,11 @@ function updateURLFromFilters() {
     if (filterNameNot && filterNameNot.checked) params.set('notName', '1');
     if (filterDistanceMin && filterDistanceMin.value != 0) params.set('minDist', filterDistanceMin.value);
     if (filterDistanceMax && filterDistanceMax.value != 400) params.set('maxDist', filterDistanceMax.value);
+    
+    if (filterElevationMin && filterElevationMin.value != 0) params.set('minElev', filterElevationMin.value);
+    if (filterElevationMax && filterElevationMax.value != 10000) params.set('maxElev', filterElevationMax.value);
+
     if (filterCountry && filterCountry.value) params.set('country', filterCountry.value);
-    if (filterElevation && filterElevation.value) params.set('minElev', filterElevation.value);
     if (filterType && filterType.value) params.set('type', filterType.value);
     
     const tagsVal = filterTags ? filterTags.value.trim() : '';
@@ -170,14 +202,19 @@ function updateURLFromFilters() {
 function clearFilters() {
     if (filterName) filterName.value = '';
     if (filterNameNot) filterNameNot.checked = false;
-    if (filterElevation) filterElevation.value = '';
     if (filterType) filterType.value = '';
     if (filterTags) filterTags.value = '';
     if (filterCountry) filterCountry.value = '';
   
+    // Reset Distance
     if (filterDistanceMin) filterDistanceMin.value = 0;
     if (filterDistanceMax) filterDistanceMax.value = 400;
-    if (distValueDisplay) distValueDisplay.textContent = "0 - 400";
+    if (distValueDisplay) distValueDisplay.textContent = "0 - 400 km";
+
+    // Reset Elevation
+    if (filterElevationMin) filterElevationMin.value = 0;
+    if (filterElevationMax) filterElevationMax.value = 10000;
+    if (elevValueDisplay) elevValueDisplay.textContent = "0 - 10000 m";
 
     applyFilters();
     updateURLFromFilters();
@@ -187,15 +224,22 @@ function loadFiltersFromURL() {
   dbg('loadFiltersFromURL() checking strings...');
   const params = new URLSearchParams(window.location.search);
 
+  // Restore Distance
   if (filterDistanceMin) filterDistanceMin.value = params.get('minDist') || 0;
   if (filterDistanceMax) filterDistanceMax.value = params.get('maxDist') || 400;
   if (distValueDisplay && filterDistanceMin && filterDistanceMax) {
-    distValueDisplay.textContent = `${filterDistanceMin.value} - ${filterDistanceMax.value}`;
+    distValueDisplay.textContent = `${filterDistanceMin.value} - ${filterDistanceMax.value} km`;
+  }
+
+  // Restore Elevation
+  if (filterElevationMin) filterElevationMin.value = params.get('minElev') || 0;
+  if (filterElevationMax) filterElevationMax.value = params.get('maxElev') || 10000;
+  if (elevValueDisplay && filterElevationMin && filterElevationMax) {
+    elevValueDisplay.textContent = `${filterElevationMin.value} - ${filterElevationMax.value} m`;
   }
 
   if (params.has('name') && filterName) filterName.value = params.get('name');
   if (params.has('country') && filterCountry) filterCountry.value = params.get('country');
-  if (params.has('minElev') && filterElevation) filterElevation.value = params.get('minElev');
   if (params.has('type') && filterType) filterType.value = params.get('type');
   if (params.has('tags') && filterTags) filterTags.value = params.get('tags');
   if (params.has('notName') && filterNameNot) filterNameNot.checked = params.get('notName') === '1';

@@ -245,10 +245,13 @@
     </div>
   </div>
 
-  <div class="filter-group">
-    <label for="filterElevation">Min Elevation</label>
-    <input id="filterElevation" class="filter-input" type="number" min="0" placeholder="0 meters">
+<div class="filter-group">
+  <label>Elevation Gain <span id="elevValue" class="crisp-badge">0 - 10000 m</span></label>
+  <div class="range-slider-wrapper">
+    <input id="filterElevationMin" type="range" min="0" max="10000" step="50" value="0">
+    <input id="filterElevationMax" type="range" min="0" max="12000" step="50" value="12000">
   </div>
+</div>
 
   <div class="filter-group">
     <label for="filterType">Activity Type</label>
@@ -310,24 +313,44 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    const minInput = document.getElementById('filterDistanceMin');
-    const maxInput = document.getElementById('filterDistanceMax');
+    // --- Distance Slider Handler ---
+    const distMin = document.getElementById('filterDistanceMin');
+    const distMax = document.getElementById('filterDistanceMax');
     const distDisplay = document.getElementById('distValue');
 
-    function updateSliderDisplay() {
-        if (!minInput || !maxInput || !distDisplay) return;
-        
-        if (parseInt(minInput.value) > parseInt(maxInput.value)) {
-            let tmp = minInput.value;
-            minInput.value = maxInput.value;
-            maxInput.value = tmp;
+    function updateDistDisplay() {
+        if (!distMin || !distMax || !distDisplay) return;
+        if (parseInt(distMin.value) > parseInt(distMax.value)) {
+            let tmp = distMin.value;
+            distMin.value = distMax.value;
+            distMax.value = tmp;
         }
-        distDisplay.textContent = `${minInput.value} - ${maxInput.value} km`;
+        distDisplay.textContent = `${distMin.value} - ${distMax.value} km`;
     }
 
-    if (minInput && maxInput) {
-        minInput.addEventListener('input', updateSliderDisplay);
-        maxInput.addEventListener('input', updateSliderDisplay);
+    if (distMin && distMax) {
+        distMin.addEventListener('input', updateDistDisplay);
+        distMax.addEventListener('input', updateDistDisplay);
+    }
+
+    // --- Elevation Slider Handler ---
+    const elevMin = document.getElementById('filterElevationMin');
+    const elevMax = document.getElementById('filterElevationMax');
+    const elevDisplay = document.getElementById('elevValue');
+
+    function updateElevDisplay() {
+        if (!elevMin || !elevMax || !elevDisplay) return;
+        if (parseInt(elevMin.value) > parseInt(elevMax.value)) {
+            let tmp = elevMin.value;
+            elevMin.value = elevMax.value;
+            elevMax.value = tmp;
+        }
+        elevDisplay.textContent = `${elevMin.value} - ${elevMax.value} m`;
+    }
+
+    if (elevMin && elevMax) {
+        elevMin.addEventListener('input', updateElevDisplay);
+        elevMax.addEventListener('input', updateElevDisplay);
     }
 });
 </script>
