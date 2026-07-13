@@ -308,6 +308,13 @@ body {
     font-size: 18px !important;
 }
 
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
 /* Sleek Action Button Styling */
 #btnFetchPois {
   transition: all 0.2s ease-in-out;
@@ -433,7 +440,7 @@ body {
                 </div>
                 
                 <div class="form-check form-switch mb-3">
-                    <input class="form-check-input" type="checkbox" id="drinkFountains" checked>
+                    <input class="form-check-input" type="checkbox" id="drinkFountains">
                     <label class="form-check-label small" for="drinkFountains">Water Tap Points</label>
                 </div>
 
