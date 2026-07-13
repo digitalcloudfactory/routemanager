@@ -662,7 +662,7 @@ async function fetchSupermarkets(coords) {
         }
     }
 
-    // Build bounding boxes for sampled points
+    // Build bounding queries for sampled points
     let queryParts = [];
     sampledCoords.forEach(c => {
         const lat = c[0];
@@ -680,14 +680,22 @@ async function fetchSupermarkets(coords) {
     });
 
     const overpassQuery = `[out:json][timeout:25];(${queryParts.join("")});out center;`;
-    const url = "https://overpass-api.de/api/interpreter?data=" + encodeURIComponent(overpassQuery);
 
     const shopCountElem = document.getElementById("shopCount");
     if (shopCountElem) shopCountElem.innerText = "...";
 
     try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error("Overpass API request failed");
+        // Fetch through local PHP backend proxy to prevent CORS issues
+        const response = await fetch('/overpass.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ query: overpassQuery })
+        });
+
+        if (!response.ok) throw new Error(`HTTP Error ${response.status}: Failed to fetch POIs`);
+        
         const data = await response.json();
 
         let foundCount = 0;
@@ -743,7 +751,6 @@ function refreshShops() {
         alert("Please select a route from the table first.");
     }
 }
-
 
 
 </script>
