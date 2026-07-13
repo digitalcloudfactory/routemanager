@@ -31,7 +31,7 @@ curl_setopt_array($ch, [
     CURLOPT_POST => true,
     CURLOPT_POSTFIELDS => 'data=' . urlencode($query),
     CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_TIMEOUT => 30,
+    CURLOPT_TIMEOUT => 60,
     CURLOPT_USERAGENT => 'WasmerRoutePlanner/1.0',
     CURLOPT_HTTPHEADER => [
         'Content-Type: application/x-www-form-urlencoded; charset=UTF-8'

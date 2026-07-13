@@ -539,45 +539,67 @@ function renderDenseSpreadsheetMatrix(data) {
 }
 
 // Shared central targeting engine
+// Shared central targeting engine
 async function handleTrackSelection(route, UIComponentElementId) {
+    // 1. Highlight selected row in spreadsheet
     document.querySelectorAll('.dense-matrix-table tbody tr').forEach(r => r.classList.remove('row-selected'));
-
     const correspondingRow = document.getElementById(`row-id-${route.route_id}`);
-    if(correspondingRow) correspondingRow.classList.add('row-selected');
+    if (correspondingRow) correspondingRow.classList.add('row-selected');
 
-    if (currentActivePolyline) globalWorkspaceMap.removeLayer(currentActivePolyline);
+    // 2. CLEAR ALL PREVIOUS MAP LAYERS BEFORE DRAWING NEW ROUTE
+    if (currentActivePolyline) {
+        globalWorkspaceMap.removeLayer(currentActivePolyline);
+        currentActivePolyline = null;
+    }
+
+    // Clear 10km step markers
     currentDistanceMarkers.forEach(m => globalWorkspaceMap.removeLayer(m));
     currentDistanceMarkers = [];
 
-    document.getElementById('mapSplashHud').style.opacity = '0';
+    // Clear previous shop / water POI markers
+    if (poiMarkersGroup) {
+        poiMarkersGroup.clearLayers();
+    }
+    
+    // Reset shop counter badge
+    updateShopCountBadges(0);
 
-   if (!route.summary_polyline) {
+    // Fade out splash overlay HUD
+    const splashHud = document.getElementById('mapSplashHud');
+    if (splashHud) splashHud.style.opacity = '0';
+
+    // 3. Fetch polyline if not already loaded in memory
+    if (!route.summary_polyline) {
         try {
             const res = await fetch(`get_polyline.php?route_id=${route.route_id}`);
             const polyData = await res.json();
             route.summary_polyline = polyData.polyline;
         } catch (e) { 
             console.error("Trace buffer line tracking fetch error:", e); 
+            return;
         }
     }
 
+    // 4. Draw new polyline
     if (route.summary_polyline) {
         try {
             const coords = polyline.decode(route.summary_polyline).map(c => [c[0], c[1]]);
             
-            // 1. Store coordinates for Overpass POI searches
+            // Store coordinates for Overpass POI searches
             currentRouteCoords = coords;
 
-            // 2. Clear previous route POI markers from map
-            poiMarkersGroup.clearLayers();
-            const shopCountElem = document.getElementById("shopCount");
-            if (shopCountElem) shopCountElem.innerText = "0";
+            // Draw new polyline & assign to tracking variable
+            currentActivePolyline = L.polyline(coords, { 
+                color: '#ef4444', 
+                weight: 4.5, 
+                opacity: 0.9, 
+                lineJoin: 'round' 
+            }).addTo(globalWorkspaceMap);
 
-            // 3. Draw active polyline & fit map view
-            currentActivePolyline = L.polyline(coords, { color: '#ef4444', weight: 4.5, opacity: 0.9, lineJoin: 'round' }).addTo(globalWorkspaceMap);
+            // Fit map to new route bounds
             globalWorkspaceMap.fitBounds(currentActivePolyline.getBounds(), { padding: [40, 40] });
             
-            // 4. Place 10km step markers
+            // Place 10km step markers
             addDistanceMarkers(coords, 10);
         } catch (err) { 
             console.error("Leaflet drawing exception parameters:", err); 
