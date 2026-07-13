@@ -306,6 +306,32 @@ body {
     text-decoration: none !important;
     font-size: 18px !important;
 }
+
+/* Sleek Action Button Styling */
+#btnFetchPois {
+  transition: all 0.2s ease-in-out;
+  border-width: 1.5px;
+}
+
+#btnFetchPois:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.15) !important;
+}
+
+#btnFetchPois:active {
+  transform: translateY(0);
+}
+
+/* Spinner animation state */
+.spin-icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 </style>
 
 <div class="app-workspace-frame" id="workspaceMainShell">
@@ -361,11 +387,21 @@ body {
     
     
     <!-- Floating Map Control Button -->
-<div class="position-absolute bottom-0 end-0 m-3" style="z-index: 1000;">
-    <button type="button" class="btn btn-primary shadow-lg d-flex align-items-center gap-2 rounded-pill px-3 py-2 fw-semibold" data-bs-toggle="offcanvas" data-bs-target="#stopsDrawer">
-        <span>🛒</span>
-        <span>Stops Planner</span>
-    </button>
+<!-- Modern POI Action Group -->
+<div class="d-flex align-items-center gap-2">
+  <button 
+    type="button" 
+    id="btnFetchPois" 
+    class="btn btn-outline-primary btn-sm rounded-pill d-inline-flex align-items-center gap-2 px-3 shadow-sm transition-all"
+    onclick="refreshShops()"
+  >
+    <!-- Icon with loading animation support -->
+    <i id="poiBtnIcon" class="bi bi-shop fs-6"></i>
+    <span class="fw-semibold">Find Stops</span>
+    
+    <!-- Count Badge -->
+    <span id="shopCount" class="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 ms-1">0</span>
+  </button>
 </div>
 
 <!-- Offcanvas Sidebar / Drawer -->
@@ -654,6 +690,21 @@ async function fetchSupermarkets(coords) {
     const step = Math.max(1, Math.floor(coords.length / 50));
     const sampledCoords = coords.filter((_, idx) => idx % step === 0);
 
+    // Get UI Elements
+    const btn = document.getElementById("btnFetchPois");
+    const icon = document.getElementById("poiBtnIcon");
+    const shopCountElem = document.getElementById("shopCount");
+
+    // 🔄 UI: Set Loading State
+    if (btn) btn.disabled = true;
+    if (icon) {
+        icon.className = "bi bi-arrow-repeat spin-icon fs-6"; // Switch icon to spinner
+    }
+    if (shopCountElem) {
+        shopCountElem.innerText = "...";
+    }
+
+
     // Clear existing markers from map
     if (globalWorkspaceMap) {
         poiMarkersGroup.clearLayers();
@@ -713,14 +764,8 @@ try {
                 foundCount++;
                 const iconSymbol = waterOnly ? '💧' : '🛒';
                 
-                const poiMarker = L.marker([lat, lon], {
-                    icon: L.divIcon({
-                        className: 'poi-custom-marker',
-                        html: `<div style="background:#ffffff; border:2px solid #0284c7; border-radius:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; font-size:14px; box-shadow:0 2px 6px rgba(0,0,0,0.2);">${iconSymbol}</div>`,
-                        iconSize: [28, 28],
-                        iconAnchor: [14, 14]
-                    })
-                });
+                // Standard Leaflet Pin (no custom icon option needed)
+                const poiMarker = L.marker([lat, lon]);
 
                 poiMarker.bindPopup(`
                     <div style="font-family: Inter, sans-serif; padding: 4px;">
