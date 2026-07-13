@@ -31,11 +31,6 @@ $countryStmt = $pdo->prepare("SELECT DISTINCT country FROM strava_routes WHERE u
 $countryStmt->execute([$internalUserId]);
 $countries = $countryStmt->fetchAll(PDO::FETCH_COLUMN);
 
-// 2. Fetch all routes (Make sure 'country' is in the SELECT)
-$stmt = $pdo->prepare("SELECT route_id, name, summary_polyline, distance_km, country FROM strava_routes WHERE user_id = ? LIMIT 200");
-$stmt->execute([$internalUserId]);
-$allRoutes = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
 ?>
 
 <?php include 'header.php'; ?>
@@ -339,7 +334,7 @@ table.styled-table tbody tr:last-of-type {
             <div class="control-group">
                 <span>Country:</span>
                 <select id="countryFilter">
-                    <option value="all">All Countries (<?= count($allRoutes) ?> routes)</option>
+                    <option value="all">All Countries</option>
                     <?php if (!empty($countries)): ?>
                         <?php foreach ($countries as $country): ?>
                             <option value="<?= htmlspecialchars($country) ?>">
@@ -428,6 +423,14 @@ async function loadRoutesFromAPI(selectedCountry = 'all') {
 
         if (rawRoutesData.length > 0) {
             console.log("🔍 Sample route object structure from API:", rawRoutesData[0]);
+        }
+
+        // Only update the "All Countries" counter on full fetches
+        if (selectedCountry === 'all') {
+            const countrySelect = document.getElementById('countryFilter');
+            if (countrySelect && countrySelect.options.length > 0) {
+                countrySelect.options[0].text = `All Countries (${rawRoutesData.length} routes)`;
+            }
         }
 
         // Decode polylines in memory
