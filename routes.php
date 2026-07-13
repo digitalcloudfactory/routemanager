@@ -674,6 +674,15 @@ let currentRouteCoords = []; // Holds current [[lat, lng], ...]
 let poiMarkersGroup = L.layerGroup(); // Layer group to easily add/remove POI markers
 
 /**
+ * Updates all badge count elements on the page simultaneously
+ */
+function updateShopCountBadges(value) {
+    document.querySelectorAll("#shopCount").forEach(elem => {
+        elem.innerText = value;
+    });
+}
+
+/**
  * Executes the Overpass API query to fetch supermarkets, convenience stores, or water points.
  */
 async function fetchSupermarkets(coords) {
@@ -693,17 +702,13 @@ async function fetchSupermarkets(coords) {
     // Get UI Elements
     const btn = document.getElementById("btnFetchPois");
     const icon = document.getElementById("poiBtnIcon");
-    const shopCountElem = document.getElementById("shopCount");
 
     // 🔄 UI: Set Loading State
     if (btn) btn.disabled = true;
     if (icon) {
         icon.className = "bi bi-arrow-repeat spin-icon fs-6"; // Switch icon to spinner
     }
-    if (shopCountElem) {
-        shopCountElem.innerText = "...";
-    }
-
+    updateShopCountBadges("...");
 
     // Clear existing markers from map
     if (globalWorkspaceMap) {
@@ -730,24 +735,21 @@ async function fetchSupermarkets(coords) {
         }
     });
 
-const overpassQuery = `[out:json][timeout:25];(${queryParts.join("")});out center;`;
+    const overpassQuery = `[out:json][timeout:25];(${queryParts.join("")});out center;`;
 
-const shopCountElem = document.getElementById("shopCount");
-if (shopCountElem) shopCountElem.innerText = "...";
+    try {
+        // Send as URLSearchParams (guarantees $_POST['query'] is populated in PHP)
+        const response = await fetch('/overpass.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({ query: overpassQuery })
+        });
 
-try {
-    // Send as URLSearchParams (guarantees $_POST['query'] is populated in PHP)
-    const response = await fetch('/overpass.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({ query: overpassQuery })
-    });
-
-    if (!response.ok) throw new Error(`HTTP Error ${response.status}: Failed to fetch POIs`);
-    
-    const data = await response.json();
+        if (!response.ok) throw new Error(`HTTP Error ${response.status}: Failed to fetch POIs`);
+        
+        const data = await response.json();
 
         let foundCount = 0;
         const seenIds = new Set();
@@ -762,9 +764,8 @@ try {
 
             if (lat && lon) {
                 foundCount++;
-                const iconSymbol = waterOnly ? '💧' : '🛒';
                 
-                // Standard Leaflet Pin (no custom icon option needed)
+                // Standard Leaflet Pin
                 const poiMarker = L.marker([lat, lon]);
 
                 poiMarker.bindPopup(`
@@ -778,11 +779,17 @@ try {
             }
         });
 
-        if (shopCountElem) shopCountElem.innerText = foundCount;
+        updateShopCountBadges(foundCount);
 
     } catch (err) {
         console.error("Error fetching POIs from Overpass:", err);
-        if (shopCountElem) shopCountElem.innerText = "Error";
+        updateShopCountBadges("Err");
+    } finally {
+        // 🔄 UI: Restore Normal State
+        if (btn) btn.disabled = false;
+        if (icon) {
+            icon.className = waterOnly ? "bi bi-droplet-fill fs-6" : "bi bi-shop fs-6";
+        }
     }
 }
 
@@ -796,7 +803,6 @@ function refreshShops() {
         alert("Please select a route from the table first.");
     }
 }
-
 
 </script>
 <?php include 'footer.php'; ?>
