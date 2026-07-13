@@ -155,8 +155,8 @@ body {
 /* Actions Header Panel */
 .table-action-row {
     display: flex;
-    gap: 4px; /* Reduced gap between buttons */
-    align-items: center;
+    gap: 4px;
+    align-items: center; /* Ensures all items center vertically relative to each other */
 }
 
 .btn-action-pill {
@@ -164,17 +164,21 @@ body {
     align-items: center;
     justify-content: center;
     gap: 3px;
-    font-size: 0.68rem;          /* Tighter font size */
+    font-size: 0.68rem;
     font-weight: 600;
-    line-height: 1;              /* Kills extra vertical line height */
-    padding: 0.25rem 0.45rem;    /* Ultra-compact padding */
-    border-radius: 4px;          /* Sleeker radius */
+    line-height: 1;
+    height: 24px;                  /* Fixed uniform height across links and buttons */
+    padding: 0 0.45rem;             /* Horizontal padding (vertical handled by height) */
+    box-sizing: border-border;      /* Keeps border included in total height calculation */
+    border-radius: 4px;
     border: 1px solid #cbd5e1;
     background: #ffffff;
     color: #334155;
     cursor: pointer;
     text-decoration: none;
-    white-space: nowrap;         /* Keeps button text on 1 line */
+    white-space: nowrap;
+    margin: 0;                      /* Clears default button browser margins */
+    vertical-align: middle;
     transition: all 0.15s ease;
 }
 
@@ -186,16 +190,16 @@ body {
 
 .btn-action-pill.btn-sync {
     background-color: #00E676;
-    border: none;
+    border: 1px solid #00E676;     /* Matching 1px border so height stays identical */
     color: #0f172a;
     font-weight: 700;
     text-transform: uppercase;
-    font-size: 0.65rem;          /* Extra clean look for uppercase button */
-    padding: 0.28rem 0.5rem;
+    font-size: 0.65rem;
 }
 
 .btn-action-pill.btn-sync:hover { 
     background-color: #00c853; 
+    border-color: #00c853;
 }
 
 /* Premium High Density Structured Spreadsheet Layout */
