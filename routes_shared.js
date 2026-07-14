@@ -82,11 +82,11 @@ document.addEventListener('DOMContentLoaded', () => {
   if (filterElevationMin) filterElevationMin.addEventListener('input', elevRangeUpdate);
   if (filterElevationMax) filterElevationMax.addEventListener('input', elevRangeUpdate);
 
-  // 4. Setup Input Watchers for Text/Select/Checkbox Inputs safely
-  const filterIds = ['filterName', 'filterNameNot', 'filterType', 'filterTags', 'filterCountry', 'filterCityLat', 'filterCityLng'];
+// 4. Setup Input Watchers for Text/Select/Checkbox Inputs safely
+  const filterIds = ['filterName', 'filterNameNot', 'filterType', 'filterTags', 'filterCountry', 'filterCityInput', 'filterCityLat', 'filterCityLng'];
   filterIds.forEach(id => {
     const el = document.getElementById(id);
-    if (!el) return; // Skip if missing, do not crash!
+    if (!el) return;
 
     const triggerUpdate = (e) => {
         dbg(`Event (${e.type}) fired on element: ${id}`);

@@ -62,3 +62,37 @@ try {
     echo json_encode(['error' => 'Database connection failed']);
     exit;
 }
+
+// Inside your city selection click/key handler in city_search.php:
+function selectCity(cityName, lat, lng) {
+    document.getElementById('filterCityInput').value = cityName;
+    document.getElementById('filterCityLat').value = lat;
+    document.getElementById('filterCityLng').value = lng;
+
+    // Hide suggestions
+    const results = document.getElementById('citySearchResults');
+    if (results) results.innerHTML = '';
+
+    // 🔥 TRIGGER THE FILTER RIGHT AWAY
+    if (typeof applyFilters === 'function') {
+        applyFilters();
+    }
+    if (typeof updateURLFromFilters === 'function') {
+        updateURLFromFilters();
+    }
+}
+
+// Clear lat/lng if the user backspaces the city text completely
+document.getElementById('filterCityInput')?.addEventListener('input', (e) => {
+    if (e.target.value.trim() === '') {
+        document.getElementById('filterCityLat').value = '';
+        document.getElementById('filterCityLng').value = '';
+        
+        if (typeof applyFilters === 'function') {
+            applyFilters();
+        }
+        if (typeof updateURLFromFilters === 'function') {
+            updateURLFromFilters();
+        }
+    }
+});
