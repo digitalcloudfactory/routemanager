@@ -412,7 +412,7 @@ body {
             <div class="table-action-row">
                 <a id="mapLink" href="map.php" class="btn-action-pill">🗺️ Full View</a>
                 <a href="duplicate_finder.php" class="btn-action-pill">👥 Find Duplicates</a>
-                <button id="openFilters" class="btn-action-pill" type="button">⚙️ Filters</button>
+                <button id="openFilters" class="btn-action-pill" type="button">⚙️ Filters & Configs</button>
                 <button id="fetchRoutes" class="btn-action-pill btn-sync" type="button">🚀 Sync Tracks</button>
             </div>
         </div>
@@ -447,7 +447,7 @@ body {
     </div>
 
     <!-- Floating Map Controls (Independent of mapSplashHud so it stays visible) -->
-    <div class="position-absolute top-0 end-0 m-3" style="z-index: 1000;">
+    <div class="position-absolute top-0 end-0 m-3" style="z-index: 1000; display: none !important;">
         <button 
             type="button" 
             id="btnFetchPois" 
@@ -562,6 +562,13 @@ async function handleTrackSelection(route, UIComponentElementId) {
     // Fade out splash overlay HUD
     const splashHud = document.getElementById('mapSplashHud');
     if (splashHud) splashHud.style.opacity = '0';
+
+
+    // Reveal the Find Stops overlay button on the map
+    const mapPoiOverlay = document.getElementById('mapPoiOverlay');
+    if (mapPoiOverlay) {
+        mapPoiOverlay.style.setProperty('display', 'block', 'important');
+    }
 
     // 3. Fetch polyline if not already loaded in memory
     if (!route.summary_polyline) {

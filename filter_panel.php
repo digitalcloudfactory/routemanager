@@ -398,13 +398,10 @@
     </div>
   </div>
 
-  <!-- Footer Actions Anchor -->
+<!-- Footer Actions Anchor -->
   <div class="action-footer">
     <button class="btn-reset" type="button" id="clearFilters">
-      Reset
-    </button>
-    <button class="btn-poi-search" type="button" id="btnFetchPoisSidebar" onclick="if(typeof refreshShops === 'function') refreshShops();">
-      🔍 Find POIs
+      Reset Filters
     </button>
   </div>
 </aside>
