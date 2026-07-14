@@ -312,12 +312,13 @@
       </div>
 
       <!-- NEW: Start City Radius Filter (10km Circle) -->
+      <!-- Start City Radius Filter (10km Circle) -->
       <div class="filter-group">
-        <label for="filterCity">Start City <span class="crisp-badge">Within 10km</span></label>
-        <input id="filterCity" class="filter-input" type="text" placeholder="Type city (e.g. Paris, Leuven)..." autocomplete="off">
+        <label for="filterCityInput">Start City <span class="crisp-badge">Within 10km</span></label>
+        <input id="filterCityInput" class="filter-input" type="text" placeholder="Type city (e.g. Paris, Leuven)..." autocomplete="off">
         <input id="filterCityLat" type="hidden">
         <input id="filterCityLng" type="hidden">
-        <div id="citySuggestions" class="city-suggestions-dropdown"></div>
+        <div id="citySearchResults" class="city-suggestions-dropdown"></div>
       </div>
 
       <!-- Distance Slider Group -->
