@@ -20,7 +20,6 @@ $pdo = new PDO(
     ]
 );
 
-
 // Open the txt file
 $handle = fopen("cities1000.txt", "r");
 
@@ -43,22 +42,21 @@ if ($handle) {
         // Timezone is at index 17 in the GeoNames schema
         $timezone = $data[17] ?? '';
 
-        // Check if the timezone starts with 'Europe/'
-        if (str_str_starts_with_or_similar($timezone)) { // Using str_starts_with for PHP 8+
-            if (str_starts_with($timezone, 'Europe/')) {
-                // Ensure empty fields turn into NULL values
-                $data = array_map(function($value) {
-                    return $value === '' ? null : $value;
-                }, $data);
+        // Check if the timezone starts with 'Europe/' (Works in PHP 8+)
+        // If you are on PHP 7, use: strpos($timezone, 'Europe/') === 0
+        if (str_starts_with($timezone, 'Europe/')) {
+            // Ensure empty fields turn into NULL values
+            $data = array_map(function($value) {
+                return $value === '' ? null : $value;
+            }, $data);
 
-                $stmt->execute($data);
-                $inserted++;
-                
-                // Commit in chunks of 5,000 inserted rows
-                if (++$count % 5000 === 0) {
-                    $pdo->commit();
-                    $pdo->beginTransaction();
-                }
+            $stmt->execute($data);
+            $inserted++;
+            
+            // Commit in chunks of 5,000 inserted rows
+            if (++$count % 5000 === 0) {
+                $pdo->commit();
+                $pdo->beginTransaction();
             }
         }
     }
