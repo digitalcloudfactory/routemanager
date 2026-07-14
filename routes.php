@@ -1023,37 +1023,91 @@ document.addEventListener('keydown', (e) => {
 
 
 
-// Inside your city selection click/key handler in city_search.php:
+// Global city selection function
 function selectCity(cityName, lat, lng) {
-    document.getElementById('filterCityInput').value = cityName;
-    document.getElementById('filterCityLat').value = lat;
-    document.getElementById('filterCityLng').value = lng;
+    console.log('👉 selectCity() triggered with:', cityName, lat, lng);
 
-    // Hide suggestions
-    const results = document.getElementById('citySearchResults');
-    if (results) results.innerHTML = '';
+    const inputEl = document.getElementById('filterCityInput');
+    const latEl = document.getElementById('filterCityLat');
+    const lngEl = document.getElementById('filterCityLng');
 
-    // 🔥 TRIGGER THE FILTER RIGHT AWAY
+    if (inputEl) inputEl.value = cityName;
+    if (latEl) latEl.value = lat;
+    if (lngEl) lngEl.value = lng;
+
+    // Clear the dropdown menu
+    const resultsContainer = document.getElementById('citySearchResults');
+    if (resultsContainer) resultsContainer.innerHTML = '';
+
+    // Verify coordinates were set
+    console.log('📌 City hidden fields updated:', {
+        lat: latEl ? latEl.value : 'missing',
+        lng: lngEl ? lngEl.value : 'missing'
+    });
+
+    // Run filters immediately
     if (typeof applyFilters === 'function') {
+        console.log('🚀 Calling applyFilters()...');
         applyFilters();
+    } else {
+        console.error('❌ applyFilters() function is NOT defined! Check if routes_shared.js loaded.');
     }
+
     if (typeof updateURLFromFilters === 'function') {
         updateURLFromFilters();
     }
 }
 
-// Clear lat/lng if the user backspaces the city text completely
-document.getElementById('filterCityInput')?.addEventListener('input', (e) => {
-    if (e.target.value.trim() === '') {
-        document.getElementById('filterCityLat').value = '';
-        document.getElementById('filterCityLng').value = '';
-        
-        if (typeof applyFilters === 'function') {
-            applyFilters();
-        }
-        if (typeof updateURLFromFilters === 'function') {
-            updateURLFromFilters();
-        }
+// Attach autocomplete search input listener
+document.addEventListener('DOMContentLoaded', () => {
+    const cityInput = document.getElementById('filterCityInput');
+    const resultsContainer = document.getElementById('citySearchResults');
+
+    if (cityInput) {
+        cityInput.addEventListener('input', (e) => {
+            const query = e.target.value.trim();
+
+            // Clear hidden coords if user empties the input
+            if (query === '') {
+                console.log('🧹 City input cleared, resetting lat/lng');
+                document.getElementById('filterCityLat').value = '';
+                document.getElementById('filterCityLng').value = '';
+                if (resultsContainer) resultsContainer.innerHTML = '';
+                if (typeof applyFilters === 'function') applyFilters();
+                if (typeof updateURLFromFilters === 'function') updateURLFromFilters();
+                return;
+            }
+
+            if (query.length < 2) return;
+
+            // Fetch cities from backend
+            fetch(`city_search.php?q=${encodeURIComponent(query)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (!resultsContainer) return;
+                    resultsContainer.innerHTML = '';
+
+                    if (!Array.isArray(data) || data.length === 0) {
+                        resultsContainer.innerHTML = '<div class="city-item">No cities found</div>';
+                        return;
+                    }
+
+                    // Render dropdown items with click listeners
+                    data.forEach(city => {
+                        const item = document.createElement('div');
+                        item.className = 'city-item';
+                        item.textContent = city.label || city.name;
+                        item.style.cursor = 'pointer';
+
+                        item.addEventListener('click', () => {
+                            selectCity(city.name, city.lat, city.lng);
+                        });
+
+                        resultsContainer.appendChild(item);
+                    });
+                })
+                .catch(err => console.error('Error fetching cities:', err));
+        });
     }
 });
 
