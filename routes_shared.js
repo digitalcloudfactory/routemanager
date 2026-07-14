@@ -136,7 +136,10 @@ function applyFilters() {
     return;
   }
 
-  // Read selected city coordinates from filter_panel inputs
+  // Read selected city coordinates & input value from DOM
+  const cityInputEl = document.getElementById('filterCityInput');
+  const cityInputVal = cityInputEl ? cityInputEl.value.trim() : '';
+
   const targetCityLat = parseFloat(document.getElementById('filterCityLat')?.value);
   const targetCityLng = parseFloat(document.getElementById('filterCityLng')?.value);
   const hasCityFilter = !isNaN(targetCityLat) && !isNaN(targetCityLng);
