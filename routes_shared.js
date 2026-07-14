@@ -141,6 +141,15 @@ function applyFilters() {
   const targetCityLng = parseFloat(document.getElementById('filterCityLng')?.value);
   const hasCityFilter = !isNaN(targetCityLat) && !isNaN(targetCityLng);
 
+
+if (hasCityFilter) {
+    dbg(`🌆 Active City Filter: "${cityInputVal}" @ [Lat: ${targetCityLat}, Lng: ${targetCityLng}] (10km Radius)`);
+  } else if (cityInputVal) {
+    dbg(`⚠️ City text "${cityInputVal}" present, but valid Lat/Lng coordinates are missing!`);
+  } else {
+    dbg(`🌆 No City Filter active.`);
+  }
+
   const nameQuery = filterName ? filterName.value.trim().toLowerCase() : '';
   const isNegated = filterNameNot ? filterNameNot.checked : false;
   const selectedCountry = filterCountry ? filterCountry.value : '';
@@ -156,23 +165,38 @@ function applyFilters() {
     ? filterTags.value.toLowerCase().split(',').map(t => t.trim()).filter(Boolean)
     : [];
 
+  let cityPassedCount = 0;
+  let cityFailedCount = 0;
+
   // Single-pass filtering across all conditions
   filteredRoutes = routes.filter(r => {
     // 1. City Start Radius Check (10 km)
     if (hasCityFilter) {
-      if (!r.summary_polyline) return false;
+      if (!r.summary_polyline) {
+        dbg(`❌ Route ${r.route_id} ("${r.name}") excluded: No summary_polyline available.`);
+        cityFailedCount++;
+        return false;
+      }
       try {
         const decodedPoints = polyline.decode(r.summary_polyline);
         if (decodedPoints && decodedPoints.length > 0) {
           const startLat = decodedPoints[0][0];
           const startLng = decodedPoints[0][1];
           const distKm = getHaversineDistanceKm(targetCityLat, targetCityLng, startLat, startLng);
-          if (distKm > 10) return false;
+
+          if (distKm > 10) {
+            cityFailedCount++;
+            return false;
+          } else {
+            cityPassedCount++;
+          }
         } else {
+          cityFailedCount++;
           return false;
         }
       } catch (err) {
         console.error("Error decoding polyline for route:", r.route_id, err);
+        cityFailedCount++;
         return false;
       }
     }
@@ -205,6 +229,10 @@ function applyFilters() {
 
     return true;
   });
+
+  if (hasCityFilter) {
+    dbg(`📍 City Filter Results: ${cityPassedCount} routes within 10km, ${cityFailedCount} excluded.`);
+  }
 
   dbg(`Filters finished. Showing ${filteredRoutes.length} of ${routes.length} routes.`);
 
@@ -243,7 +271,7 @@ function updateURLFromFilters() {
     const tagsVal = filterTags ? filterTags.value.trim() : '';
     if (tagsVal) params.set('tags', tagsVal);
 
-    // --- CITY RADIUS FILTER URL SYNC ---
+// --- CITY RADIUS FILTER URL SYNC ---
     const cityInput = document.getElementById('filterCityInput');
     const cityLat = document.getElementById('filterCityLat');
     const cityLng = document.getElementById('filterCityLng');
@@ -311,7 +339,7 @@ function loadFiltersFromURL() {
   if (params.has('tags') && filterTags) filterTags.value = params.get('tags');
   if (params.has('notName') && filterNameNot) filterNameNot.checked = params.get('notName') === '1';
 
-  // --- RESTORE CITY RADIUS FROM URL ---
+// --- RESTORE CITY RADIUS FROM URL ---
   const cityInput = document.getElementById('filterCityInput');
   const cityLat = document.getElementById('filterCityLat');
   const cityLng = document.getElementById('filterCityLng');
