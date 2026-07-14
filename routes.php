@@ -341,6 +341,27 @@ body {
 }
 
 /* ==========================================================================
+   FULLSCREEN / FOCUS MAP MODE OVERLAY
+   ========================================================================== */
+#mapContainer.map-focus-mode {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 9999 !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+
+/* Ensure controls overlay sits neatly inside focus mode */
+#mapControlOverlay {
+    transition: opacity 0.2s ease-in-out;
+}
+
+
+/* ==========================================================================
    ENHANCED DISTANCE & MILESTONE MARKERS
    ========================================================================== */
 .km-marker-container {
@@ -446,8 +467,10 @@ body {
         <p style="margin:0; font-size:0.8rem; color:#64748b;">Select an active route timeline index coordinate to build spatial tracking visualizations.</p>
     </div>
 
-    <!-- Floating Map Controls (Independent of mapSplashHud so it stays visible) -->
-    <div class="position-absolute top-0 end-0 m-3" style="z-index: 1000; display: none !important;">
+    <!-- Floating Map Action Overlay (Hidden until a route is selected) -->
+    <div id="mapControlOverlay" class="position-absolute top-0 end-0 m-3 d-flex gap-2" style="z-index: 1000; display: none !important;">
+        
+        <!-- 1. Find POIs Button -->
         <button 
             type="button" 
             id="btnFetchPois" 
@@ -459,6 +482,19 @@ body {
             <span class="fw-semibold text-dark" style="font-size: 0.8rem;">Find Stops</span>
             <span id="shopCount" class="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 ms-1">0</span>
         </button>
+
+        <!-- 2. Fullscreen / Focus Mode Toggle Button -->
+        <button 
+            type="button" 
+            id="btnToggleMapFocus" 
+            class="btn btn-sm btn-white bg-white shadow-sm rounded-pill d-inline-flex align-items-center gap-2 px-3 border"
+            onclick="toggleMapFocusMode()"
+            title="Expand map to full screen"
+        >
+            <i id="mapFocusIcon" class="bi bi-arrows-fullscreen text-secondary"></i>
+            <span id="mapFocusText" class="fw-semibold text-dark" style="font-size: 0.8rem;">Focus</span>
+        </button>
+
     </div>
 </main>
 
@@ -564,10 +600,10 @@ async function handleTrackSelection(route, UIComponentElementId) {
     if (splashHud) splashHud.style.opacity = '0';
 
 
-    // Reveal the Find Stops overlay button on the map
-    const mapPoiOverlay = document.getElementById('mapPoiOverlay');
-    if (mapPoiOverlay) {
-        mapPoiOverlay.style.setProperty('display', 'block', 'important');
+    // Reveal overlay buttons when route is selected
+    const overlay = document.getElementById('mapControlOverlay');
+    if (overlay) {
+        overlay.style.setProperty('display', 'flex', 'important');
     }
 
     // 3. Fetch polyline if not already loaded in memory
@@ -904,6 +940,50 @@ function refreshShops() {
         alert("Please select a route from the table first.");
     }
 }
+
+
+/**
+ * Toggles the map between standard layout and full-screen focus mode.
+ */
+function toggleMapFocusMode(forceClose = false) {
+    // Replace 'mapContainer' with the actual ID of your map container element
+    const mapWrapper = document.getElementById('mapContainer') || document.getElementById('map');
+    const icon = document.getElementById('mapFocusIcon');
+    const text = document.getElementById('mapFocusText');
+
+    if (!mapWrapper) return;
+
+    const isCurrentlyFocused = mapWrapper.classList.contains('map-focus-mode');
+
+    if (isCurrentlyFocused || forceClose) {
+        // Exit Focus Mode
+        mapWrapper.classList.remove('map-focus-mode');
+        if (icon) icon.className = 'bi bi-arrows-fullscreen text-secondary';
+        if (text) text.textContent = 'Focus';
+    } else {
+        // Enter Focus Mode
+        mapWrapper.classList.add('map-focus-mode');
+        if (icon) icon.className = 'bi bi-x-lg text-danger';
+        if (text) text.textContent = 'Close';
+    }
+
+    // Force Leaflet to recalculate tile bounds on resize
+    setTimeout(() => {
+        if (typeof globalWorkspaceMap !== 'undefined' && globalWorkspaceMap) {
+            globalWorkspaceMap.invalidateSize();
+            if (typeof currentActivePolyline !== 'undefined' && currentActivePolyline) {
+                globalWorkspaceMap.fitBounds(currentActivePolyline.getBounds(), { padding: [40, 40] });
+            }
+        }
+    }, 250);
+}
+
+// Press 'Esc' key to close Focus Mode automatically
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        toggleMapFocusMode(true);
+    }
+});
 
 </script>
 <?php include 'footer.php'; ?>
