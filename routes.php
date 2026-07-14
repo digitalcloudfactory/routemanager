@@ -1021,8 +1021,6 @@ document.addEventListener('keydown', (e) => {
 });
 
 
-
-
 // Global city selection function
 function selectCity(cityName, lat, lng) {
     console.log('👉 selectCity() triggered with:', cityName, lat, lng);
@@ -1035,22 +1033,20 @@ function selectCity(cityName, lat, lng) {
     if (latEl) latEl.value = lat;
     if (lngEl) lngEl.value = lng;
 
-    // Clear the dropdown menu
+    // Clear dropdown
     const resultsContainer = document.getElementById('citySearchResults');
     if (resultsContainer) resultsContainer.innerHTML = '';
 
-    // Verify coordinates were set
-    console.log('📌 City hidden fields updated:', {
+    console.log('📌 Hidden inputs set:', {
         lat: latEl ? latEl.value : 'missing',
         lng: lngEl ? lngEl.value : 'missing'
     });
 
-    // Run filters immediately
     if (typeof applyFilters === 'function') {
-        console.log('🚀 Calling applyFilters()...');
+        console.log('🚀 Executing applyFilters()...');
         applyFilters();
     } else {
-        console.error('❌ applyFilters() function is NOT defined! Check if routes_shared.js loaded.');
+        console.error('❌ applyFilters() not found in global scope!');
     }
 
     if (typeof updateURLFromFilters === 'function') {
@@ -1058,20 +1054,24 @@ function selectCity(cityName, lat, lng) {
     }
 }
 
-// Attach autocomplete search input listener
 document.addEventListener('DOMContentLoaded', () => {
     const cityInput = document.getElementById('filterCityInput');
     const resultsContainer = document.getElementById('citySearchResults');
 
+    console.log('🔍 City Search DOM Check:', {
+        cityInputFound: !!cityInput,
+        resultsContainerFound: !!resultsContainer
+    });
+
     if (cityInput) {
         cityInput.addEventListener('input', (e) => {
             const query = e.target.value.trim();
+            console.log('⌨️ Typing in city search:', query);
 
-            // Clear hidden coords if user empties the input
             if (query === '') {
-                console.log('🧹 City input cleared, resetting lat/lng');
-                document.getElementById('filterCityLat').value = '';
-                document.getElementById('filterCityLng').value = '';
+                console.log('🧹 Input cleared.');
+                if (document.getElementById('filterCityLat')) document.getElementById('filterCityLat').value = '';
+                if (document.getElementById('filterCityLng')) document.getElementById('filterCityLng').value = '';
                 if (resultsContainer) resultsContainer.innerHTML = '';
                 if (typeof applyFilters === 'function') applyFilters();
                 if (typeof updateURLFromFilters === 'function') updateURLFromFilters();
@@ -1080,33 +1080,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (query.length < 2) return;
 
-            // Fetch cities from backend
             fetch(`city_search.php?q=${encodeURIComponent(query)}`)
                 .then(res => res.json())
                 .then(data => {
+                    console.log('📥 Search API response:', data);
                     if (!resultsContainer) return;
                     resultsContainer.innerHTML = '';
 
                     if (!Array.isArray(data) || data.length === 0) {
-                        resultsContainer.innerHTML = '<div class="city-item">No cities found</div>';
+                        resultsContainer.innerHTML = '<div class="city-item" style="padding: 8px;">No cities found</div>';
                         return;
                     }
 
-                    // Render dropdown items with click listeners
                     data.forEach(city => {
                         const item = document.createElement('div');
                         item.className = 'city-item';
                         item.textContent = city.label || city.name;
                         item.style.cursor = 'pointer';
+                        item.style.padding = '8px';
 
-                        item.addEventListener('click', () => {
+                        // 💡 Use mousedown to prevent blur events from destroying the item before click!
+                        item.addEventListener('mousedown', (evt) => {
+                            evt.preventDefault(); // Prevents input blur
+                            console.log('🖱️ City item clicked/pressed:', city.name);
                             selectCity(city.name, city.lat, city.lng);
                         });
 
                         resultsContainer.appendChild(item);
                     });
                 })
-                .catch(err => console.error('Error fetching cities:', err));
+                .catch(err => console.error('❌ Fetch error:', err));
         });
     }
 });
