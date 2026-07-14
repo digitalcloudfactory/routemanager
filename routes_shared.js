@@ -225,7 +225,6 @@ function applyFilters() {
         return false;
       }
     }
-}
 
     // 2. Name Search
     if (nameQuery) {
