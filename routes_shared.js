@@ -5,6 +5,19 @@ function dbg(...args) {
   if (DEBUG_FILTERS) console.log('[filters]', ...args);
 }
 
+/**
+ * Haversine Formula: Calculates distance in km between two lat/lng pairs
+ */
+function getHaversineDistanceKm(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Earth's radius in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 // Keep these global so map.php can reference them
 let filterName, filterNameNot, filterDistanceMin, filterDistanceMax, distValueDisplay;
 let filterElevationMin, filterElevationMax, elevValueDisplay;
@@ -70,7 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (filterElevationMax) filterElevationMax.addEventListener('input', elevRangeUpdate);
 
   // 4. Setup Input Watchers for Text/Select/Checkbox Inputs safely
-  const filterIds = ['filterName', 'filterNameNot', 'filterType', 'filterTags', 'filterCountry'];
+  const filterIds = ['filterName', 'filterNameNot', 'filterType', 'filterTags', 'filterCountry', 'filterCityLat', 'filterCityLng'];
   filterIds.forEach(id => {
     const el = document.getElementById(id);
     if (!el) return; // Skip if missing, do not crash!
@@ -123,6 +136,11 @@ function applyFilters() {
     return;
   }
 
+  // Read selected city coordinates from filter_panel inputs
+  const targetCityLat = parseFloat(document.getElementById('filterCityLat')?.value);
+  const targetCityLng = parseFloat(document.getElementById('filterCityLng')?.value);
+  const hasCityFilter = !isNaN(targetCityLat) && !isNaN(targetCityLng);
+
   const nameQuery = filterName ? filterName.value.trim().toLowerCase() : '';
   const isNegated = filterNameNot ? filterNameNot.checked : false;
   const selectedCountry = filterCountry ? filterCountry.value : '';
@@ -138,27 +156,54 @@ function applyFilters() {
     ? filterTags.value.toLowerCase().split(',').map(t => t.trim()).filter(Boolean)
     : [];
 
+  // Single-pass filtering across all conditions
   filteredRoutes = routes.filter(r => {
-    let nameMatch = true;
-    if (nameQuery) {
-      const contains = r.name && r.name.toLowerCase().includes(nameQuery);
-      nameMatch = isNegated ? !contains : contains;
+    // 1. City Start Radius Check (10 km)
+    if (hasCityFilter) {
+      if (!r.summary_polyline) return false;
+      try {
+        const decodedPoints = polyline.decode(r.summary_polyline);
+        if (decodedPoints && decodedPoints.length > 0) {
+          const startLat = decodedPoints[0][0];
+          const startLng = decodedPoints[0][1];
+          const distKm = getHaversineDistanceKm(targetCityLat, targetCityLng, startLat, startLng);
+          if (distKm > 10) return false;
+        } else {
+          return false;
+        }
+      } catch (err) {
+        console.error("Error decoding polyline for route:", r.route_id, err);
+        return false;
+      }
     }
 
-    const routeTags = (r.tags || '').split(',').map(t => t.trim().toLowerCase());
-    const tagsMatch = !tags.length || tags.every(t => routeTags.includes(t));
+    // 2. Route Name Search
+    if (nameQuery) {
+      const contains = r.name && r.name.toLowerCase().includes(nameQuery);
+      if (isNegated ? contains : !contains) return false;
+    }
 
+    // 3. Tags Filter
+    if (tags.length > 0) {
+      const routeTags = (r.tags || '').split(',').map(t => t.trim().toLowerCase());
+      if (!tags.every(t => routeTags.includes(t))) return false;
+    }
+
+    // 4. Distance Filter
     const dist = parseFloat(r.distance_km || r.distance || 0);
-    const elev = parseFloat(r.elevation || r.elevation_gain || r.total_elevation_gain || 0);
+    if (dist < minDist || dist > maxDist) return false;
 
-    return (
-      nameMatch &&
-      tagsMatch &&
-      (dist >= minDist && dist <= maxDist) &&
-      (elev >= minElev && elev <= maxElev) &&
-      (!type || r.type == type) &&
-      (!selectedCountry || (r.country && r.country.trim() === selectedCountry.trim()))
-    );
+    // 5. Elevation Filter
+    const elev = parseFloat(r.elevation || r.elevation_gain || r.total_elevation_gain || 0);
+    if (elev < minElev || elev > maxElev) return false;
+
+    // 6. Discipline/Type Filter
+    if (type && r.type != type) return false;
+
+    // 7. Country Filter
+    if (selectedCountry && (!r.country || r.country.trim() !== selectedCountry.trim())) return false;
+
+    return true;
   });
 
   dbg(`Filters finished. Showing ${filteredRoutes.length} of ${routes.length} routes.`);
@@ -180,20 +225,34 @@ function updateURLFromFilters() {
     if (!filterName) return;
     const params = new URLSearchParams();
 
+    // Text & Checkbox filters
     if (filterName.value.trim()) params.set('name', filterName.value.trim());
     if (filterNameNot && filterNameNot.checked) params.set('notName', '1');
+
+    // Distance Sliders
     if (filterDistanceMin && filterDistanceMin.value != 0) params.set('minDist', filterDistanceMin.value);
     if (filterDistanceMax && filterDistanceMax.value != 400) params.set('maxDist', filterDistanceMax.value);
     
+    // Elevation Sliders
     if (filterElevationMin && filterElevationMin.value != 0) params.set('minElev', filterElevationMin.value);
     if (filterElevationMax && filterElevationMax.value != 10000) params.set('maxElev', filterElevationMax.value);
 
+    // Dropdowns & Tags
     if (filterCountry && filterCountry.value) params.set('country', filterCountry.value);
     if (filterType && filterType.value) params.set('type', filterType.value);
-    
     const tagsVal = filterTags ? filterTags.value.trim() : '';
     if (tagsVal) params.set('tags', tagsVal);
 
+    // --- CITY RADIUS FILTER URL SYNC ---
+    const cityInput = document.getElementById('filterCityInput');
+    const cityLat = document.getElementById('filterCityLat');
+    const cityLng = document.getElementById('filterCityLng');
+
+    if (cityInput && cityInput.value.trim()) params.set('city', cityInput.value.trim());
+    if (cityLat && cityLat.value) params.set('lat', cityLat.value);
+    if (cityLng && cityLng.value) params.set('lng', cityLng.value);
+
+    // Update browser URL without reloading page
     const queryString = params.toString();
     const newUrl = window.location.pathname + (queryString ? '?' + queryString : '');
     history.replaceState({}, '', newUrl);
@@ -205,6 +264,13 @@ function clearFilters() {
     if (filterType) filterType.value = '';
     if (filterTags) filterTags.value = '';
     if (filterCountry) filterCountry.value = '';
+
+    const filterCityLat = document.getElementById('filterCityLat');
+    const filterCityLng = document.getElementById('filterCityLng');
+    const filterCityInput = document.getElementById('filterCityInput');
+    if (filterCityLat) filterCityLat.value = '';
+    if (filterCityLng) filterCityLng.value = '';
+    if (filterCityInput) filterCityInput.value = '';
   
     // Reset Distance
     if (filterDistanceMin) filterDistanceMin.value = 0;
@@ -238,12 +304,23 @@ function loadFiltersFromURL() {
     elevValueDisplay.textContent = `${filterElevationMin.value} - ${filterElevationMax.value} m`;
   }
 
+  // Restore Text / Select Controls
   if (params.has('name') && filterName) filterName.value = params.get('name');
   if (params.has('country') && filterCountry) filterCountry.value = params.get('country');
   if (params.has('type') && filterType) filterType.value = params.get('type');
   if (params.has('tags') && filterTags) filterTags.value = params.get('tags');
   if (params.has('notName') && filterNameNot) filterNameNot.checked = params.get('notName') === '1';
+
+  // --- RESTORE CITY RADIUS FROM URL ---
+  const cityInput = document.getElementById('filterCityInput');
+  const cityLat = document.getElementById('filterCityLat');
+  const cityLng = document.getElementById('filterCityLng');
+
+  if (cityInput && params.has('city')) cityInput.value = params.get('city');
+  if (cityLat && params.has('lat')) cityLat.value = params.get('lat');
+  if (cityLng && params.has('lng')) cityLng.value = params.get('lng');
   
+  // Re-run filter logic with updated state
   applyFilters();
 }
 

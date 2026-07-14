@@ -311,6 +311,15 @@
         </label>
       </div>
 
+      <!-- NEW: Start City Radius Filter (10km Circle) -->
+      <div class="filter-group">
+        <label for="filterCity">Start City <span class="crisp-badge">Within 10km</span></label>
+        <input id="filterCity" class="filter-input" type="text" placeholder="Type city (e.g. Paris, Leuven)..." autocomplete="off">
+        <input id="filterCityLat" type="hidden">
+        <input id="filterCityLng" type="hidden">
+        <div id="citySuggestions" class="city-suggestions-dropdown"></div>
+      </div>
+
       <!-- Distance Slider Group -->
       <div class="filter-group">
         <label>Distance <span id="distValue" class="crisp-badge">0 - 400 km</span></label>
@@ -425,6 +434,74 @@ document.addEventListener('DOMContentLoaded', () => {
             panel.setAttribute('aria-hidden', 'true');
         });
     }
+
+// --- City Autocomplete Search ---
+    const cityInput = document.getElementById('filterCity');
+    const cityLatInput = document.getElementById('filterCityLat');
+    const cityLngInput = document.getElementById('filterCityLng');
+    const citySuggestions = document.getElementById('citySuggestions');
+    let cityDebounce;
+
+    if (cityInput && citySuggestions) {
+        cityInput.addEventListener('input', () => {
+            const query = cityInput.value.trim();
+            clearTimeout(cityDebounce);
+
+            // If user cleared the city field, reset hidden coordinates and trigger table filter
+            if (query.length < 2) {
+                cityLatInput.value = '';
+                cityLngInput.value = '';
+                citySuggestions.innerHTML = '';
+                citySuggestions.style.display = 'none';
+                if (typeof applyTableFilters === 'function') applyTableFilters();
+                return;
+            }
+
+            cityDebounce = setTimeout(() => {
+                fetch(`city_search.php?q=${encodeURIComponent(query)}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        citySuggestions.innerHTML = '';
+                        if (!data || data.length === 0) {
+                            citySuggestions.style.display = 'none';
+                            return;
+                        }
+
+                        data.forEach(item => {
+                            const itemDiv = document.createElement('div');
+                            itemDiv.className = 'city-suggestion-item';
+                            itemDiv.textContent = item.label;
+
+                            itemDiv.addEventListener('click', () => {
+                                cityInput.value = item.name;
+                                cityLatInput.value = item.lat;
+                                cityLngInput.value = item.lng;
+                                citySuggestions.innerHTML = '';
+                                citySuggestions.style.display = 'none';
+
+                                // Instantly apply 10km circle filter to table
+                                if (typeof applyTableFilters === 'function') {
+                                    applyTableFilters();
+                                }
+                            });
+
+                            citySuggestions.appendChild(itemDiv);
+                        });
+
+                        citySuggestions.style.display = 'block';
+                    })
+                    .catch(err => console.error("Error fetching cities:", err));
+            }, 200);
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (e.target !== cityInput && e.target !== citySuggestions) {
+                citySuggestions.style.display = 'none';
+            }
+        });
+    }
+
 
     // --- Distance Slider Handler ---
     const distMin = document.getElementById('filterDistanceMin');
