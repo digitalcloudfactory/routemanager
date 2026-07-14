@@ -448,73 +448,17 @@ body {
 
     <!-- Floating Map Controls (Independent of mapSplashHud so it stays visible) -->
     <div class="position-absolute top-0 end-0 m-3" style="z-index: 1000;">
-        <div class="d-flex align-items-center gap-1 bg-white p-1 rounded-pill shadow-sm border">
-            <button 
-                type="button" 
-                id="btnFetchPois" 
-                class="btn btn-sm rounded-pill d-inline-flex align-items-center gap-2 px-3 border-0"
-                onclick="refreshShops()"
-            >
-                <i id="poiBtnIcon" class="bi bi-shop fs-6 text-primary"></i>
-                <span class="fw-semibold text-dark" style="font-size: 0.75rem;">Find Stops</span>
-                <span id="shopCount" class="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 ms-1">0</span>
-            </button>
-
-            <!-- Gear button to open drawer settings -->
-            <button 
-                type="button" 
-                class="btn btn-sm rounded-circle border-0 text-secondary px-2"
-                data-bs-toggle="offcanvas" 
-                data-bs-target="#stopsDrawer" 
-                title="Stop Settings"
-            >
-                ⚙️
-            </button>
-        </div>
-    </div>
-
-    <!-- Offcanvas Sidebar / Drawer -->
-    <div class="offcanvas offcanvas-end shadow" tabindex="-1" id="stopsDrawer" aria-labelledby="stopsDrawerLabel" style="width: 380px;">
-        <div class="offcanvas-header border-bottom">
-            <h5 class="offcanvas-title fw-bold" id="stopsDrawerLabel">Anti-Bonk <span>GPX</span></h5>
-            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-        </div>
-        
-        <div class="offcanvas-body">
-            <!-- 1. Stop Categories -->
-            <div class="config-card mb-3 p-3 rounded bg-light border">
-                <label class="card-label fw-bold text-muted small mb-2 d-block">1. Stop Categories</label>
-                
-                <div class="form-check form-switch mb-2">
-                    <input class="form-check-input" type="checkbox" id="SundayBox">
-                    <label class="form-check-label small" for="SundayBox">Sunday Mode (Spar/Delhaize/Carrefour)</label>
-                </div>
-                
-                <div class="form-check form-switch mb-3">
-                    <input class="form-check-input" type="checkbox" id="drinkFountains">
-                    <label class="form-check-label small" for="drinkFountains">Water Tap Points</label>
-                </div>
-
-                <hr class="my-2">
-
-                <label for="radiusSelect" class="small text-muted mb-1 d-block">Search Radius:</label>
-                <select id="radiusSelect" class="form-select form-select-sm mb-3">
-                    <option value="200">200 meters (Tight)</option>
-                    <option value="500" selected>500 meters (Default)</option>
-                    <option value="800">800 meters (Wide)</option>
-                </select>
-
-                <button type="button" class="btn btn-primary btn-sm w-100 fw-semibold" onclick="refreshShops()">
-                    🔄 Find POIs Along Route
-                </button>
-            </div>
-
-            <!-- POI Summary Bar -->
-            <div class="d-flex justify-content-between align-items-center p-2 rounded bg-light border">
-                <span class="small fw-semibold text-secondary">Shops found near route:</span>
-                <span id="shopCount" class="badge bg-primary text-white fw-bold px-2 py-1">0</span>
-            </div>
-        </div>
+        <button 
+            type="button" 
+            id="btnFetchPois" 
+            class="btn btn-sm btn-white bg-white shadow-sm rounded-pill d-inline-flex align-items-center gap-2 px-3 border"
+            onclick="refreshShops()"
+            title="Find shops and water stops along route"
+        >
+            <i id="poiBtnIcon" class="bi bi-shop fs-6 text-primary"></i>
+            <span class="fw-semibold text-dark" style="font-size: 0.8rem;">Find Stops</span>
+            <span id="shopCount" class="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 ms-1">0</span>
+        </button>
     </div>
 </main>
 

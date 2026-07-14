@@ -95,6 +95,23 @@
   margin-bottom: 0.2rem;
 }
 
+/* Section divider header for POIs */
+.filter-section-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #0284c7;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 0.35rem;
+  margin-bottom: 0.35rem;
+  padding-top: 0.4rem;
+  border-top: 1px dashed #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 /* 2-Column Grid Layout for Form Groups */
 .filter-grid-2col {
   display: grid;
@@ -229,10 +246,11 @@
   border-top: 1px solid #e2e8f0; 
   margin-top: 0.65rem; 
   padding-top: 0.65rem;
+  display: flex;
+  gap: 0.5rem;
 }
 
-.btn-reset {
-  width: 100%;
+.btn-reset, .btn-poi-search {
   height: 26px;
   display: inline-flex;
   align-items: center;
@@ -242,13 +260,17 @@
   font-weight: 600;
   padding: 0 0.5rem;
   border-radius: 4px;
-  background: #f8fafc;
-  border: 1px solid #cbd5e1;
-  color: #475569;
   cursor: pointer;
   transition: all 0.15s ease;
   box-sizing: border-box;
   line-height: 1;
+}
+
+.btn-reset {
+  flex: 1;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  color: #475569;
 }
 
 .btn-reset:hover {
@@ -256,12 +278,25 @@
   color: #dc2626;
   border-color: #fca5a5;
 }
+
+.btn-poi-search {
+  flex: 2;
+  background: #0284c7;
+  border: 1px solid #0284c7;
+  color: #ffffff;
+}
+
+.btn-poi-search:hover {
+  background: #0369a1;
+  border-color: #0369a1;
+}
 </style>
 
 <aside id="filterPanel" aria-hidden="true">
   <div>
+    <!-- Header -->
     <div class="filter-header">
-      <h2>⚙️ Route Filters</h2>
+      <h2>⚙️ Filter & Configs</h2>
       <button type="button" class="close-panel-btn" id="closeFilters" aria-label="Close">✕</button>
     </div>
 
@@ -330,13 +365,46 @@
         <label for="filterTags">Tags</label>
         <input id="filterTags" class="filter-input" type="text" placeholder="e.g. gravel, weekend, mallorca">
       </div>
+
+      <!-- Overpass POI / Route Configuration Section -->
+      <div class="filter-section-title">
+        <span>🛒 Route Stops & POI Config</span>
+      </div>
+
+      <!-- POI Options Grid -->
+      <div class="filter-grid-2col">
+        <div class="filter-group">
+          <label for="radiusSelect">Search Radius</label>
+          <select id="radiusSelect" class="filter-select">
+            <option value="200">200m (Tight)</option>
+            <option value="500" selected>500m (Default)</option>
+            <option value="800">800m (Wide)</option>
+          </select>
+        </div>
+
+        <div class="filter-group d-flex flex-column justify-content-end">
+          <label class="checkbox-label" style="margin-top: 0;">
+            <input id="SundayBox" type="checkbox"> Sunday Mode
+          </label>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <label class="checkbox-label">
+          <input id="drinkFountains" type="checkbox"> Water Tap Points (Fountains)
+        </label>
+      </div>
+
     </div>
   </div>
 
   <!-- Footer Actions Anchor -->
   <div class="action-footer">
     <button class="btn-reset" type="button" id="clearFilters">
-      Reset Filters
+      Reset
+    </button>
+    <button class="btn-poi-search" type="button" id="btnFetchPoisSidebar" onclick="if(typeof refreshShops === 'function') refreshShops();">
+      🔍 Find POIs
     </button>
   </div>
 </aside>
