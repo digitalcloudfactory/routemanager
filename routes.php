@@ -43,6 +43,8 @@ $stmt = $pdo->prepare("
         private,
         country,
         starred,
+        start_latlng_lat, 
+        start_latlng_lng,
         DATE(created_at) AS created_date
     FROM strava_routes
     WHERE user_id = ?

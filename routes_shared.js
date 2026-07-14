@@ -163,68 +163,30 @@ function applyFilters() {
   let debugPrinted = 0;
 
   filteredRoutes = routes.filter(r => {
+ 
     // 1. City Start Radius Check (10 km)
-    // Inside the filteredRoutes loop in applyFilters():
-// 1. City Start Radius Check (10 km)
-    if (hasCityFilter) {
-      // Check which key contains the polyline
-      const poly = r.summary_polyline || r.polyline || r.summaryPolyline;
-      
-      if (!poly) {
-        if (debugPrinted < 3) {
-          console.error(`❌ Route ${r.route_id || r.name} is missing a polyline string! Object keys:`, Object.keys(r));
-          debugPrinted++;
-        }
-        cityFailedCount++;
-        return false;
-      }
+   // 1. City Start Radius Check (10 km)
+      if (hasCityFilter) {
+        // Read start coordinates directly from database fields
+        const startLat = parseFloat(r.start_latlng_lat || r.start_lat || r.lat);
+        const startLng = parseFloat(r.start_latlng_lng || r.start_latlng_lon || r.start_lng || r.lng);
 
-      if (typeof polyline === 'undefined' || typeof polyline.decode !== 'function') {
-        console.error("❌ CRITICAL: The 'polyline' decoding library is NOT loaded on the page!");
-        cityFailedCount++;
-        return false;
-      }
-
-      try {
-        const decodedPoints = polyline.decode(poly);
-        
-        if (decodedPoints && decodedPoints.length > 0) {
-          const pt = decodedPoints[0];
-          
-          if (debugPrinted < 3) {
-            const d1 = getHaversineDistanceKm(targetCityLat, targetCityLng, pt[0], pt[1]);
-            const d2 = getHaversineDistanceKm(targetCityLat, targetCityLng, pt[1], pt[0]);
-
-            console.log(`🔎 Diagnostic Route "${r.name || r.route_id}":`, {
-              cityCoords: [targetCityLat, targetCityLng],
-              decodedStartPoint: pt,
-              distNormalLatLng: isNaN(d1) ? 'NaN' : `${d1.toFixed(1)} km`,
-              distFlippedLngLat: isNaN(d2) ? 'NaN' : `${d2.toFixed(1)} km`
-            });
-            debugPrinted++;
-          }
-
-          const distKm = getHaversineDistanceKm(targetCityLat, targetCityLng, pt[0], pt[1]);
-
-          if (isNaN(distKm) || distKm > 10) {
-            cityFailedCount++;
-            return false;
-          } else {
-            cityPassedCount++;
-          }
-        } else {
+        if (isNaN(startLat) || isNaN(startLng)) {
+          dbg(`❌ Route ${r.route_id} ("${r.name}") missing start coordinates.`);
           cityFailedCount++;
           return false;
         }
-      } catch (err) {
-        if (debugPrinted < 3) {
-          console.error(`❌ Polyline decode error on route "${r.name}":`, err);
-          debugPrinted++;
+
+        // Calculate distance directly from start point
+        const distKm = getHaversineDistanceKm(targetCityLat, targetCityLng, startLat, startLng);
+
+        if (distKm > 10) {
+          cityFailedCount++;
+          return false;
+        } else {
+          cityPassedCount++;
         }
-        cityFailedCount++;
-        return false;
       }
-    }
 
     // 2. Name Search
     if (nameQuery) {
