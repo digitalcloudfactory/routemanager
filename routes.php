@@ -258,6 +258,29 @@ body {
     position: relative;
     background: #cbd5e1;
 }
+
+/* Focus / Fullscreen Mode Styles */
+.map-canvas-frame.map-focus-mode {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 99999 !important; /* Forces it over table, headers, and sidebars */
+    margin: 0 !important;
+    border-radius: 0 !important;
+    background: #ffffff;
+}
+
+/* Fix Leaflet map sizing inside focus container */
+.map-focus-mode #primary-workspace-map {
+    width: 100vw !important;
+    height: 100vh !important;
+}
+
+
 #primary-workspace-map { width: 100%; height: 100%; }
 
 /* HUD Displays */
@@ -942,32 +965,31 @@ function refreshShops() {
 }
 
 
-/**
- * Toggles the map between standard layout and full-screen focus mode.
- */
 function toggleMapFocusMode(forceClose = false) {
-    // Replace 'mapContainer' with the actual ID of your map container element
-    const mapWrapper = document.getElementById('mapContainer') || document.getElementById('map');
+    const mapFrame = document.getElementById('mapCanvasFrame');
     const icon = document.getElementById('mapFocusIcon');
     const text = document.getElementById('mapFocusText');
 
-    if (!mapWrapper) return;
+    if (!mapFrame) {
+        console.error("mapCanvasFrame element not found!");
+        return;
+    }
 
-    const isCurrentlyFocused = mapWrapper.classList.contains('map-focus-mode');
+    const isCurrentlyFocused = mapFrame.classList.contains('map-focus-mode');
 
     if (isCurrentlyFocused || forceClose) {
         // Exit Focus Mode
-        mapWrapper.classList.remove('map-focus-mode');
+        mapFrame.classList.remove('map-focus-mode');
         if (icon) icon.className = 'bi bi-arrows-fullscreen text-secondary';
         if (text) text.textContent = 'Focus';
     } else {
         // Enter Focus Mode
-        mapWrapper.classList.add('map-focus-mode');
+        mapFrame.classList.add('map-focus-mode');
         if (icon) icon.className = 'bi bi-x-lg text-danger';
         if (text) text.textContent = 'Close';
     }
 
-    // Force Leaflet to recalculate tile bounds on resize
+    // Crucial: Force Leaflet map redraw to recalculate new width/height instantly
     setTimeout(() => {
         if (typeof globalWorkspaceMap !== 'undefined' && globalWorkspaceMap) {
             globalWorkspaceMap.invalidateSize();
@@ -975,7 +997,7 @@ function toggleMapFocusMode(forceClose = false) {
                 globalWorkspaceMap.fitBounds(currentActivePolyline.getBounds(), { padding: [40, 40] });
             }
         }
-    }, 250);
+    }, 150);
 }
 
 // Press 'Esc' key to close Focus Mode automatically
@@ -984,7 +1006,6 @@ document.addEventListener('keydown', (e) => {
         toggleMapFocusMode(true);
     }
 });
-
 </script>
 <?php include 'footer.php'; ?>
 <?php exit(0); ?>
