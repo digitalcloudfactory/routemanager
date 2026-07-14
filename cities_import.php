@@ -22,37 +22,50 @@ $pdo = new PDO(
 
 
 // Open the txt file
-$handle = fopen("cities5000.txt", "r");
+$handle = fopen("cities1000.txt", "r");
 
 if ($handle) {
-    // Prepare a master insert query once (for speed)
+    // Prepare a master insert query once
     $stmt = $pdo->prepare("INSERT INTO cities VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
     
-    $pdo->beginTransaction(); // Wrap in a transaction to make it 100x faster
+    $pdo->beginTransaction();
     
     $count = 0;
-    while (($line = fgets($handle)) !== false) {
-        // Split the line by tabs (\t)
-        $data = explode("\t", trim($line));
-        
-        // Ensure empty fields turn into NULL values rather than breaking
-        $data = array_map(function($value) {
-            return $value === '' ? null : $value;
-        }, $data);
+    $inserted = 0;
 
-        // Execute the insert
-        $stmt->execute($data);
+    while (($line = fgets($handle)) !== false) {
+        $line = trim($line);
+        if (empty($line)) continue;
+
+        // Split the line by tabs (\t)
+        $data = explode("\t", $line);
         
-        // Commit in chunks of 5,000 rows to prevent running out of memory
-        if (++$count % 5000 === 0) {
-            $pdo->commit();
-            $pdo->beginTransaction();
+        // Timezone is at index 17 in the GeoNames schema
+        $timezone = $data[17] ?? '';
+
+        // Check if the timezone starts with 'Europe/'
+        if (str_str_starts_with_or_similar($timezone)) { // Using str_starts_with for PHP 8+
+            if (str_starts_with($timezone, 'Europe/')) {
+                // Ensure empty fields turn into NULL values
+                $data = array_map(function($value) {
+                    return $value === '' ? null : $value;
+                }, $data);
+
+                $stmt->execute($data);
+                $inserted++;
+                
+                // Commit in chunks of 5,000 inserted rows
+                if (++$count % 5000 === 0) {
+                    $pdo->commit();
+                    $pdo->beginTransaction();
+                }
+            }
         }
     }
     
-    $pdo->commit(); // Commit any remaining rows
+    $pdo->commit(); // Commit remaining rows
     fclose($handle);
-    echo "Import completed successfully!";
+    echo "Import completed successfully! Total imported: $inserted";
 } else {
     echo "Error opening the text file.";
 }
