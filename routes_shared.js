@@ -144,6 +144,7 @@ function applyFilters() {
   const targetCityLng = parseFloat(document.getElementById('filterCityLng')?.value);
   const hasCityFilter = !isNaN(targetCityLat) && !isNaN(targetCityLng);
 
+  
   if (hasCityFilter) {
     dbg(`🌆 Active City Filter: "${cityInputVal}" @ [Lat: ${targetCityLat}, Lng: ${targetCityLng}] (10km Radius)`);
   } else if (cityInputVal) {
@@ -163,42 +164,48 @@ function applyFilters() {
 
   filteredRoutes = routes.filter(r => {
     // 1. City Start Radius Check (10 km)
-    if (hasCityFilter) {
-      const poly = r.summary_polyline || r.polyline;
-      if (!poly) {
-        cityFailedCount++;
-        return false;
+    // Inside the filteredRoutes loop in applyFilters():
+if (hasCityFilter) {
+  const poly = r.summary_polyline || r.polyline || r.summaryPolyline;
+  if (!poly) {
+    cityFailedCount++;
+    return false;
+  }
+
+  try {
+    const decodedPoints = typeof polyline !== 'undefined' ? polyline.decode(poly) : null;
+    
+    if (decodedPoints && decodedPoints.length > 0) {
+      const p = decodedPoints[0];
+      
+      // 🔍 Print the raw extracted start point of the first route to inspect:
+      if (debugPrinted < 3) {
+        const d1 = getHaversineDistanceKm(targetCityLat, targetCityLng, p[0], p[1]); // normal [lat, lng]
+        const d2 = getHaversineDistanceKm(targetCityLat, targetCityLng, p[1], p[0]); // flipped [lng, lat]
+
+        console.log(`🔎 Route "${r.name || r.id}":`, {
+          rawDecodedStartPoint: p,
+          distNormalLatLng: `${d1.toFixed(1)} km`,
+          distFlippedLngLat: `${d2.toFixed(1)} km`
+        });
+        debugPrinted++;
       }
 
-      try {
-        const decodedPoints = typeof polyline !== 'undefined' ? polyline.decode(poly) : null;
-        if (decodedPoints && decodedPoints.length > 0) {
-          const startLat = decodedPoints[0][0];
-          const startLng = decodedPoints[0][1];
-          const distKm = getHaversineDistanceKm(targetCityLat, targetCityLng, startLat, startLng);
+      // Try distance calculation
+      const distKm = getHaversineDistanceKm(targetCityLat, targetCityLng, p[0], p[1]);
 
-          // Log the first 3 routes to check distance calculation
-          if (debugPrinted < 3) {
-            dbg(`🔍 Route "${r.name || r.route_id}": start=[${startLat}, ${startLng}], distFromCity=${distKm?.toFixed(2)}km`);
-            debugPrinted++;
-          }
-
-          if (isNaN(distKm) || distKm > 10) {
-            cityFailedCount++;
-            return false;
-          } else {
-            cityPassedCount++;
-          }
-        } else {
-          cityFailedCount++;
-          return false;
-        }
-      } catch (err) {
-        console.error("Error decoding polyline for route:", r.route_id, err);
+      if (isNaN(distKm) || distKm > 10) {
         cityFailedCount++;
         return false;
+      } else {
+        cityPassedCount++;
       }
     }
+  } catch (err) {
+    cityFailedCount++;
+    return false;
+  }
+}
 
     // 2. Name Search
     if (nameQuery) {
