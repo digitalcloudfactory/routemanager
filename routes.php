@@ -480,7 +480,7 @@ body {
         </div>
     </section>
 
-<main class="map-canvas-frame">
+<main class="map-canvas-frame position-relative" id="mapCanvasFrame">
     <div id="primary-workspace-map"></div>
 
     <!-- HUD Overlay (Fades out when route is clicked) -->
