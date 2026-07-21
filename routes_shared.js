@@ -153,6 +153,13 @@ function applyFilters() {
     dbg(`🌆 No City Filter active.`);
   }
 
+  // --- READ DISTANCE & ELEVATION SLIDER VALUES ---
+  const minDistanceVal = filterDistanceMin ? parseFloat(filterDistanceMin.value) : 0;
+  const maxDistanceVal = filterDistanceMax ? parseFloat(filterDistanceMax.value) : Infinity;
+
+  const minElevationVal = filterElevationMin ? parseFloat(filterElevationMin.value) : 0;
+  const maxElevationVal = filterElevationMax ? parseFloat(filterElevationMax.value) : Infinity;
+
   const nameQuery = typeof filterName !== 'undefined' && filterName ? filterName.value.trim().toLowerCase() : '';
   const isNegated = typeof filterNameNot !== 'undefined' && filterNameNot ? filterNameNot.checked : false;
   const selectedCountry = typeof filterCountry !== 'undefined' && filterCountry ? filterCountry.value : '';
@@ -192,6 +199,22 @@ function applyFilters() {
     if (nameQuery) {
       const contains = r.name && r.name.toLowerCase().includes(nameQuery);
       if (isNegated ? contains : !contains) return false;
+    }
+
+    // 2. Route Distance Range Filter (km)
+    const routeDist = parseFloat(r.distance_km);
+    if (!isNaN(routeDist)) {
+      if (routeDist < minDistanceVal || routeDist > maxDistanceVal) {
+        return false;
+      }
+    }
+
+    // 3. Elevation Range Filter (m)
+    const routeElev = parseFloat(r.elevation);
+    if (!isNaN(routeElev)) {
+      if (routeElev < minElevationVal || routeElev > maxElevationVal) {
+        return false;
+      }
     }
 
     // 3. Discipline / Type
