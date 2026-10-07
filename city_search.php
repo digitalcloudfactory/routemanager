@@ -1,12 +1,7 @@
 <?php
 // city_search.php — Fast MySQL Autocomplete Endpoint
 header('Content-Type: application/json; charset=utf-8');
-
-$db_host = 'db.fr-pari1.bengt.wasmernet.com';
-$db_port = 10272;
-$db_name = 'dbcmpLT2zrmwmur5UEjZ3Xj8';
-$db_user = 'de142c5d7a0180009884f0319fb7';
-$db_pass = '0696de14-2c5d-7bb2-8000-fe77e5a731bf';
+require_once 'config.php'; // 🟩 Everything loads instantly
 
 try {
     $pdo = new PDO(
