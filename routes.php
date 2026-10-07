@@ -552,7 +552,7 @@ function routeTypeLabel(type) {
 function initWorkspaceMap() {
     globalWorkspaceMap = L.map('primary-workspace-map', { zoomControl: false }).setView([50.8503, 4.3517], 9);
     L.control.zoom({ position: 'topright' }).addTo(globalWorkspaceMap);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?key=cb1_4d46_1_1fdd6120593fa07cf27831cd', {
         attribution: '&copy; OpenStreetMap Contribs &copy; CARTO'
     }).addTo(globalWorkspaceMap);
 }

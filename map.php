@@ -222,7 +222,7 @@ let routes = [];
 const map = L.map('map', { trackResize: true, zoomControl: false }).setView([50.8503, 4.3517], 9);
 L.control.zoom({ position: 'topright' }).addTo(map);
 
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?key=cb1_4d46_1_1fdd6120593fa07cf27831cd', {
     attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
 }).addTo(map);
 
