@@ -7,8 +7,8 @@ ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 // 2. Database Connection Credentials
-$db_host = 'db.fr-pari1.bengt.wasmernet.com';
-$db_port = 10272;
+$db_host = 'db.fr-roub1.bengt.wasmernet.com';
+$db_port = 20184;
 $db_name = 'dbcmpLT2zrmwmur5UEjZ3Xj8';
 $db_user = 'de142c5d7a0180009884f0319fb7';
 $db_pass = '0696de14-2c5d-7bb2-8000-fe77e5a731bf';
